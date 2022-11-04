@@ -1,12 +1,14 @@
 {
-  "name": "lapp-template",
+  "name": "create-ln-app",
+  "url": "https://create-ln-app.dev",
   "version": "0.1.0",
   "private": false,
   "scripts": {
     "start": "concurrently npm:watch:*",
+    "test": "",
     "install:all": "npm install && npm run install:frontend",
     "install:frontend": "cd frontend && npm install && cd ..",
-    "watch:frontend": "cd frontend && npm start",
+    "watch:frontend": "sh ./scripts/start.frontend.sh",
     "watch:backend": "cd backend/docker/compose && docker-compose up",
     "start:backend:polar": "open -a Polar",
     "start:backend:compose": "cd backend/docker/compose && docker-compose up",

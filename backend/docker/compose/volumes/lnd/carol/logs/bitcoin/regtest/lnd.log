@@ -1,0 +1,191 @@
+2022-11-04 23:05:45.773 [WRN] LTND: open /home/lnd/.lnd/lnd.conf: no such file or directory
+2022-11-04 23:05:45.778 [INF] LTND: Version: 0.15.2-beta commit=v0.15.2-beta, build=production, logging=default, debuglevel=info
+2022-11-04 23:05:45.790 [INF] LTND: Active chain: Bitcoin (network=regtest)
+2022-11-04 23:05:45.817 [INF] RPCS: Generating TLS certificates...
+2022-11-04 23:05:45.848 [INF] RPCS: Done generating TLS certificates
+2022-11-04 23:05:45.865 [INF] RPCS: RPC server listening on 0.0.0.0:10009
+2022-11-04 23:05:45.895 [INF] RPCS: gRPC proxy started at 0.0.0.0:8080
+2022-11-04 23:05:45.899 [INF] LTND: Opening the main database, this might take a few minutes...
+2022-11-04 23:05:45.902 [INF] LTND: Opening bbolt database, sync_freelist=false, auto_compact=false
+2022-11-04 23:05:45.977 [INF] LTND: Creating local graph and channel state DB instances
+2022-11-04 23:05:45.995 [INF] CHDB: Checking for schema update: latest_version=29, db_version=29
+2022-11-04 23:05:45.995 [INF] CHDB: Checking for optional update: prune_revocation_log=false, db_version=empty
+2022-11-04 23:05:45.998 [INF] LTND: Database(s) now open (time_to_open=90.966145ms)!
+2022-11-04 23:05:46.242 [INF] CHRE: Primary chain is set to: bitcoin
+2022-11-04 23:05:46.778 [ERR] LTND: unable to create partial chain control: -28: Loading P2P addresses…
+2022-11-04 23:05:46.779 [ERR] LTND: Shutting down because error in main method: error creating wallet config: unable to create partial chain control: -28: Loading P2P addresses…
+2022-11-04 23:05:48.228 [WRN] LTND: open /home/lnd/.lnd/lnd.conf: no such file or directory
+2022-11-04 23:05:48.229 [INF] LTND: Version: 0.15.2-beta commit=v0.15.2-beta, build=production, logging=default, debuglevel=info
+2022-11-04 23:05:48.231 [INF] LTND: Active chain: Bitcoin (network=regtest)
+2022-11-04 23:05:48.245 [INF] RPCS: RPC server listening on 0.0.0.0:10009
+2022-11-04 23:05:48.251 [INF] RPCS: gRPC proxy started at 0.0.0.0:8080
+2022-11-04 23:05:48.258 [INF] LTND: Opening the main database, this might take a few minutes...
+2022-11-04 23:05:48.262 [INF] LTND: Opening bbolt database, sync_freelist=false, auto_compact=false
+2022-11-04 23:05:48.302 [INF] LTND: Creating local graph and channel state DB instances
+2022-11-04 23:05:48.316 [INF] CHDB: Checking for schema update: latest_version=29, db_version=29
+2022-11-04 23:05:48.316 [INF] CHDB: Checking for optional update: prune_revocation_log=false, db_version=empty
+2022-11-04 23:05:48.319 [INF] LTND: Database(s) now open (time_to_open=54.256457ms)!
+2022-11-04 23:05:48.468 [INF] CHRE: Primary chain is set to: bitcoin
+2022-11-04 23:05:48.509 [INF] LNWL: Started listening for bitcoind block notifications via ZMQ on 172.22.0.5:28334
+2022-11-04 23:05:48.509 [INF] LNWL: Started listening for bitcoind transaction notifications via ZMQ on 172.22.0.5:28335
+2022-11-04 23:05:50.433 [INF] LTND: Received terminated
+2022-11-04 23:05:50.445 [INF] LTND: Shutting down...
+2022-11-04 23:05:50.451 [INF] LTND: Gracefully shutting down.
+2022-11-04 23:28:51.295 [WRN] LTND: open /home/lnd/.lnd/lnd.conf: no such file or directory
+2022-11-04 23:28:51.295 [INF] LTND: Version: 0.15.2-beta commit=v0.15.2-beta, build=production, logging=default, debuglevel=info
+2022-11-04 23:28:51.305 [INF] LTND: Active chain: Bitcoin (network=regtest)
+2022-11-04 23:28:51.335 [INF] RPCS: RPC server listening on 0.0.0.0:10009
+2022-11-04 23:28:51.348 [INF] RPCS: gRPC proxy started at 0.0.0.0:8080
+2022-11-04 23:28:51.355 [INF] LTND: Opening the main database, this might take a few minutes...
+2022-11-04 23:28:51.364 [INF] LTND: Opening bbolt database, sync_freelist=false, auto_compact=false
+2022-11-04 23:28:51.411 [INF] LTND: Creating local graph and channel state DB instances
+2022-11-04 23:28:51.427 [INF] CHDB: Checking for schema update: latest_version=29, db_version=29
+2022-11-04 23:28:51.427 [INF] CHDB: Checking for optional update: prune_revocation_log=false, db_version=empty
+2022-11-04 23:28:51.432 [INF] LTND: Database(s) now open (time_to_open=64.266242ms)!
+2022-11-04 23:28:51.647 [INF] CHRE: Primary chain is set to: bitcoin
+2022-11-04 23:28:51.681 [ERR] LTND: unable to create partial chain control: -28: Verifying blocks…
+2022-11-04 23:28:51.681 [ERR] LTND: Shutting down because error in main method: error creating wallet config: unable to create partial chain control: -28: Verifying blocks…
+2022-11-04 23:28:54.312 [WRN] LTND: open /home/lnd/.lnd/lnd.conf: no such file or directory
+2022-11-04 23:28:54.313 [INF] LTND: Version: 0.15.2-beta commit=v0.15.2-beta, build=production, logging=default, debuglevel=info
+2022-11-04 23:28:54.316 [INF] LTND: Active chain: Bitcoin (network=regtest)
+2022-11-04 23:28:54.343 [INF] RPCS: RPC server listening on 0.0.0.0:10009
+2022-11-04 23:28:54.356 [INF] RPCS: gRPC proxy started at 0.0.0.0:8080
+2022-11-04 23:28:54.360 [INF] LTND: Opening the main database, this might take a few minutes...
+2022-11-04 23:28:54.373 [INF] LTND: Opening bbolt database, sync_freelist=false, auto_compact=false
+2022-11-04 23:28:54.428 [INF] LTND: Creating local graph and channel state DB instances
+2022-11-04 23:28:54.491 [INF] CHDB: Checking for schema update: latest_version=29, db_version=29
+2022-11-04 23:28:54.491 [INF] CHDB: Checking for optional update: prune_revocation_log=false, db_version=empty
+2022-11-04 23:28:54.497 [INF] LTND: Database(s) now open (time_to_open=111.566576ms)!
+2022-11-04 23:28:54.690 [INF] CHRE: Primary chain is set to: bitcoin
+2022-11-04 23:28:54.760 [INF] LNWL: Started listening for bitcoind block notifications via ZMQ on 172.23.0.2:28334
+2022-11-04 23:28:54.761 [INF] LNWL: Started listening for bitcoind transaction notifications via ZMQ on 172.23.0.2:28335
+2022-11-04 23:28:54.832 [ERR] LTND: unable to create wallet controller: missing address manager namespace
+2022-11-04 23:28:54.832 [ERR] LTND: Shutting down because error in main method: error loading chain control: unable to create wallet controller: missing address manager namespace
+2022-11-04 23:28:56.474 [WRN] LTND: open /home/lnd/.lnd/lnd.conf: no such file or directory
+2022-11-04 23:28:56.475 [INF] LTND: Version: 0.15.2-beta commit=v0.15.2-beta, build=production, logging=default, debuglevel=info
+2022-11-04 23:28:56.484 [INF] LTND: Active chain: Bitcoin (network=regtest)
+2022-11-04 23:28:56.499 [INF] RPCS: RPC server listening on 0.0.0.0:10009
+2022-11-04 23:28:56.508 [INF] RPCS: gRPC proxy started at 0.0.0.0:8080
+2022-11-04 23:28:56.513 [INF] LTND: Opening the main database, this might take a few minutes...
+2022-11-04 23:28:56.518 [INF] LTND: Opening bbolt database, sync_freelist=false, auto_compact=false
+2022-11-04 23:28:56.552 [INF] LTND: Creating local graph and channel state DB instances
+2022-11-04 23:28:56.560 [INF] CHDB: Checking for schema update: latest_version=29, db_version=29
+2022-11-04 23:28:56.561 [INF] CHDB: Checking for optional update: prune_revocation_log=false, db_version=empty
+2022-11-04 23:28:56.575 [INF] LTND: Database(s) now open (time_to_open=54.074698ms)!
+2022-11-04 23:28:56.760 [INF] CHRE: Primary chain is set to: bitcoin
+2022-11-04 23:28:56.816 [INF] LNWL: Started listening for bitcoind block notifications via ZMQ on 172.23.0.2:28334
+2022-11-04 23:28:56.816 [INF] LNWL: Started listening for bitcoind transaction notifications via ZMQ on 172.23.0.2:28335
+2022-11-04 23:28:56.893 [ERR] LTND: unable to create wallet controller: missing address manager namespace
+2022-11-04 23:28:56.894 [ERR] LTND: Shutting down because error in main method: error loading chain control: unable to create wallet controller: missing address manager namespace
+2022-11-04 23:28:58.764 [WRN] LTND: open /home/lnd/.lnd/lnd.conf: no such file or directory
+2022-11-04 23:28:58.765 [INF] LTND: Version: 0.15.2-beta commit=v0.15.2-beta, build=production, logging=default, debuglevel=info
+2022-11-04 23:28:58.767 [INF] LTND: Active chain: Bitcoin (network=regtest)
+2022-11-04 23:28:58.784 [INF] RPCS: RPC server listening on 0.0.0.0:10009
+2022-11-04 23:28:58.798 [INF] RPCS: gRPC proxy started at 0.0.0.0:8080
+2022-11-04 23:28:58.798 [INF] LTND: Opening the main database, this might take a few minutes...
+2022-11-04 23:28:58.803 [INF] LTND: Opening bbolt database, sync_freelist=false, auto_compact=false
+2022-11-04 23:28:58.836 [INF] LTND: Creating local graph and channel state DB instances
+2022-11-04 23:28:58.847 [INF] CHDB: Checking for schema update: latest_version=29, db_version=29
+2022-11-04 23:28:58.847 [INF] CHDB: Checking for optional update: prune_revocation_log=false, db_version=empty
+2022-11-04 23:28:58.852 [INF] LTND: Database(s) now open (time_to_open=45.46682ms)!
+2022-11-04 23:28:59.144 [INF] CHRE: Primary chain is set to: bitcoin
+2022-11-04 23:28:59.215 [INF] LNWL: Started listening for bitcoind block notifications via ZMQ on 172.23.0.2:28334
+2022-11-04 23:28:59.215 [INF] LNWL: Started listening for bitcoind transaction notifications via ZMQ on 172.23.0.2:28335
+2022-11-04 23:28:59.290 [ERR] LTND: unable to create wallet controller: missing address manager namespace
+2022-11-04 23:28:59.290 [ERR] LTND: Shutting down because error in main method: error loading chain control: unable to create wallet controller: missing address manager namespace
+2022-11-04 23:28:59.301 [INF] LTND: Shutdown complete2022-11-04 23:29:01.381 [WRN] LTND: open /home/lnd/.lnd/lnd.conf: no such file or directory
+2022-11-04 23:29:01.381 [INF] LTND: Version: 0.15.2-beta commit=v0.15.2-beta, build=production, logging=default, debuglevel=info
+2022-11-04 23:29:01.385 [INF] LTND: Active chain: Bitcoin (network=regtest)
+2022-11-04 23:29:01.409 [INF] RPCS: RPC server listening on 0.0.0.0:10009
+2022-11-04 23:29:01.417 [INF] RPCS: gRPC proxy started at 0.0.0.0:8080
+2022-11-04 23:29:01.425 [INF] LTND: Opening the main database, this might take a few minutes...
+2022-11-04 23:29:01.431 [INF] LTND: Opening bbolt database, sync_freelist=false, auto_compact=false
+2022-11-04 23:29:01.484 [INF] LTND: Creating local graph and channel state DB instances
+2022-11-04 23:29:01.504 [INF] CHDB: Checking for schema update: latest_version=29, db_version=29
+2022-11-04 23:29:01.506 [INF] CHDB: Checking for optional update: prune_revocation_log=false, db_version=empty
+2022-11-04 23:29:01.511 [INF] LTND: Database(s) now open (time_to_open=78.613503ms)!
+2022-11-04 23:29:01.715 [INF] CHRE: Primary chain is set to: bitcoin
+2022-11-04 23:29:01.786 [INF] LNWL: Started listening for bitcoind block notifications via ZMQ on 172.23.0.2:28334
+2022-11-04 23:29:01.786 [INF] LNWL: Started listening for bitcoind transaction notifications via ZMQ on 172.23.0.2:28335
+2022-11-04 23:29:01.854 [ERR] LTND: unable to create wallet controller: missing address manager namespace
+2022-11-04 23:29:01.855 [ERR] LTND: Shutting down because error in main method: error loading chain control: unable to create wallet controller: missing address manager namespace
+2022-11-04 23:29:01.864 [INF] LTND: Shutdown complete2022-11-04 23:29:05.265 [WRN] LTND: open /home/lnd/.lnd/lnd.conf: no such file or directory
+2022-11-04 23:29:05.265 [INF] LTND: Version: 0.15.2-beta commit=v0.15.2-beta, build=production, logging=default, debuglevel=info
+2022-11-04 23:29:05.272 [INF] LTND: Active chain: Bitcoin (network=regtest)
+2022-11-04 23:29:05.295 [INF] RPCS: RPC server listening on 0.0.0.0:10009
+2022-11-04 23:29:05.302 [INF] RPCS: gRPC proxy started at 0.0.0.0:8080
+2022-11-04 23:29:05.312 [INF] LTND: Opening the main database, this might take a few minutes...
+2022-11-04 23:29:05.332 [INF] LTND: Opening bbolt database, sync_freelist=false, auto_compact=false
+2022-11-04 23:29:05.369 [INF] LTND: Creating local graph and channel state DB instances
+2022-11-04 23:29:05.378 [INF] CHDB: Checking for schema update: latest_version=29, db_version=29
+2022-11-04 23:29:05.379 [INF] CHDB: Checking for optional update: prune_revocation_log=false, db_version=empty
+2022-11-04 23:29:05.384 [INF] LTND: Database(s) now open (time_to_open=40.790521ms)!
+2022-11-04 23:29:05.547 [INF] CHRE: Primary chain is set to: bitcoin
+2022-11-04 23:29:05.617 [INF] LNWL: Started listening for bitcoind block notifications via ZMQ on 172.23.0.2:28334
+2022-11-04 23:29:05.617 [INF] LNWL: Started listening for bitcoind transaction notifications via ZMQ on 172.23.0.2:28335
+2022-11-04 23:29:05.697 [ERR] LTND: unable to create wallet controller: missing address manager namespace
+2022-11-04 23:29:05.697 [ERR] LTND: Shutting down because error in main method: error loading chain control: unable to create wallet controller: missing address manager namespace
+2022-11-04 23:29:10.545 [WRN] LTND: open /home/lnd/.lnd/lnd.conf: no such file or directory
+2022-11-04 23:29:10.546 [INF] LTND: Version: 0.15.2-beta commit=v0.15.2-beta, build=production, logging=default, debuglevel=info
+2022-11-04 23:29:10.550 [INF] LTND: Active chain: Bitcoin (network=regtest)
+2022-11-04 23:29:10.572 [INF] RPCS: RPC server listening on 0.0.0.0:10009
+2022-11-04 23:29:10.584 [INF] RPCS: gRPC proxy started at 0.0.0.0:8080
+2022-11-04 23:29:10.590 [INF] LTND: Opening the main database, this might take a few minutes...
+2022-11-04 23:29:10.606 [INF] LTND: Opening bbolt database, sync_freelist=false, auto_compact=false
+2022-11-04 23:29:10.655 [INF] LTND: Creating local graph and channel state DB instances
+2022-11-04 23:29:10.660 [INF] CHDB: Checking for schema update: latest_version=29, db_version=29
+2022-11-04 23:29:10.661 [INF] CHDB: Checking for optional update: prune_revocation_log=false, db_version=empty
+2022-11-04 23:29:10.665 [INF] LTND: Database(s) now open (time_to_open=33.313694ms)!
+2022-11-04 23:29:10.817 [INF] CHRE: Primary chain is set to: bitcoin
+2022-11-04 23:29:10.882 [INF] LNWL: Started listening for bitcoind block notifications via ZMQ on 172.23.0.2:28334
+2022-11-04 23:29:10.882 [INF] LNWL: Started listening for bitcoind transaction notifications via ZMQ on 172.23.0.2:28335
+2022-11-04 23:29:10.965 [ERR] LTND: unable to create wallet controller: missing address manager namespace
+2022-11-04 23:29:10.965 [ERR] LTND: Shutting down because error in main method: error loading chain control: unable to create wallet controller: missing address manager namespace
+2022-11-04 23:29:18.659 [WRN] LTND: open /home/lnd/.lnd/lnd.conf: no such file or directory
+2022-11-04 23:29:18.660 [INF] LTND: Version: 0.15.2-beta commit=v0.15.2-beta, build=production, logging=default, debuglevel=info
+2022-11-04 23:29:18.663 [INF] LTND: Active chain: Bitcoin (network=regtest)
+2022-11-04 23:29:18.680 [INF] RPCS: RPC server listening on 0.0.0.0:10009
+2022-11-04 23:29:18.685 [INF] RPCS: gRPC proxy started at 0.0.0.0:8080
+2022-11-04 23:29:18.690 [INF] LTND: Opening the main database, this might take a few minutes...
+2022-11-04 23:29:18.696 [INF] LTND: Opening bbolt database, sync_freelist=false, auto_compact=false
+2022-11-04 23:29:18.738 [INF] LTND: Creating local graph and channel state DB instances
+2022-11-04 23:29:18.749 [INF] CHDB: Checking for schema update: latest_version=29, db_version=29
+2022-11-04 23:29:18.749 [INF] CHDB: Checking for optional update: prune_revocation_log=false, db_version=empty
+2022-11-04 23:29:18.757 [INF] LTND: Database(s) now open (time_to_open=53.231447ms)!
+2022-11-04 23:29:18.945 [INF] CHRE: Primary chain is set to: bitcoin
+2022-11-04 23:29:19.010 [INF] LNWL: Started listening for bitcoind block notifications via ZMQ on 172.23.0.2:28334
+2022-11-04 23:29:19.010 [INF] LNWL: Started listening for bitcoind transaction notifications via ZMQ on 172.23.0.2:28335
+2022-11-04 23:29:19.068 [ERR] LTND: unable to create wallet controller: missing address manager namespace
+2022-11-04 23:29:19.069 [ERR] LTND: Shutting down because error in main method: error loading chain control: unable to create wallet controller: missing address manager namespace
+2022-11-04 23:29:34.182 [WRN] LTND: open /home/lnd/.lnd/lnd.conf: no such file or directory
+2022-11-04 23:29:34.183 [INF] LTND: Version: 0.15.2-beta commit=v0.15.2-beta, build=production, logging=default, debuglevel=info
+2022-11-04 23:29:34.188 [INF] LTND: Active chain: Bitcoin (network=regtest)
+2022-11-04 23:29:34.218 [INF] RPCS: RPC server listening on 0.0.0.0:10009
+2022-11-04 23:29:34.238 [INF] RPCS: gRPC proxy started at 0.0.0.0:8080
+2022-11-04 23:29:34.252 [INF] LTND: Opening the main database, this might take a few minutes...
+2022-11-04 23:29:34.258 [INF] LTND: Opening bbolt database, sync_freelist=false, auto_compact=false
+2022-11-04 23:29:34.310 [INF] LTND: Creating local graph and channel state DB instances
+2022-11-04 23:29:34.320 [INF] CHDB: Checking for schema update: latest_version=29, db_version=29
+2022-11-04 23:29:34.323 [INF] CHDB: Checking for optional update: prune_revocation_log=false, db_version=empty
+2022-11-04 23:29:34.330 [INF] LTND: Database(s) now open (time_to_open=65.169451ms)!
+2022-11-04 23:29:34.528 [INF] CHRE: Primary chain is set to: bitcoin
+2022-11-04 23:29:34.630 [INF] LNWL: Started listening for bitcoind block notifications via ZMQ on 172.23.0.2:28334
+2022-11-04 23:29:34.638 [INF] LNWL: Started listening for bitcoind transaction notifications via ZMQ on 172.23.0.2:28335
+2022-11-04 23:29:34.750 [ERR] LTND: unable to create wallet controller: missing address manager namespace
+2022-11-04 23:29:34.751 [ERR] LTND: Shutting down because error in main method: error loading chain control: unable to create wallet controller: missing address manager namespace
+2022-11-04 23:30:01.820 [WRN] LTND: open /home/lnd/.lnd/lnd.conf: no such file or directory
+2022-11-04 23:30:01.821 [INF] LTND: Version: 0.15.2-beta commit=v0.15.2-beta, build=production, logging=default, debuglevel=info
+2022-11-04 23:30:01.846 [INF] LTND: Active chain: Bitcoin (network=regtest)
+2022-11-04 23:30:01.875 [INF] RPCS: RPC server listening on 0.0.0.0:10009
+2022-11-04 23:30:01.885 [INF] RPCS: gRPC proxy started at 0.0.0.0:8080
+2022-11-04 23:30:01.893 [INF] LTND: Opening the main database, this might take a few minutes...
+2022-11-04 23:30:01.906 [INF] LTND: Opening bbolt database, sync_freelist=false, auto_compact=false
+2022-11-04 23:30:01.959 [INF] LTND: Creating local graph and channel state DB instances
+2022-11-04 23:30:01.972 [INF] CHDB: Checking for schema update: latest_version=29, db_version=29
+2022-11-04 23:30:01.973 [INF] CHDB: Checking for optional update: prune_revocation_log=false, db_version=empty
+2022-11-04 23:30:01.979 [INF] LTND: Database(s) now open (time_to_open=64.233387ms)!
+2022-11-04 23:30:02.165 [INF] CHRE: Primary chain is set to: bitcoin
+2022-11-04 23:30:02.240 [INF] LNWL: Started listening for bitcoind block notifications via ZMQ on 172.23.0.2:28334
+2022-11-04 23:30:02.240 [INF] LNWL: Started listening for bitcoind transaction notifications via ZMQ on 172.23.0.2:28335
+2022-11-04 23:30:02.322 [ERR] LTND: unable to create wallet controller: missing address manager namespace
+2022-11-04 23:30:02.322 [ERR] LTND: Shutting down because error in main method: error loading chain control: unable to create wallet controller: missing address manager namespace
