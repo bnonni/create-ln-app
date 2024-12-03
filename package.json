@@ -1,28 +1,26 @@
 {
-  "name": "lapp-template",
+  "name": "src",
   "version": "0.1.0",
-  "private": false,
+  "private": true,
   "scripts": {
-    "start": "concurrently npm:watch:*",
-    "lnd:urls": "",
-    "lnd:macaroons": "",
-    "install:all": "npm install && npm run install:frontend",
-    "install:frontend": "cd frontend && npm install && cd ..",
-    "watch:env": "node ./scripts/setup.env.js",
-    "watch:frontend": "cd frontend && npm start",
-    "watch:backend": "cd backend/docker/compose && docker-compose up",
-    "env:lnd:urls": "# TODO",
-    "env:lnd:macaroons": "# TODO",
-    "start:backend:polar": "open -a Polar",
-    "start:backend:compose": "cd backend/docker/compose && docker-compose up",
-    "start:backend:export": "cd backend/docker/export && unzip && docker-compose up"
-  },
-  "devDependencies": {
-    "concurrently": "^7.5.0"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
-    "dotenv": "^16.0.3",
-    "node-fetch": "^3.2.10",
-    "styled-components": "^5.3.6"
+    "react": "19.0.0-rc-66855b96-20241106",
+    "react-dom": "19.0.0-rc-66855b96-20241106",
+    "next": "15.0.3"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "eslint": "^8",
+    "eslint-config-next": "15.0.3"
   }
 }

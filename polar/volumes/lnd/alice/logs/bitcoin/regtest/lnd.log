@@ -1,0 +1,117 @@
+2024-12-03 23:14:59.380 [WRN] LTND: open /home/lnd/.lnd/lnd.conf: no such file or directory
+2024-12-03 23:14:59.381 [WRN] LTND: Config 'bitcoin.active' is deprecated, please remove it
+2024-12-03 23:14:59.384 [INF] LTND: Version: 0.18.2-beta commit=v0.18.2-beta, build=production, logging=default, debuglevel=debug
+2024-12-03 23:14:59.388 [INF] LTND: Active chain: Bitcoin (network=regtest)
+2024-12-03 23:14:59.392 [INF] RPCS: Generating TLS certificates...
+2024-12-03 23:14:59.398 [INF] RPCS: Done generating TLS certificates
+2024-12-03 23:14:59.406 [DBG] VRPC: Versioner RPC server successfully registered with root gRPC server
+2024-12-03 23:14:59.407 [DBG] IRPC: Invoices RPC server successfully registered with root gRPC server
+2024-12-03 23:14:59.407 [DBG] RRPC: Router RPC server successfully register with root gRPC server
+2024-12-03 23:14:59.407 [DBG] PRPC: Peers RPC server successfully register with root gRPC server
+2024-12-03 23:14:59.408 [DBG] NTFR: ChainNotifier RPC server successfully register with root gRPC server
+2024-12-03 23:14:59.408 [DBG] NTFR: ChainKit RPC server successfully register with root gRPC server
+2024-12-03 23:14:59.409 [DBG] NRPC: Neutrino RPC server successfully register with root gRPC server
+2024-12-03 23:14:59.409 [DBG] SGNR: Signer RPC server successfully register with root gRPC server
+2024-12-03 23:14:59.410 [DBG] WLKT: WalletKit RPC server successfully registered with root gRPC server
+2024-12-03 23:14:59.411 [DBG] ARPC: Autopilot RPC server successfully register with root gRPC server
+2024-12-03 23:14:59.411 [INF] RPCS: RPC server listening on 0.0.0.0:10009
+2024-12-03 23:14:59.415 [DBG] VRPC: Versioner REST server successfully registered with root REST server
+2024-12-03 23:14:59.417 [DBG] IRPC: Invoices REST server successfully registered with root REST server
+2024-12-03 23:14:59.424 [DBG] RRPC: Router REST server successfully registered with root REST server
+2024-12-03 23:14:59.426 [DBG] PRPC: Peers REST server successfully registered with root REST server
+2024-12-03 23:14:59.430 [DBG] NTFR: ChainNotifier REST server successfully registered with root REST server
+2024-12-03 23:14:59.430 [DBG] NTFR: ChainKit REST server successfully registered with root REST server
+2024-12-03 23:14:59.439 [DBG] NRPC: Neutrino REST server successfully registered with root REST server
+2024-12-03 23:14:59.440 [DBG] SGNR: Signer REST server successfully registered with root REST server
+2024-12-03 23:14:59.442 [DBG] WLKT: WalletKit REST server successfully registered with root REST server
+2024-12-03 23:14:59.443 [DBG] ARPC: Autopilot REST server successfully registered with root REST server
+2024-12-03 23:14:59.445 [INF] RPCS: gRPC proxy started at 0.0.0.0:8080
+2024-12-03 23:14:59.446 [INF] LTND: Opening the main database, this might take a few minutes...
+2024-12-03 23:14:59.447 [INF] LTND: Opening bbolt database, sync_freelist=false, auto_compact=false
+2024-12-03 23:14:59.464 [INF] LTND: Creating local graph and channel state DB instances
+2024-12-03 23:14:59.477 [DBG] CHDB: Populating in-memory channel graph, this might take a while...
+2024-12-03 23:14:59.478 [DBG] CHDB: Finished populating in-memory channel graph (took 1.246399ms, num_node_features=0, num_nodes=0, num_channels=0)
+2024-12-03 23:14:59.478 [INF] CHDB: Checking for schema update: latest_version=31, db_version=31
+2024-12-03 23:14:59.479 [INF] CHDB: Checking for optional update: prune_revocation_log=false, db_version=empty
+2024-12-03 23:14:59.481 [INF] LTND: Database(s) now open (time_to_open=33.923806ms)!
+2024-12-03 23:15:00.105 [DBG] RPCS: [/lnrpc.Lightning/GetInfo] requested
+2024-12-03 23:15:00.106 [ERR] RPCS: [/lnrpc.Lightning/GetInfo]: the RPC server is in the process of starting up, but not yet ready to accept calls
+2024-12-03 23:15:00.175 [DBG] RPCS: [/lnrpc.State/SubscribeState] requested
+2024-12-03 23:15:00.736 [INF] LNWL: Started listening for bitcoind block notifications via ZMQ on 172.22.0.6:28334
+2024-12-03 23:15:00.737 [INF] LNWL: Started listening for bitcoind transaction notifications via ZMQ on 172.22.0.6:28335
+2024-12-03 23:15:03.547 [DBG] RPCS: [/lnrpc.Lightning/GetInfo] requested
+2024-12-03 23:15:03.547 [ERR] RPCS: [/lnrpc.Lightning/GetInfo]: the RPC server is in the process of starting up, but not yet ready to accept calls
+2024-12-03 23:15:04.064 [INF] LNWL: Opened wallet
+2024-12-03 23:15:05.175 [INF] LNWL: The wallet has been unlocked without a time limit
+2024-12-03 23:15:05.254 [INF] CHRE: LightningWallet opened
+2024-12-03 23:15:05.258 [DBG] LNWL: Locating suitable block for birthday 2024-12-01 23:14:59 +0000 UTC between blocks 0-1
+2024-12-03 23:15:05.268 [INF] HSWC: Cleaning circuits from disk for closed channels
+2024-12-03 23:15:05.268 [DBG] HSWC: Found 0 closed channels
+2024-12-03 23:15:05.269 [INF] HSWC: Finished cleaning: no closed channels found, no actions taken.
+2024-12-03 23:15:05.270 [INF] HSWC: Restoring in-memory circuit state from disk
+2024-12-03 23:15:05.268 [DBG] LNWL: Checking candidate block: height=0, hash=0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206, timestamp=2011-02-02 23:16:42 +0000 UTC
+2024-12-03 23:15:05.271 [DBG] LNWL: Found birthday block: height=0, hash=0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206, timestamp=2011-02-02 23:16:42 +0000 UTC
+2024-12-03 23:15:05.271 [INF] HSWC: Payment circuits loaded: num_pending=0, num_open=0
+2024-12-03 23:15:05.280 [DBG] CRTR: Instantiating mission control with config: maximum history: 1000, minimum failure relax interval: 1m0s, estimator type: apriori, penalty halflife time: 1h0m0s, apriori hop probability: 0.6, apriori weight: 0.5, previous success probability: 0.95, capacity fraction: 0.9999
+2024-12-03 23:15:05.283 [DBG] CRTR: Mission control state reconstruction started
+2024-12-03 23:15:05.283 [DBG] CRTR: Mission control state reconstruction finished: n=0, time=11.652µs
+2024-12-03 23:15:05.284 [DBG] SRVR: Instantiating payment session source with config: AttemptCost=100 + 0.1%, MinRouteProbability=0.01
+2024-12-03 23:15:05.288 [INF] SWPR: Migrating UTXO nursery finalized TXIDs
+2024-12-03 23:15:05.290 [INF] LTND: Channel backup proxy channel notifier starting
+2024-12-03 23:15:05.290 [INF] ATPL: Instantiating autopilot with active=false, max_channels=5, allocation=0.600000, min_chan_size=20000, max_chan_size=16777215, private=false, min_confs=1, conf_target=3
+2024-12-03 23:15:05.291 [DBG] LTND: Populating dependencies for sub RPC server: SignRPC
+2024-12-03 23:15:05.292 [DBG] LTND: Populating dependencies for sub RPC server: WalletKitRPC
+2024-12-03 23:15:05.293 [DBG] LTND: Populating dependencies for sub RPC server: AutopilotRPC
+2024-12-03 23:15:05.294 [DBG] LTND: Populating dependencies for sub RPC server: ChainRPC
+2024-12-03 23:15:05.296 [DBG] LTND: Populating dependencies for sub RPC server: InvoicesRPC
+2024-12-03 23:15:05.297 [DBG] LTND: Populating dependencies for sub RPC server: PeersRPC
+2024-12-03 23:15:05.298 [DBG] LTND: Populating dependencies for sub RPC server: NeutrinoKitRPC
+2024-12-03 23:15:05.298 [DBG] LTND: Populating dependencies for sub RPC server: RouterRPC
+2024-12-03 23:15:05.299 [DBG] LTND: Populating dependencies for sub RPC server: WatchtowerRPC
+2024-12-03 23:15:05.301 [DBG] LTND: Populating dependencies for sub RPC server: WatchtowerClientRPC
+2024-12-03 23:15:05.302 [DBG] LTND: Populating dependencies for sub RPC server: DevRPC
+2024-12-03 23:15:05.303 [INF] IRPC: Baking macaroons for invoices RPC Server at: /home/lnd/.lnd/data/chain/bitcoin/regtest/invoices.macaroon
+2024-12-03 23:15:05.308 [INF] RRPC: Making macaroons for Router RPC Server at: /home/lnd/.lnd/data/chain/bitcoin/regtest/router.macaroon
+2024-12-03 23:15:05.309 [INF] LNWL: Started rescan from block 0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206 (height 0) for 0 addresses
+2024-12-03 23:15:05.312 [INF] NTFR: Baking macaroons for ChainNotifier RPC Server at: /home/lnd/.lnd/data/chain/bitcoin/regtest/chainnotifier.macaroon
+2024-12-03 23:15:05.318 [INF] SGNR: Making macaroons for Signer RPC Server at: /home/lnd/.lnd/data/chain/bitcoin/regtest/signer.macaroon
+2024-12-03 23:15:05.325 [INF] WLKT: Baking macaroons for WalletKit RPC Server at: /home/lnd/.lnd/data/chain/bitcoin/regtest/walletkit.macaroon
+2024-12-03 23:15:05.331 [DBG] RPCS: Starting sub RPC server: VersionRPC
+2024-12-03 23:15:05.333 [DBG] RPCS: Starting sub RPC server: WatchtowerRPC
+2024-12-03 23:15:05.335 [DBG] RPCS: Starting sub RPC server: InvoicesRPC
+2024-12-03 23:15:05.335 [DBG] RPCS: Starting sub RPC server: RouterRPC
+2024-12-03 23:15:05.336 [DBG] RPCS: Starting sub RPC server: PeersRPC
+2024-12-03 23:15:05.338 [DBG] RPCS: Starting sub RPC server: WatchtowerClientRPC
+2024-12-03 23:15:05.340 [DBG] RPCS: Starting sub RPC server: ChainRPC
+2024-12-03 23:15:05.337 [INF] LNWL: Catching up block hashes to height 1, this might take a while
+2024-12-03 23:15:05.342 [DBG] RPCS: Starting sub RPC server: NeutrinoKitRPC
+2024-12-03 23:15:05.344 [DBG] RPCS: Starting sub RPC server: SignRPC
+2024-12-03 23:15:05.346 [DBG] RPCS: Starting sub RPC server: WalletKitRPC
+2024-12-03 23:15:05.347 [DBG] RPCS: Starting sub RPC server: AutopilotRPC
+2024-12-03 23:15:05.348 [INF] LTND: We're not running within systemd or the service type is not 'notify'
+2024-12-03 23:15:05.358 [DBG] RPCS: [/lnrpc.Lightning/GetInfo] requested
+2024-12-03 23:15:05.362 [INF] LTND: Waiting for chain backend to finish sync, start_height=1
+2024-12-03 23:15:05.369 [INF] LNWL: Done catching up block hashes
+2024-12-03 23:15:05.370 [INF] LNWL: Rescanned through block 0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206 (height 1)
+2024-12-03 23:15:05.372 [INF] LNWL: Catching up block hashes to height 1, this might take a while
+2024-12-03 23:15:05.374 [INF] LNWL: Done catching up block hashes
+2024-12-03 23:15:05.374 [INF] LNWL: Finished rescan for 0 addresses (synced to block 6e3057867cba111e25ddd05dbe9183cc62bab6f347814449299ab27680e970fe, height 1)
+2024-12-03 23:15:05.381 [DBG] LTND: Syncing to block timestamp: 2011-02-02 23:16:42 +0000 UTC, is synced=false
+2024-12-03 23:15:05.393 [DBG] RPCS: [/verrpc.Versioner/GetVersion] requested
+2024-12-03 23:15:05.396 [DBG] RPCS: [/lnrpc.Lightning/GetInfo] requested
+2024-12-03 23:15:05.650 [INF] LTND: Received terminated
+2024-12-03 23:15:05.651 [INF] LTND: Shutting down...
+2024-12-03 23:15:05.652 [INF] LTND: Gracefully shutting down.
+2024-12-03 23:15:06.382 [INF] RPCS: Stopping RPC Server
+2024-12-03 23:15:06.383 [INF] RPCS: Stopping VersionRPC Sub-RPC Server
+2024-12-03 23:15:06.383 [INF] RPCS: Stopping WatchtowerRPC Sub-RPC Server
+2024-12-03 23:15:06.384 [INF] RPCS: Stopping InvoicesRPC Sub-RPC Server
+2024-12-03 23:15:06.384 [INF] RPCS: Stopping RouterRPC Sub-RPC Server
+2024-12-03 23:15:06.385 [INF] RPCS: Stopping PeersRPC Sub-RPC Server
+2024-12-03 23:15:06.385 [INF] RPCS: Stopping WatchtowerClientRPC Sub-RPC Server
+2024-12-03 23:15:06.386 [INF] RPCS: Stopping ChainRPC Sub-RPC Server
+2024-12-03 23:15:06.387 [INF] RPCS: Stopping NeutrinoKitRPC Sub-RPC Server
+2024-12-03 23:15:06.387 [INF] RPCS: Stopping SignRPC Sub-RPC Server
+2024-12-03 23:15:06.388 [INF] RPCS: Stopping WalletKitRPC Sub-RPC Server
+2024-12-03 23:15:06.389 [INF] RPCS: Stopping AutopilotRPC Sub-RPC Server
+2024-12-03 23:15:06.393 [INF] LTND: Shutdown complete

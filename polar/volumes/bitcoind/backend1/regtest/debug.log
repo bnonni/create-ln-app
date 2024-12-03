@@ -1,0 +1,614 @@
+
+
+
+
+
+2024-12-03T23:14:59Z Bitcoin Core version v27.0.0 (release build)
+2024-12-03T23:14:59Z Script verification uses 11 additional threads
+2024-12-03T23:14:59Z Using the 'sse4(1way),sse41(4way),avx2(8way)' SHA256 implementation
+2024-12-03T23:14:59Z Using RdSeed as an additional entropy source
+2024-12-03T23:14:59Z Using RdRand as an additional entropy source
+2024-12-03T23:14:59Z Default data directory /home/bitcoin/.bitcoin
+2024-12-03T23:14:59Z Using data directory /home/bitcoin/.bitcoin/regtest
+2024-12-03T23:14:59Z Config file: /home/bitcoin/.bitcoin/bitcoin.conf (not found, skipping)
+2024-12-03T23:14:59Z Command-line arg: blockfilterindex="1"
+2024-12-03T23:14:59Z Command-line arg: debug="1"
+2024-12-03T23:14:59Z Command-line arg: dnsseed="0"
+2024-12-03T23:14:59Z Command-line arg: fallbackfee="0.0002"
+2024-12-03T23:14:59Z Command-line arg: listen="1"
+2024-12-03T23:14:59Z Command-line arg: listenonion="0"
+2024-12-03T23:14:59Z Command-line arg: peerblockfilters="1"
+2024-12-03T23:14:59Z Command-line arg: regtest="1"
+2024-12-03T23:14:59Z Command-line arg: rest=""
+2024-12-03T23:14:59Z Command-line arg: rpcallowip="0.0.0.0/0"
+2024-12-03T23:14:59Z Command-line arg: rpcauth=****
+2024-12-03T23:14:59Z Command-line arg: rpcbind="0.0.0.0"
+2024-12-03T23:14:59Z Command-line arg: rpcport="18443"
+2024-12-03T23:14:59Z Command-line arg: server="1"
+2024-12-03T23:14:59Z Command-line arg: txindex="1"
+2024-12-03T23:14:59Z Command-line arg: upnp="0"
+2024-12-03T23:14:59Z Command-line arg: zmqpubhashblock="tcp://0.0.0.0:28336"
+2024-12-03T23:14:59Z Command-line arg: zmqpubrawblock="tcp://0.0.0.0:28334"
+2024-12-03T23:14:59Z Command-line arg: zmqpubrawtx="tcp://0.0.0.0:28335"
+2024-12-03T23:14:59Z Using at most 125 automatic connections (1048576 file descriptors available)
+2024-12-03T23:14:59Z Using 16 MiB out of 16 MiB requested for signature cache, able to store 524288 elements
+2024-12-03T23:14:59Z Using 16 MiB out of 16 MiB requested for script execution cache, able to store 524288 elements
+2024-12-03T23:14:59Z scheduler thread start
+2024-12-03T23:14:59Z [http] Allowing HTTP connections from: 127.0.0.0/8 ::1/128 0.0.0.0/0 
+2024-12-03T23:14:59Z Binding RPC on address 0.0.0.0 port 18443
+2024-12-03T23:14:59Z WARNING: the RPC server is not safe to expose to untrusted networks such as the public internet
+2024-12-03T23:14:59Z [http] Initialized HTTP server
+2024-12-03T23:14:59Z [http] creating work queue of depth 16
+2024-12-03T23:14:59Z [rpc] Starting RPC
+2024-12-03T23:14:59Z [rpc] Starting HTTP RPC server
+2024-12-03T23:14:59Z Using random cookie authentication.
+2024-12-03T23:14:59Z Generated RPC authentication cookie /home/bitcoin/.bitcoin/regtest/.cookie
+2024-12-03T23:14:59Z Using rpcauth authentication.
+2024-12-03T23:14:59Z [http] Registering HTTP handler for / (exactmatch 1)
+2024-12-03T23:14:59Z [http] Registering HTTP handler for /wallet/ (exactmatch 0)
+2024-12-03T23:14:59Z [http] Registering HTTP handler for /rest/tx/ (exactmatch 0)
+2024-12-03T23:14:59Z [http] Registering HTTP handler for /rest/block/notxdetails/ (exactmatch 0)
+2024-12-03T23:14:59Z [http] Registering HTTP handler for /rest/block/ (exactmatch 0)
+2024-12-03T23:14:59Z [http] Registering HTTP handler for /rest/blockfilter/ (exactmatch 0)
+2024-12-03T23:14:59Z [http] Registering HTTP handler for /rest/blockfilterheaders/ (exactmatch 0)
+2024-12-03T23:14:59Z [http] Registering HTTP handler for /rest/chaininfo (exactmatch 0)
+2024-12-03T23:14:59Z [http] Registering HTTP handler for /rest/mempool/ (exactmatch 0)
+2024-12-03T23:14:59Z [http] Registering HTTP handler for /rest/headers/ (exactmatch 0)
+2024-12-03T23:14:59Z [http] Registering HTTP handler for /rest/getutxos (exactmatch 0)
+2024-12-03T23:14:59Z [http] Registering HTTP handler for /rest/deploymentinfo/ (exactmatch 0)
+2024-12-03T23:14:59Z [http] Registering HTTP handler for /rest/deploymentinfo (exactmatch 0)
+2024-12-03T23:14:59Z [http] Registering HTTP handler for /rest/blockhashbyheight/ (exactmatch 0)
+2024-12-03T23:14:59Z Starting HTTP server with 4 worker threads
+2024-12-03T23:14:59Z [http] Entering http event loop
+2024-12-03T23:14:59Z Using wallet directory /home/bitcoin/.bitcoin/regtest/wallets
+2024-12-03T23:14:59Z init message: Verifying wallet(s)…
+2024-12-03T23:14:59Z Using /16 prefix for IP bucketing
+2024-12-03T23:14:59Z init message: Loading P2P addresses…
+2024-12-03T23:14:59Z Creating peers.dat because the file was not found ("/home/bitcoin/.bitcoin/regtest/peers.dat")
+2024-12-03T23:14:59Z init message: Loading banlist…
+2024-12-03T23:14:59Z Recreating the banlist database
+2024-12-03T23:14:59Z [net] Flushed 0 banned node addresses/subnets to disk  4ms
+2024-12-03T23:14:59Z [net] setting try another outbound peer=false
+2024-12-03T23:14:59Z SetNetworkActive: true
+2024-12-03T23:14:59Z /home/bitcoin/.bitcoin/regtest/fee_estimates.dat is not found. Continue anyway.
+2024-12-03T23:14:59Z [zmq] version 4.3.5
+2024-12-03T23:14:59Z [zmq] Initialize notification interface
+2024-12-03T23:14:59Z [zmq] Outbound message high water mark for pubhashblock at tcp://0.0.0.0:28336 is 1000
+2024-12-03T23:14:59Z [zmq] Notifier pubhashblock ready (address = tcp://0.0.0.0:28336)
+2024-12-03T23:14:59Z [zmq] Outbound message high water mark for pubrawblock at tcp://0.0.0.0:28334 is 1000
+2024-12-03T23:14:59Z [zmq] Notifier pubrawblock ready (address = tcp://0.0.0.0:28334)
+2024-12-03T23:14:59Z [zmq] Outbound message high water mark for pubrawtx at tcp://0.0.0.0:28335 is 1000
+2024-12-03T23:14:59Z [zmq] Notifier pubrawtx ready (address = tcp://0.0.0.0:28335)
+2024-12-03T23:14:59Z Script verification uses 11 additional threads
+2024-12-03T23:14:59Z Cache configuration:
+2024-12-03T23:14:59Z * Using 2.0 MiB for block index database
+2024-12-03T23:14:59Z * Using 56.0 MiB for transaction index database
+2024-12-03T23:14:59Z * Using 49.0 MiB for basic block filter index database
+2024-12-03T23:14:59Z * Using 8.0 MiB for chain state database
+2024-12-03T23:14:59Z * Using 335.0 MiB for in-memory UTXO set (plus up to 286.1 MiB of unused mempool space)
+2024-12-03T23:14:59Z init message: Loading block index…
+2024-12-03T23:14:59Z Validating signatures for all blocks.
+2024-12-03T23:14:59Z Setting nMinimumChainWork=0000000000000000000000000000000000000000000000000000000000000000
+2024-12-03T23:14:59Z [leveldb] LevelDB using max_open_files=1000 (default=1000)
+2024-12-03T23:14:59Z Opening LevelDB in /home/bitcoin/.bitcoin/regtest/blocks/index
+2024-12-03T23:14:59Z [http] Received a POST request for / from 172.22.0.3:50618
+2024-12-03T23:14:59Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:14:59Z [http] Received a POST request for / from 172.22.0.4:54474
+2024-12-03T23:14:59Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:14:59Z [leveldb] Delete type=3 #1
+2024-12-03T23:14:59Z Opened LevelDB successfully
+2024-12-03T23:14:59Z Using obfuscation key for /home/bitcoin/.bitcoin/regtest/blocks/index: 0000000000000000
+2024-12-03T23:14:59Z LoadBlockIndexDB: last block file = 0
+2024-12-03T23:14:59Z LoadBlockIndexDB: last block file info: CBlockFileInfo(blocks=0, size=0, heights=0...0, time=1970-01-01...1970-01-01)
+2024-12-03T23:14:59Z Checking all blk files are present...
+2024-12-03T23:14:59Z Initializing databases...
+2024-12-03T23:14:59Z [validation] Pre-allocating up to position 0x1000000 in blk00000.dat
+2024-12-03T23:14:59Z Initializing chainstate Chainstate [ibd] @ height -1 (null)
+2024-12-03T23:14:59Z [leveldb] LevelDB using max_open_files=1000 (default=1000)
+2024-12-03T23:14:59Z Opening LevelDB in /home/bitcoin/.bitcoin/regtest/chainstate
+2024-12-03T23:14:59Z [leveldb] Delete type=3 #1
+2024-12-03T23:14:59Z Opened LevelDB successfully
+2024-12-03T23:14:59Z [leveldb] WriteBatch memory usage: db=chainstate, before=0.0MiB, after=0.0MiB
+2024-12-03T23:14:59Z Wrote new obfuscate key for /home/bitcoin/.bitcoin/regtest/chainstate: 7e7eb4ae3bfdae18
+2024-12-03T23:14:59Z Using obfuscation key for /home/bitcoin/.bitcoin/regtest/chainstate: 7e7eb4ae3bfdae18
+2024-12-03T23:14:59Z [leveldb] LevelDB using max_open_files=1000 (default=1000)
+2024-12-03T23:14:59Z Opening LevelDB in /home/bitcoin/.bitcoin/regtest/chainstate
+2024-12-03T23:14:59Z [leveldb] Recovering log #3
+2024-12-03T23:14:59Z [leveldb] Level-0 table #5: started
+2024-12-03T23:14:59Z [leveldb] Level-0 table #5: 198 bytes OK
+2024-12-03T23:14:59Z [leveldb] Delete type=0 #3
+2024-12-03T23:14:59Z [leveldb] Delete type=3 #2
+2024-12-03T23:14:59Z Opened LevelDB successfully
+2024-12-03T23:14:59Z Using obfuscation key for /home/bitcoin/.bitcoin/regtest/chainstate: 7e7eb4ae3bfdae18
+2024-12-03T23:14:59Z [Chainstate [ibd] @ height -1 (null)] resized coinsdb cache to 8.0 MiB
+2024-12-03T23:14:59Z [Chainstate [ibd] @ height -1 (null)] resized coinstip cache to 335.0 MiB
+2024-12-03T23:14:59Z init message: Verifying blocks…
+2024-12-03T23:14:59Z  block index             137ms
+2024-12-03T23:14:59Z [leveldb] LevelDB using max_open_files=1000 (default=1000)
+2024-12-03T23:14:59Z Opening LevelDB in /home/bitcoin/.bitcoin/regtest/indexes/txindex
+2024-12-03T23:14:59Z [leveldb] Delete type=3 #1
+2024-12-03T23:14:59Z Opened LevelDB successfully
+2024-12-03T23:14:59Z Using obfuscation key for /home/bitcoin/.bitcoin/regtest/indexes/txindex: 0000000000000000
+2024-12-03T23:14:59Z [leveldb] LevelDB using max_open_files=1000 (default=1000)
+2024-12-03T23:14:59Z Opening LevelDB in /home/bitcoin/.bitcoin/regtest/indexes/blockfilter/basic/db
+2024-12-03T23:14:59Z [leveldb] Delete type=3 #1
+2024-12-03T23:14:59Z Opened LevelDB successfully
+2024-12-03T23:14:59Z Using obfuscation key for /home/bitcoin/.bitcoin/regtest/indexes/blockfilter/basic/db: 0000000000000000
+2024-12-03T23:14:59Z Setting NODE_NETWORK on non-prune mode
+2024-12-03T23:14:59Z initload thread start
+2024-12-03T23:14:59Z [bench]   - Load block from disk: 1.70ms
+2024-12-03T23:14:59Z [validation] BlockChecked: block hash=0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206 state=Valid
+2024-12-03T23:14:59Z [bench]   - Connect total: 0.85ms [0.00s (0.85ms/blk)]
+2024-12-03T23:14:59Z [bench]   - Flush: 0.29ms [0.00s (0.29ms/blk)]
+2024-12-03T23:14:59Z [bench]   - Writing chainstate: 0.27ms [0.00s (0.27ms/blk)]
+2024-12-03T23:14:59Z [validation] Enqueuing MempoolTransactionsRemovedForBlock: block height=0 txs removed=0
+2024-12-03T23:14:59Z UpdateTip: new best=0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206 height=0 version=0x00000001 log2_work=1.000000 tx=1 date='2011-02-02T23:16:42Z' progress=1.000000 cache=0.3MiB(0txo)
+2024-12-03T23:14:59Z [bench]   - Connect postprocess: 1.33ms [0.00s (1.33ms/blk)]
+2024-12-03T23:14:59Z [bench] - Connect block: 4.43ms [0.00s (4.43ms/blk)]
+2024-12-03T23:14:59Z [mempool] Checking mempool with 0 transactions and 0 inputs
+2024-12-03T23:14:59Z [validation] Enqueuing BlockConnected: block hash=0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206 block height=0
+2024-12-03T23:14:59Z [validation] Enqueuing UpdatedBlockTip: new block hash=0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206 fork block hash=null (in IBD=true)
+2024-12-03T23:14:59Z [validation] MempoolTransactionsRemovedForBlock: block height=0 txs removed=0
+2024-12-03T23:14:59Z basic block filter index thread start
+2024-12-03T23:14:59Z basic block filter index is enabled
+2024-12-03T23:14:59Z basic block filter index thread exit
+2024-12-03T23:14:59Z [validation] BlockConnected: block hash=0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206 block height=0
+2024-12-03T23:14:59Z [zmq] Publish rawtx 4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b to tcp://0.0.0.0:28335
+2024-12-03T23:14:59Z block tree size = 1
+2024-12-03T23:14:59Z nBestHeight = 0
+2024-12-03T23:14:59Z txindex thread start
+2024-12-03T23:14:59Z txindex is enabled at height 0
+2024-12-03T23:14:59Z txindex thread exit
+2024-12-03T23:14:59Z Bound to 127.0.0.1:18445
+2024-12-03T23:14:59Z Bound to [::]:18444
+2024-12-03T23:14:59Z Bound to 0.0.0.0:18444
+2024-12-03T23:14:59Z [validation] Pre-allocating up to position 0x100000 in fltr00000.dat
+2024-12-03T23:14:59Z Failed to open mempool file from disk. Continuing anyway.
+2024-12-03T23:14:59Z initload thread exit
+2024-12-03T23:14:59Z 0 block-relay-only anchors will be tried for connections.
+2024-12-03T23:14:59Z init message: Starting network threads…
+2024-12-03T23:14:59Z DNS seeding disabled
+2024-12-03T23:14:59Z net thread start
+2024-12-03T23:14:59Z msghand thread start
+2024-12-03T23:14:59Z addcon thread start
+2024-12-03T23:14:59Z opencon thread start
+2024-12-03T23:14:59Z init message: Done loading
+2024-12-03T23:14:59Z [leveldb] WriteBatch memory usage: db=db, before=0.0MiB, after=0.0MiB
+2024-12-03T23:14:59Z [validation] UpdatedBlockTip: new block hash=0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206 fork block hash=null (in IBD=true)
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.2:54962
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.2:54970
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.2:54972
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getinfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.2:54978
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getnetworkinfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.2:54994
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getnetworkinfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.2:55006
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.2:55016
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getinfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.2:55024
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getnetworkinfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.2:55040
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getdeploymentinfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.2:55050
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getnetworkinfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.2:55064
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getzmqnotifications user=polaruser
+2024-12-03T23:15:00Z Adding fixed seeds as -dnsseed=0 (or IPv4/IPv6 connections are disabled via -onlynet) and neither -addnode nor -seednode are provided
+2024-12-03T23:15:00Z Added 0 fixed seeds from reachable networks.
+2024-12-03T23:15:00Z [http] Received a POST request for / from 192.168.65.1:62832
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 192.168.65.1:32859
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=listwallets user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 192.168.65.1:63470
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=createwallet user=polaruser
+2024-12-03T23:15:00Z Using SQLite Version 3.38.5
+2024-12-03T23:15:00Z Using wallet /home/bitcoin/.bitcoin/regtest/wallets
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.4:41870
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.3:60622
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.3:60624
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.4:41874
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.3:60640
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getinfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.4:41880
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getinfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.4:41882
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.3:60646
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getnetworkinfo user=polaruser
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getnetworkinfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.4:41888
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.3:60658
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getnetworkinfo user=polaruser
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getnetworkinfo user=polaruser
+2024-12-03T23:15:00Z init message: Loading wallet…
+2024-12-03T23:15:00Z [default wallet] Wallet file version = 10500, last client version = 270000
+2024-12-03T23:15:00Z [default wallet] Legacy Wallet Keys: 0 plaintext, 0 encrypted, 0 w/ metadata, 0 total.
+2024-12-03T23:15:00Z [default wallet] Descriptors: 0, Descriptor Keys: 0 plaintext, 0 encrypted, 0 total.
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.3:60660
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.4:41894
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:00Z [default wallet] Setting minversion to 169900
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.4:41910
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getinfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.3:60670
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getinfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.4:41918
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.3:60678
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getnetworkinfo user=polaruser
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getnetworkinfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.4:41926
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getdeploymentinfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.3:60686
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getdeploymentinfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.3:60690
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.4:41938
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getnetworkinfo user=polaruser
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getnetworkinfo user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.4:41940
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getzmqnotifications user=polaruser
+2024-12-03T23:15:00Z [http] Received a POST request for / from 172.22.0.3:60698
+2024-12-03T23:15:00Z [rpc] ThreadRPCServer method=getzmqnotifications user=polaruser
+2024-12-03T23:15:00Z [default wallet] Setting spkMan to active: id = 478e3e4c3850f3b54924ff4fe6cf29a39c4ae6828b0eb923c009b509fe5c7a77, type = legacy, internal = false
+2024-12-03T23:15:00Z [default wallet] Setting spkMan to active: id = 645848cf9e64699e86d5c068847e0436f1e430a3b16566f8694e03a03a513f3b, type = p2sh-segwit, internal = false
+2024-12-03T23:15:01Z [default wallet] Setting spkMan to active: id = 6491cc0fe724c5062ac352c74b30ede4e47c516df4afd9146746fdf39be64736, type = bech32, internal = false
+2024-12-03T23:15:01Z [default wallet] Setting spkMan to active: id = 96d0b0eb4310d702f7667fc56aff235321b692e5f7b6a2edd7b0b2ff4a79da40, type = bech32m, internal = false
+2024-12-03T23:15:01Z [default wallet] Setting spkMan to active: id = 4b1e98238996ae47a830ed06af5d6d287f9e24291b77bc83a5099be3257bbd56, type = legacy, internal = true
+2024-12-03T23:15:01Z [default wallet] Setting spkMan to active: id = a0d75f44df3880dda9c7baaf40bceadbddba6a1183fa054962f8b80a376e6e05, type = p2sh-segwit, internal = true
+2024-12-03T23:15:01Z [default wallet] Setting spkMan to active: id = 1e5a24c2cf35119ebe569f944c21ae635d1b9f4535445b12b9ff4d2c072de14f, type = bech32, internal = true
+2024-12-03T23:15:01Z [default wallet] Setting spkMan to active: id = a1768dfb608541e84040f90de9ddd87c7dccc9671cef31c063ec30006b394c61, type = bech32m, internal = true
+2024-12-03T23:15:01Z [default wallet] Wallet completed loading in             911ms
+2024-12-03T23:15:01Z [default wallet] setKeyPool.size() = 8000
+2024-12-03T23:15:01Z [default wallet] mapWallet.size() = 0
+2024-12-03T23:15:01Z [default wallet] m_address_book.size() = 0
+2024-12-03T23:15:01Z [http] Received a POST request for / from 192.168.65.1:29585
+2024-12-03T23:15:01Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:01Z [http] Received a POST request for / from 192.168.65.1:59982
+2024-12-03T23:15:01Z [rpc] ThreadRPCServer method=getwalletinfo user=polaruser
+2024-12-03T23:15:03Z [http] Received a POST request for / from 192.168.65.1:48268
+2024-12-03T23:15:03Z [rpc] ThreadRPCServer method=getnewaddress user=polaruser
+2024-12-03T23:15:03Z [http] Received a POST request for / from 192.168.65.1:40522
+2024-12-03T23:15:03Z [rpc] ThreadRPCServer method=generatetoaddress user=polaruser
+2024-12-03T23:15:03Z CreateNewBlock(): block weight: 884 txs: 0 fees: 0 sigops 400
+2024-12-03T23:15:03Z [bench]     - Sanity checks: 0.00ms [0.00s (0.00ms/blk)]
+2024-12-03T23:15:03Z [bench]     - Fork checks: 0.53ms [0.00s (0.26ms/blk)]
+2024-12-03T23:15:03Z [bench]       - Connect 1 transactions: 0.69ms (0.686ms/tx, 0.000ms/txin) [0.00s (0.34ms/blk)]
+2024-12-03T23:15:03Z [bench]     - Verify 0 txins: 0.97ms (0.000ms/txin) [0.00s (0.48ms/blk)]
+2024-12-03T23:15:03Z [bench] CreateNewBlock() packages: 0.01ms (0 packages, 0 updated descendants), validity: 2.61ms (total 2.62ms)
+2024-12-03T23:15:03Z [validation] Saw new header hash=6e3057867cba111e25ddd05dbe9183cc62bab6f347814449299ab27680e970fe height=1
+2024-12-03T23:15:03Z [bench]   - Using cached block
+2024-12-03T23:15:03Z [bench]   - Load block from disk: 0.32ms
+2024-12-03T23:15:03Z [bench]     - Sanity checks: 0.00ms [0.00s (0.00ms/blk)]
+2024-12-03T23:15:03Z [bench]     - Fork checks: 0.50ms [0.00s (0.34ms/blk)]
+2024-12-03T23:15:03Z [bench]       - Connect 1 transactions: 0.36ms (0.356ms/tx, 0.000ms/txin) [0.00s (0.35ms/blk)]
+2024-12-03T23:15:03Z [bench]     - Verify 0 txins: 1.07ms (0.000ms/txin) [0.00s (0.68ms/blk)]
+2024-12-03T23:15:03Z [validation] Pre-allocating up to position 0x100000 in rev00000.dat
+2024-12-03T23:15:03Z [bench]     - Write undo data: 6.85ms [0.01s (2.28ms/blk)]
+2024-12-03T23:15:03Z [bench]     - Index writing: 0.34ms [0.00s (0.11ms/blk)]
+2024-12-03T23:15:03Z [validation] BlockChecked: block hash=6e3057867cba111e25ddd05dbe9183cc62bab6f347814449299ab27680e970fe state=Valid
+2024-12-03T23:15:03Z [bench]   - Connect total: 10.03ms [0.01s (3.63ms/blk)]
+2024-12-03T23:15:03Z [bench]   - Flush: 0.33ms [0.00s (0.21ms/blk)]
+2024-12-03T23:15:03Z [bench]   - Writing chainstate: 0.44ms [0.00s (0.24ms/blk)]
+2024-12-03T23:15:03Z [validation] Enqueuing MempoolTransactionsRemovedForBlock: block height=1 txs removed=0
+2024-12-03T23:15:03Z Leaving InitialBlockDownload (latching to false)
+2024-12-03T23:15:03Z UpdateTip: new best=6e3057867cba111e25ddd05dbe9183cc62bab6f347814449299ab27680e970fe height=1 version=0x20000000 log2_work=2.000000 tx=2 date='2024-12-03T23:15:03Z' progress=1.000000 cache=0.3MiB(1txo)
+2024-12-03T23:15:03Z [bench]   - Connect postprocess: 2.08ms [0.00s (1.14ms/blk)]
+2024-12-03T23:15:03Z [bench] - Connect block: 13.21ms [0.02s (5.88ms/blk)]
+2024-12-03T23:15:03Z [mempool] Checking mempool with 0 transactions and 0 inputs
+2024-12-03T23:15:03Z [validation] Enqueuing BlockConnected: block hash=6e3057867cba111e25ddd05dbe9183cc62bab6f347814449299ab27680e970fe block height=1
+2024-12-03T23:15:03Z [validation] Enqueuing UpdatedBlockTip: new block hash=6e3057867cba111e25ddd05dbe9183cc62bab6f347814449299ab27680e970fe fork block hash=0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206 (in IBD=false)
+2024-12-03T23:15:03Z [validation] MempoolTransactionsRemovedForBlock: block height=1 txs removed=0
+2024-12-03T23:15:03Z [estimatefee] Blockpolicy estimates updated by 0 of 0 block txs, since last block 0 of 0 tracked, mempool map size 0, max target 0 from current
+2024-12-03T23:15:03Z [validation] BlockConnected: block hash=6e3057867cba111e25ddd05dbe9183cc62bab6f347814449299ab27680e970fe block height=1
+2024-12-03T23:15:03Z [zmq] Publish rawtx a260540a512a21fa70743d736f2278cbc7973c1b2fa2a181656701df1b4284ad to tcp://0.0.0.0:28335
+2024-12-03T23:15:03Z [leveldb] WriteBatch memory usage: db=txindex, before=0.0MiB, after=0.0MiB
+2024-12-03T23:15:03Z [leveldb] WriteBatch memory usage: db=db, before=0.0MiB, after=0.0MiB
+2024-12-03T23:15:03Z [default wallet] AddToWallet a260540a512a21fa70743d736f2278cbc7973c1b2fa2a181656701df1b4284ad  new Confirmed (block=6e3057867cba111e25ddd05dbe9183cc62bab6f347814449299ab27680e970fe, height=1, index=0)
+2024-12-03T23:15:03Z [validation] UpdatedBlockTip: new block hash=6e3057867cba111e25ddd05dbe9183cc62bab6f347814449299ab27680e970fe fork block hash=0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206 (in IBD=false)
+2024-12-03T23:15:03Z [zmq] Publish hashblock 6e3057867cba111e25ddd05dbe9183cc62bab6f347814449299ab27680e970fe to tcp://0.0.0.0:28336
+2024-12-03T23:15:03Z [zmq] Publish rawblock 6e3057867cba111e25ddd05dbe9183cc62bab6f347814449299ab27680e970fe to tcp://0.0.0.0:28334
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55076
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55088
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55100
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55114
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55130
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55142
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55150
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55152
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55158
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55170
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55184
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55190
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55192
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55206
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55222
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55236
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55248
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55252
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblock user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55258
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55264
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55268
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55274
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55286
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55288
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55294
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55300
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55302
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55318
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55334
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55340
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55354
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55356
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55372
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55378
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55390
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55404
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55416
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55420
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55434
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55448
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55458
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55468
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55470
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55480
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55482
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55488
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55494
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55496
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55508
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55520
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55522
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:04Z [http] Received a POST request for / from 172.22.0.2:55528
+2024-12-03T23:15:04Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60710
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60720
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60730
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60738
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60748
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60764
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60778
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60790
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60806
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:41946
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60808
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:41954
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:41958
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60822
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:41974
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60826
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:41984
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:41990
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60842
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60844
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42004
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60848
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42012
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60856
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60866
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42020
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60870
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblock user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42022
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60880
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60884
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42032
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60888
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42042
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60904
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60914
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42050
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60930
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42064
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60942
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42080
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60948
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42082
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60950
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42092
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42108
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblock user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42114
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60962
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42130
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60978
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42146
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.3:60994
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockhash user=polaruser
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42162
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42176
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42184
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42198
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42206
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42222
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42236
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42244
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42252
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockchaininfo user=polaruser
+2024-12-03T23:15:05Z [http] Received a POST request for / from 172.22.0.4:42268
+2024-12-03T23:15:05Z [rpc] ThreadRPCServer method=getblockheader user=polaruser
+2024-12-03T23:15:05Z [http] Interrupting HTTP server
+2024-12-03T23:15:05Z [rpc] Interrupting HTTP RPC server
+2024-12-03T23:15:05Z [rpc] Interrupting RPC
+2024-12-03T23:15:05Z Shutdown: In progress...
+2024-12-03T23:15:05Z [rpc] Stopping HTTP RPC server
+2024-12-03T23:15:05Z [http] Unregistering HTTP handler for / (exactmatch 1)
+2024-12-03T23:15:05Z [http] Unregistering HTTP handler for /wallet/ (exactmatch 0)
+2024-12-03T23:15:05Z [http] Unregistering HTTP handler for /rest/tx/ (exactmatch 0)
+2024-12-03T23:15:05Z [http] Unregistering HTTP handler for /rest/block/notxdetails/ (exactmatch 0)
+2024-12-03T23:15:05Z [http] Unregistering HTTP handler for /rest/block/ (exactmatch 0)
+2024-12-03T23:15:05Z addcon thread exit
+2024-12-03T23:15:05Z [http] Unregistering HTTP handler for /rest/blockfilter/ (exactmatch 0)
+2024-12-03T23:15:05Z [http] Unregistering HTTP handler for /rest/blockfilterheaders/ (exactmatch 0)
+2024-12-03T23:15:05Z [http] Unregistering HTTP handler for /rest/chaininfo (exactmatch 0)
+2024-12-03T23:15:05Z [http] Unregistering HTTP handler for /rest/mempool/ (exactmatch 0)
+2024-12-03T23:15:05Z [http] Unregistering HTTP handler for /rest/headers/ (exactmatch 0)
+2024-12-03T23:15:05Z [http] Unregistering HTTP handler for /rest/getutxos (exactmatch 0)
+2024-12-03T23:15:05Z [http] Unregistering HTTP handler for /rest/deploymentinfo/ (exactmatch 0)
+2024-12-03T23:15:05Z msghand thread exit
+2024-12-03T23:15:05Z [http] Unregistering HTTP handler for /rest/deploymentinfo (exactmatch 0)
+2024-12-03T23:15:05Z [http] Unregistering HTTP handler for /rest/blockhashbyheight/ (exactmatch 0)
+2024-12-03T23:15:05Z [rpc] Stopping RPC
+2024-12-03T23:15:05Z opencon thread exit
+2024-12-03T23:15:05Z [rpc] RPC stopped.
+2024-12-03T23:15:05Z [http] Stopping HTTP server
+2024-12-03T23:15:05Z [http] Waiting for HTTP worker threads to exit
+2024-12-03T23:15:05Z [http] Waiting for HTTP event thread to exit
+2024-12-03T23:15:05Z [http] Exited http event loop
+2024-12-03T23:15:05Z [http] Stopped HTTP server
+2024-12-03T23:15:05Z net thread exit
+2024-12-03T23:15:05Z [net] Flushed 0 addresses to peers.dat  3ms
+2024-12-03T23:15:05Z DumpAnchors: Flush 0 outbound block-relay-only peer addresses to anchors.dat started
+2024-12-03T23:15:05Z DumpAnchors: Flush 0 outbound block-relay-only peer addresses to anchors.dat completed (0.00s)
+2024-12-03T23:15:05Z scheduler thread exit
+2024-12-03T23:15:05Z Writing 0 unbroadcast transactions to disk.
+2024-12-03T23:15:05Z Dumped mempool: 0.000s to copy, 0.008s to dump
+2024-12-03T23:15:05Z [estimatefee] Recorded 0 unconfirmed txs from mempool in 0.000s
+2024-12-03T23:15:05Z Flushed fee estimates to fee_estimates.dat.
+2024-12-03T23:15:05Z [bench] FlushStateToDisk: write block and undo data to disk started
+2024-12-03T23:15:05Z [bench] FlushStateToDisk: write block and undo data to disk completed (7.76ms)
+2024-12-03T23:15:05Z [bench] FlushStateToDisk: write block index to disk started
+2024-12-03T23:15:05Z [leveldb] WriteBatch memory usage: db=index, before=0.0MiB, after=0.0MiB
+2024-12-03T23:15:05Z [bench] FlushStateToDisk: write block index to disk completed (3.60ms)
+2024-12-03T23:15:05Z [bench] FlushStateToDisk: write coins cache to disk (1 coins, 262kB) started
+2024-12-03T23:15:05Z [coindb] Writing final batch of 0.00 MiB
+2024-12-03T23:15:05Z [leveldb] WriteBatch memory usage: db=chainstate, before=0.0MiB, after=0.0MiB
+2024-12-03T23:15:05Z [coindb] Committed 1 changed transaction outputs (out of 1) to coin database...
+2024-12-03T23:15:05Z [bench] FlushStateToDisk: write coins cache to disk (1 coins, 262kB) completed (1.67ms)
+2024-12-03T23:15:05Z [validation] Enqueuing ChainStateFlushed: block hash=6e3057867cba111e25ddd05dbe9183cc62bab6f347814449299ab27680e970fe
+2024-12-03T23:15:05Z [validation] ChainStateFlushed: block hash=6e3057867cba111e25ddd05dbe9183cc62bab6f347814449299ab27680e970fe
+2024-12-03T23:15:05Z [leveldb] WriteBatch memory usage: db=txindex, before=0.0MiB, after=0.0MiB
+2024-12-03T23:15:05Z [leveldb] WriteBatch memory usage: db=db, before=0.0MiB, after=0.0MiB
+2024-12-03T23:15:05Z [bench] FlushStateToDisk: write block and undo data to disk started
+2024-12-03T23:15:05Z [bench] FlushStateToDisk: write block and undo data to disk completed (2.88ms)
+2024-12-03T23:15:05Z [bench] FlushStateToDisk: write block index to disk started
+2024-12-03T23:15:05Z [leveldb] WriteBatch memory usage: db=index, before=0.0MiB, after=0.0MiB
+2024-12-03T23:15:05Z [bench] FlushStateToDisk: write block index to disk completed (1.10ms)
+2024-12-03T23:15:05Z [bench] FlushStateToDisk: write coins cache to disk (0 coins, 262kB) started
+2024-12-03T23:15:05Z [coindb] Writing final batch of 0.00 MiB
+2024-12-03T23:15:05Z [leveldb] WriteBatch memory usage: db=chainstate, before=0.0MiB, after=0.0MiB
+2024-12-03T23:15:05Z [coindb] Committed 0 changed transaction outputs (out of 0) to coin database...
+2024-12-03T23:15:05Z [bench] FlushStateToDisk: write coins cache to disk (0 coins, 262kB) completed (1.72ms)
+2024-12-03T23:15:05Z [validation] Enqueuing ChainStateFlushed: block hash=6e3057867cba111e25ddd05dbe9183cc62bab6f347814449299ab27680e970fe
+2024-12-03T23:15:05Z [zmq] Shutdown notification interface
+2024-12-03T23:15:05Z [zmq] Shutdown notifier pubhashblock at tcp://0.0.0.0:28336
+2024-12-03T23:15:05Z [zmq] Close socket at address tcp://0.0.0.0:28336
+2024-12-03T23:15:05Z [zmq] Shutdown notifier pubrawblock at tcp://0.0.0.0:28334
+2024-12-03T23:15:05Z [zmq] Close socket at address tcp://0.0.0.0:28334
+2024-12-03T23:15:05Z [zmq] Shutdown notifier pubrawtx at tcp://0.0.0.0:28335
+2024-12-03T23:15:05Z [zmq] Close socket at address tcp://0.0.0.0:28335
+2024-12-03T23:15:05Z [default wallet] Releasing wallet
+2024-12-03T23:15:05Z Shutdown: done
