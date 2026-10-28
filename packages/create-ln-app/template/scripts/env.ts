@@ -1,6 +1,7 @@
 // Write the connection values for the local regtest network to the root .env file.
 // Start and fund the network first: docker compose -f network/docker-compose.yml up -d --wait && npm run bootstrap
 // The values stay valid until you delete the node data in network/data/.
+// The script owns the LND_ and BITCOIND_ keys. It keeps all other lines, for example API_PORT.
 import { execFile } from 'node:child_process';
 import { constants } from 'node:fs';
 import { access, readFile, writeFile } from 'node:fs/promises';
@@ -17,6 +18,8 @@ const LND_DIR = '/home/lnd/.lnd';
 const LND_REST_PORT = 8080;
 const TLS_CERT = 'tls.cert';
 const ADMIN_MACAROON = 'data/chain/bitcoin/regtest/admin.macaroon';
+const HEADER = '# Written by `npm run env`. The next run replaces the LND_ and BITCOIND_ values and keeps the other lines.';
+const OWNED_LINE = /^(# Written by `npm run env`|LND_|BITCOIND_)/;
 const BITCOIND_RPC_PORT = 18443;
 // The -rpcauth value in the compose file is the hash of this password.
 const BITCOIND_RPC_USER = 'polaruser';
@@ -81,11 +84,23 @@ async function nodeEnv(config: ComposeConfig, node: string): Promise<string[]> {
   ];
 }
 
+// The lines of the old .env file that this script does not write.
+async function keptLines(): Promise<string[]> {
+  let text: string;
+  try {
+    text = await readFile(ENV_FILE, 'utf8');
+  } catch {
+    return [];
+  }
+  return text.split('\n').filter((line) => line.trim() !== '' && !OWNED_LINE.test(line));
+}
+
 async function main(): Promise<void> {
   const config = await composeConfig();
   const nodes = await Promise.all(NODES.map((node) => nodeEnv(config, node)));
   const lines = [
-    '# Written by `npm run env`. Do not edit. The next run replaces this file.',
+    HEADER,
+    ...(await keptLines()),
     ...nodes.flat(),
     `BITCOIND_RPC_URL=http://127.0.0.1:${hostPort(config, 'bitcoind', BITCOIND_RPC_PORT)}`,
     `BITCOIND_RPC_USER=${BITCOIND_RPC_USER}`,
