@@ -173,10 +173,11 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
   - Read: `.github/workflows/ci.yml`, the template `frontend/src/components/Page.tsx`.
   - Exit: the E2E test passes locally. Owner: the E2E job passes on the PR.
   - Done: `e2e/flow.spec.ts` selects alice, connects bob, opens a channel, mines 6 blocks, waits until the channel is active, requests an invoice, and pays it. The test checks the `settled` status and that the page has no exception. Playwright starts the API server and Vite. `LAPP_DIR` selects the project folder (default: the template). If the network does not run, the test stops in less than 1 s with the API error. The CI job `e2e` packs the CLI, makes a project in `$RUNNER_TEMP`, runs `npm run network`, and runs the test. It downloads the Chromium headless shell (about 130 MB). Local runs: on clean data 1 channel and 1 payment, a second run on the same network also passes, and the CI steps pass with `CI=1`.
-- [ ] **C5.2 Docs.** Write the user docs.
+- [x] **C5.2 Docs.** Write the user docs.
   - Do: rewrite the README quickstart for `npx create-ln-app`. Add `docs/architecture.md` (browser, API server, nodes) and `docs/troubleshooting.md` (ports, Docker memory, Apple Silicon, `npm run reset`).
   - Read: `README.md`, the template `server/API.md`.
   - Exit: owner: a new user follows the README to a paid invoice in less than 5 minutes.
+  - Done: the README quick start is `npx create-ln-app my-lapp`, `npm run dev`, and the 6 steps on the page to a settled invoice. `docs/architecture.md` shows the browser, the Vite proxy, the API server, and the nodes. `docs/troubleshooting.md` has the fixes for Docker, the ports, the app errors, Apple Silicon, and `npm run reset`. Each error text in it comes from a local run. `npm run env` now keeps the `.env` lines that it does not own (all lines except `LND_` and `BITCOIND_`), so `API_PORT` in `.env` stays. The template README and the package README link to the new pages. `CONTRIBUTING.md` has the `npm run dev` step for a clone.
 - [ ] **C5.3 Landing page and release.** Prepare `v1.0.0`.
   - Do: select the landing page for `create-ln-app.dev`. GitHub Pages serves the repo root now, so `README.md` is the landing page. Remove the old to-do page in `docs/index.html`. Add `CHANGELOG.md`. Set version `1.0.0`.
   - Read: `docs/index.html`, the CLI `package.json`.
