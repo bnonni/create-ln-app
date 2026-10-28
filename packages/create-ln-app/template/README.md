@@ -32,7 +32,7 @@ The `dev` command starts 1 bitcoind node and 3 LND nodes, funds the LND nodes, a
 | Command | Result |
 |---|---|
 | `npm run dev` | Starts the network, the API server, and the example app. Ctrl+C stops the server and the app. |
-| `npm run server` | Starts only the API server. It reads `.env` one time at start, so restart it after `npm run network`. Set `API_PORT` to change the port (default 3001). |
+| `npm run server` | Starts only the API server. It reads `.env` one time at start, so restart it after `npm run network`. Set `API_PORT` in `.env` to change the port (default 3001). |
 | `npm run network` | Starts and funds the network, then writes `.env`. It does not start the app. |
 | `npm run down` | Stops the network. The node data stays in `network/data/`. |
 | `npm run doctor` | Checks Docker, Docker Compose, and the ports. Run it when the network is down. It shows a fix for each failed check. |
@@ -51,6 +51,11 @@ The `dev` command starts 1 bitcoind node and 3 LND nodes, funds the LND nodes, a
 ## Make your own Lapp
 
 The example app shows the steps of a Lightning payment: connect to a peer, open a channel, mine blocks, request an invoice, and pay it. The steps are in `frontend/src/components/Page.tsx`. Each step has a comment that starts with "Your feature". The comment gives an idea for a change.
+
+## Help
+
+- [Troubleshooting](https://github.com/bnonni/create-ln-app/blob/master/docs/troubleshooting.md): fixes for Docker, the ports, and the errors in the app.
+- [Architecture](https://github.com/bnonni/create-ln-app/blob/master/docs/architecture.md): how the app, the API server, and the nodes connect.
 
 ## Network reference
 

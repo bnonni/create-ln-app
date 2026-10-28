@@ -11,6 +11,10 @@
    ```sh
    npm run install:all
    ```
+4. Start the network, the API server, and the example app of the template:
+   ```sh
+   npm run dev
+   ```
 
 ## Folders
 

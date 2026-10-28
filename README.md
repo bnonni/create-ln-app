@@ -2,10 +2,11 @@
 
 > **Status: pre-1.0.** See [ROADMAP.md](ROADMAP.md) for the plan to 1.0.
 
-`create-ln-app` gives you two things:
+`create-ln-app` makes a Lightning app (Lapp) project with one command. The project has three parts:
 
 1. A local Bitcoin Lightning Network for development: Bitcoin Core and 3 LND nodes on regtest.
-2. An example Lightning app (Lapp) that connects to that network.
+2. An API server that connects to the nodes.
+3. An example app that uses the API server.
 
 You change the example app into your own Lapp. You do not configure nodes, macaroons, or TLS by hand.
 
@@ -22,36 +23,44 @@ A local Lightning setup takes time. You must start nodes, fund wallets, and find
 - [Node.js](https://nodejs.org/) 24 (LTS) and npm.
 - [Docker](https://docs.docker.com/engine/install/) with Docker Compose v2 (the `docker compose` command).
 
-On macOS, start Docker Desktop before you continue.
+On macOS and Windows, start Docker Desktop before you continue.
 
 ## Quick start
 
-1. Clone the repo:
+1. Make a project:
    ```sh
-   git clone https://github.com/bnonni/create-ln-app.git my-lapp && cd my-lapp
+   npx create-ln-app my-lapp
    ```
-2. Install the dependencies:
+2. Start the network, the API server, and the example app:
    ```sh
-   npm run install:all
-   ```
-3. Start the network and the example app:
-   ```sh
+   cd my-lapp
    npm run dev
    ```
+3. Open <http://localhost:5173>.
+4. Make a payment. Do the steps on the page in this sequence:
+   1. "Who are you?": select `alice`.
+   2. "1. Connect to a peer": select `bob`, then click "Connect".
+   3. "2. Open a channel": click "Open channel".
+   4. "3. Mine 6 blocks": click "Mine blocks". Then click "Refresh" until the channel status is `active`.
+   5. "4. Request an invoice": click "Request invoice".
+   6. "5. Pay the invoice": click "Pay invoice". The page shows `Invoice status: settled`.
 
-The `dev` command starts 1 bitcoind node and 3 LND nodes, funds the LND nodes, and writes the node values to `.env`. Then it starts the API server at <http://localhost:3001/api> and the example app at <http://localhost:5173>. The first start pulls the Docker images, so it takes more time.
+The `create-ln-app` command copies the project to `my-lapp`, runs `git init`, and installs the npm packages. Then it runs `npm run doctor`, which checks Docker, Docker Compose, and the ports.
 
-The app is in [`packages/create-ln-app/template/`](packages/create-ln-app/template/). Its [README](packages/create-ln-app/template/README.md) has all the commands and the network reference. Run those commands in that folder.
+The `dev` command starts 1 bitcoind node and 3 LND nodes, funds the LND nodes, and writes the node values to `.env`. Then it starts the API server at <http://localhost:3001/api> and the example app at <http://localhost:5173>. The first start downloads the Docker images (about 510 MB), so it takes more time.
+
+If a step fails, see [Troubleshooting](docs/troubleshooting.md).
+
+## Next steps
+
+- Make your own Lapp: each step in `frontend/src/components/Page.tsx` has a comment that starts with "Your feature".
+- Read the project README for all the commands and the network reference: [template README](packages/create-ln-app/template/README.md).
+- Read how the parts connect: [Architecture](docs/architecture.md).
+- Read the API reference: [`server/API.md`](packages/create-ln-app/template/server/API.md).
 
 ## Development
 
-```sh
-npm run lint        # oxlint, zero warnings allowed
-npm run typecheck   # TypeScript, no emit
-npm run build       # Vite production build of the example app
-```
-
-CI runs the three commands on each push to `master` and on each pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for the CLI tests and the publish steps.
+To change create-ln-app itself, see [CONTRIBUTING.md](CONTRIBUTING.md). It has the set-up steps, the checks, the tests, and the publish steps.
 
 ## License
 

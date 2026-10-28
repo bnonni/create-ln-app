@@ -42,6 +42,8 @@ The README in the new project has all the commands and the network reference.
 
 - Site: <https://create-ln-app.dev>
 - Source: <https://github.com/bnonni/create-ln-app>
+- [Troubleshooting](https://github.com/bnonni/create-ln-app/blob/master/docs/troubleshooting.md)
+- [Architecture](https://github.com/bnonni/create-ln-app/blob/master/docs/architecture.md)
 
 ## License
 
