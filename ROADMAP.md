@@ -218,7 +218,7 @@ The owner confirmed decisions 6 to 8 (2026-10-28). The owner can change decision
 
 ### M6: Network size (branch `m6-network-size`)
 
-- [ ] **C6.1 Node list and compose generator.** Add `network/nodes.json`, `scripts/compose.ts`, and `npm run compose`.
+- [x] **C6.1 Node list and compose generator.** Add `network/nodes.json`, `scripts/compose.ts`, and `npm run compose`.
   - Do: `nodes.json` lists alice, bob, and carol, each with `"impl": "lnd"`. `compose.ts` writes `network/docker-compose.yml` from the list. Node `i` (from 0) gets REST port `8081+i`, gRPC port `10001+i`, and P2P port `9735+i`. Set the compose `name` from the package name (decision 8). Write a header line in the file: "Generated from nodes.json. Do not edit." `npm run network` runs `compose` first. Use only Node built-in modules, so that the CLI can run the script before install. Keep the generated file in git.
   - Read: `network/docker-compose.yml`, the template `package.json`.
   - Exit: `docker compose config` of the new file and of the `v1.0.0` file show the same services, ports, and volumes. Only `name` changes. `npm run network` gives 3 funded nodes. Before the test, run `npm run down` with the old file, because the new project name does not stop the old containers.
