@@ -2,7 +2,7 @@
 
 Status: accepted, 2026-10-27. Audit base: commit `d4ce9d7`.
 
-This repo is the main `create-ln-app` project. It started as a fork of [ATLBitLab/create-ln-app](https://github.com/ATLBitLab/create-ln-app) (formerly `terminus-btc/create-ln-app`). The original repo is old and does not get updates.
+This repo is the main `create-ln-app` project.
 
 ## Goal
 
@@ -48,7 +48,7 @@ Decisions 4 and 5 have owner confirmation (2026-10-27). The owner can change dec
 2. **Add a thin API server (Hono on Node 24).** The browser talks only to this server. The server talks to LND and bitcoind. This keeps macaroons out of the browser, removes the TLS and CORS problems, and gives access to bitcoind RPC to mine blocks.
 3. **Use Vite, React, TypeScript, and plain CSS.** Replace Create React App. Remove MUI and styled-components. Ship one template (TypeScript) in 1.0.
 4. **Own the network config. Use LND only in 1.0.** Remove the Polar export dependency. Latest tags on 2026-10-27: `polarlightning/lnd:0.20.0-beta`, `polarlightning/bitcoind:30.0`, `lightninglabs/lnd:v0.21.5-beta`.
-5. **This fork is the main project.** Detach it from the ATLBitLab fork network. Use `bnonni/create-ln-app` in all URLs. Publish to npm from the owner account. Keep the original MIT copyright line.
+5. **This fork is the main project.** Detach it from the fork network. Use `bnonni/create-ln-app` in all URLs. Publish to npm from the owner account. The MIT copyright line names `bnonni` (decision 2026-10-28).
 
 ## Audit (commit `d4ce9d7`)
 
@@ -79,7 +79,7 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
 
 - [x] Code: remove `frontend/.env` and unused files, rewrite the README, add `lint`, `typecheck`, and CI. Branch `chore/m0-clean-base`.
 - [ ] Owner: detach the fork: **Settings > General > Danger Zone > Leave fork network**. The fork has 0 child forks, 0 issues, and 0 stars, so it loses no data. This change is permanent. Reference: [Detaching a fork](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/detaching-a-fork).
-- [ ] Owner: open a PR for `chore/m0-clean-base` and make sure that CI is green. Detach first. Before the detach, `gh pr create` targets ATLBitLab, so use `gh pr create -R bnonni/create-ln-app --base master`.
+- [ ] Owner: open a PR for `chore/m0-clean-base` and make sure that CI is green. Detach first. Before the detach, `gh pr create` targets the parent repo, so use `gh pr create -R bnonni/create-ln-app --base master`.
 
 ### M1: Regtest network (branch `m1-network`)
 
@@ -145,22 +145,26 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
 
 ### M4: CLI (branch `m4-cli`)
 
-- [ ] **C4.1 Workspace layout.** Move the app into `packages/create-ln-app/template/`.
+- [x] **C4.1 Workspace layout.** Move the app into `packages/create-ln-app/template/`.
   - Do: move `network/`, `scripts/`, `server/`, `frontend/`, `.env.example`, and a template README. Rename the template `.gitignore` to `gitignore`, because npm removes `.gitignore` files on publish. Make the root an npm workspace. Update the CI paths.
+  - Done: the template is a standalone npm project with its own lockfiles. It is not a workspace member, so a new project gets the same files. The root workspace has only the CLI package. The root `install:all`, `dev`, `lint`, `typecheck`, and `build` scripts run the template scripts. The template `gitignore` also has the `frontend/.gitignore` rules, so the CLI renames only one file.
   - Read: root `package.json`, `.github/workflows/ci.yml`.
   - Exit: the CI steps pass locally. `npm run dev` in the template folder still works.
-- [ ] **C4.2 CLI command.** Add `packages/create-ln-app/src/cli.ts`. Compile it to JavaScript with `tsc` in a `prepack` script.
-  - Do: check Node 24 or later first. Copy the template, rename `gitignore` to `.gitignore`, set the package name, run `npm install` and `git init`, and show the next steps. Add `--skip-install`.
+- [x] **C4.2 CLI command.** Add `packages/create-ln-app/src/cli.ts`. Compile it to JavaScript with `tsc` in a `prepack` script.
+  - Do: check Node 24 or later first. Copy the template, rename `gitignore` to `.gitignore`, set the package name, run `npm install` and `git init`, and show the next steps. Add `--skip-install`. Keep `template/.env`, `template/network/data/`, and `template/frontend/dist/` out of the package. Measured on 2026-10-28: `npm pack` includes them.
+  - Done: the package has the `bin` and `files` fields. The `files` field also excludes the template `node_modules` folders, because an explicit `files` entry includes them. The CLI makes the package name from the folder name and sets it in `package.json` and `package-lock.json`. It runs `npm run install:all`, because the template has 2 lockfiles. It does not run `git init` if the project is in a git repository. The root `typecheck` and `build` scripts also check and build the CLI.
   - Read: `packages/create-ln-app/package.json`.
-  - Exit: `npm pack`, then `npx ./create-ln-app-<version>.tgz /tmp/x` makes a project where `npm run lint` and `npm run typecheck` pass.
-- [ ] **C4.3 Preflight check.** Add `scripts/doctor.ts` and `npm run doctor` to the template. The CLI runs it in the new project after install.
+  - Exit: `npm pack`, then `npx ./create-ln-app-<version>.tgz /tmp/x` makes a project where `npm run lint` and `npm run typecheck` pass. The tarball has no `.env` file and no node data.
+- [x] **C4.3 Preflight check.** Add `scripts/doctor.ts` and `npm run doctor` to the template. The CLI runs it in the new project after install.
   - Do: check that the Docker daemon runs, that `docker compose version` works, and that ports 8081-8083, 10001-10003, 9735-9737, and 18443 are free. Show one fix for each failed check.
+  - Done: the script gets the host ports from `docker compose config`, so it also checks 19444, 28334, and 29335. It also checks the API server port (`API_PORT`, default 3001). The script uses only Node built-in modules, so the CLI runs it with `--skip-install` too. A failed check does not stop the CLI. The CLI then adds `npm run doctor` to the next steps.
   - Read: `packages/create-ln-app/src/cli.ts`, the template `package.json`.
   - Exit: with Docker stopped, `npm run doctor` fails and shows the fix. With Docker on, it passes.
-- [ ] **C4.4 Prerelease.** Set version `0.9.0` and the `bin`, `files`, and `engines` fields.
+- [x] **C4.4 Prerelease.** Set version `0.9.0`. Check the `bin`, `files`, and `engines` fields (C4.2 added them).
   - Do: run `npm publish --dry-run`. Write the publish steps in `CONTRIBUTING.md`.
   - Read: `packages/create-ln-app/package.json`.
   - Exit: the dry run lists only the CLI build and the template. Owner: run `npm publish --tag next`, then test `npx create-ln-app@next my-lapp && cd my-lapp && npm run dev` on clean macOS and Linux machines.
+  - Done: version `0.9.0`. The `name` is free on npm. The dry run lists 40 files: `dist/cli.js`, `package.json`, a package `README.md` (the npm page), a `LICENSE` copy, and the 36 tracked template files. `CONTRIBUTING.md` has the checks, the CLI tests, and the publish steps. A packed tarball needs `npx --package <tgz> create-ln-app`, because npx runs an absolute `.tgz` path as a file.
 
 ### M5: Release 1.0 (branch `m5-release`)
 

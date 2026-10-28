@@ -20,12 +20,14 @@ jobs:
           cache: npm
           cache-dependency-path: |
             package-lock.json
-            frontend/package-lock.json
+            packages/create-ln-app/template/package-lock.json
+            packages/create-ln-app/template/frontend/package-lock.json
 
       - name: Install
         run: |
           npm ci
-          npm ci --prefix frontend
+          npm ci --prefix packages/create-ln-app/template
+          npm ci --prefix packages/create-ln-app/template/frontend
 
       - name: Lint
         run: npm run lint
