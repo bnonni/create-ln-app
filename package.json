@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "install:all": "npm install && npm --prefix frontend install",
-    "dev": "npm run network && npm --prefix frontend start",
+    "dev": "npm run network && concurrently -k -n server,frontend \"npm run server\" \"npm --prefix frontend start\"",
+    "server": "node server/index.ts",
     "network": "docker compose -f network/docker-compose.yml up -d --wait && npm run bootstrap && npm run env",
     "down": "docker compose -f network/docker-compose.yml down",
     "reset": "node scripts/reset.ts",
@@ -16,6 +17,12 @@
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
+    "concurrently": "^10.0.6",
     "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.5",
+    "hono": "^4.13.14",
+    "undici": "^8.12.3"
   }
 }

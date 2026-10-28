@@ -104,7 +104,7 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
 
 ### M2: API server (branch `m2-api`)
 
-- [ ] **C2.1 Server and LND client.** Add `server/` (Hono on `@hono/node-server`) and `npm run server`.
+- [x] **C2.1 Server and LND client.** Add `server/` (Hono on `@hono/node-server`) and `npm run server`.
   - Do: add `server/lnd.ts`, a typed LND REST client that trusts each node TLS cert (`undici` `Agent` with `ca`). Add `GET /api/health` and `GET /api/nodes` (name, pubkey, alias, balance, channel count). Use `API_PORT` (default 3001). Make `npm run dev` start the server and the frontend in parallel.
   - Read: `.env.example`, `package.json`.
   - Exit: `curl localhost:3001/api/nodes` returns 3 nodes with pubkeys and balances more than 0.
