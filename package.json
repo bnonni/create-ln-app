@@ -2,19 +2,20 @@
   "name": "lapp-template",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "start": "concurrently npm:watch:*",
-    "install:all": "npm install && npm run install:frontend",
-    "install:frontend": "cd frontend && npm install && cd ..",
-    "watch:env": "node ./scripts/setup.env.js",
-    "watch:frontend": "cd frontend && npm start",
-    "watch:backend": "cd backend/docker/compose && docker compose up",
-    "start:backend:polar": "open -a Polar",
-    "start:backend:compose": "cd backend/docker/compose && docker compose up",
+    "install:all": "npm install && npm --prefix frontend install",
+    "dev": "npm run network && npm --prefix frontend start",
+    "network": "docker compose -f network/docker-compose.yml up -d --wait && npm run bootstrap && npm run env",
+    "down": "docker compose -f network/docker-compose.yml down",
+    "reset": "node scripts/reset.ts",
+    "bootstrap": "node scripts/bootstrap.ts",
+    "env": "node scripts/env.ts",
     "lint": "npm --prefix frontend run lint",
-    "typecheck": "npm --prefix frontend run typecheck"
+    "typecheck": "tsc -p tsconfig.json && npm --prefix frontend run typecheck"
   },
   "devDependencies": {
-    "concurrently": "^7.5.0"
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2"
   }
 }
