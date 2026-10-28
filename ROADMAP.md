@@ -93,7 +93,7 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
   - Also: add a root `tsconfig.json` (`noEmit`, `allowImportingTsExtensions`, `erasableSyntaxOnly`), `typescript` and `@types/node` as dev dependencies, and root files in `typecheck`.
   - Read: `network/docker-compose.yml`, `package.json`.
   - Exit: `npm run bootstrap` passes 2 times in sequence. Each node has a confirmed balance more than 0.
-- [ ] **C1.3 Env script.** Add `scripts/env.ts`, `npm run env`, and `.env.example`.
+- [x] **C1.3 Env script.** Add `scripts/env.ts`, `npm run env`, and `.env.example`.
   - Do: for each node, write `LND_<NAME>_REST_URL`, `LND_<NAME>_MACAROON_HEX`, and `LND_<NAME>_TLS_CERT_PATH` to a root `.env`. Also write `BITCOIND_RPC_URL`, `BITCOIND_RPC_USER`, and `BITCOIND_RPC_PASS`. If the host cannot read a file, read it with `docker compose exec`. Delete `scripts/setup.env.cjs` and `backend/`.
   - Read: `network/docker-compose.yml`, `scripts/setup.env.cjs`, `package.json`.
   - Exit: with values from `.env`, `curl --cacert <tls.cert> -H "Grpc-Metadata-macaroon: <hex>" https://127.0.0.1:8081/v1/getinfo` returns the alice pubkey.

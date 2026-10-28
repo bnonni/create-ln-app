@@ -7,12 +7,12 @@
     "start": "concurrently npm:watch:*",
     "install:all": "npm install && npm run install:frontend",
     "install:frontend": "cd frontend && npm install && cd ..",
-    "watch:env": "node ./scripts/setup.env.cjs",
     "watch:frontend": "cd frontend && npm start",
     "watch:backend": "docker compose -f network/docker-compose.yml up",
     "start:backend:polar": "open -a Polar",
     "start:backend:compose": "docker compose -f network/docker-compose.yml up",
     "bootstrap": "node scripts/bootstrap.ts",
+    "env": "node scripts/env.ts",
     "lint": "npm --prefix frontend run lint",
     "typecheck": "tsc -p tsconfig.json && npm --prefix frontend run typecheck"
   },
