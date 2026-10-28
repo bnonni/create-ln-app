@@ -19,6 +19,40 @@ export type GetInfoResponse = {
   num_pending_channels: number;
   synced_to_chain: boolean;
   block_height: number;
+  // Each URI is pubkey@host:port. LND adds a URI only if it has an --externalip.
+  uris: string[];
+};
+
+export type Channel = {
+  active: boolean;
+  remote_pubkey: string;
+  channel_point: string;
+  capacity: string;
+  local_balance: string;
+  remote_balance: string;
+};
+
+export type ListChannelsResponse = {
+  channels: Channel[];
+};
+
+export type PendingChannel = {
+  remote_node_pub: string;
+  channel_point: string;
+  capacity: string;
+  local_balance: string;
+  remote_balance: string;
+};
+
+// Only the channels that wait for the funding transaction to confirm.
+export type PendingChannelsResponse = {
+  pending_open_channels: { channel: PendingChannel }[];
+};
+
+// LND REST sends bytes as base64. The txid bytes are in reverse order.
+export type ChannelPointResponse = {
+  funding_txid_bytes: string;
+  output_index: number;
 };
 
 export type WalletBalanceResponse = {
@@ -74,6 +108,32 @@ export class LndClient {
 
   channelBalance(): Promise<ChannelBalanceResponse> {
     return this.#request('GET', '/v1/balance/channels');
+  }
+
+  listChannels(): Promise<ListChannelsResponse> {
+    return this.#request('GET', '/v1/channels');
+  }
+
+  pendingChannels(): Promise<PendingChannelsResponse> {
+    return this.#request('GET', '/v1/channels/pending');
+  }
+
+  // The host is host:port. LND waits up to 10 seconds for the connection.
+  // If the peer is already connected, LND sends an error. This method ignores that error.
+  async connectPeer(pubkey: string, host: string): Promise<void> {
+    try {
+      await this.#request('POST', '/v1/peers', { addr: { pubkey, host }, perm: false, timeout: '10' });
+    } catch (error) {
+      if (!(error instanceof LndError && error.message.includes('already connected to peer'))) throw error;
+    }
+  }
+
+  // LND replies after it publishes the funding transaction.
+  openChannel(pubkey: string, amountSats: number): Promise<ChannelPointResponse> {
+    return this.#request('POST', '/v1/channels', {
+      node_pubkey: Buffer.from(pubkey, 'hex').toString('base64'),
+      local_funding_amount: String(amountSats),
+    });
   }
 
   async #request<T>(method: string, path: string, body?: unknown): Promise<T> {

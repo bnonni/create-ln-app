@@ -108,7 +108,7 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
   - Do: add `server/lnd.ts`, a typed LND REST client that trusts each node TLS cert (`undici` `Agent` with `ca`). Add `GET /api/health` and `GET /api/nodes` (name, pubkey, alias, balance, channel count). Use `API_PORT` (default 3001). Make `npm run dev` start the server and the frontend in parallel.
   - Read: `.env.example`, `package.json`.
   - Exit: `curl localhost:3001/api/nodes` returns 3 nodes with pubkeys and balances more than 0.
-- [ ] **C2.2 Peers, channels, and mine.** Add `server/bitcoind.ts`, a JSON-RPC client.
+- [x] **C2.2 Peers, channels, and mine.** Add `server/bitcoind.ts`, a JSON-RPC client.
   - Do: add `POST /api/mine` (`{ blocks }`), `POST /api/nodes/:name/peers` (`{ peer }`), and `POST /api/nodes/:name/channels` (`{ peer, amountSats }`). Add the channel list to `GET /api/nodes`. Return JSON errors with correct HTTP status codes.
   - Read: `server/lnd.ts`, the server entry file.
   - Exit: with `curl`, alice connects to bob, opens a 1,000,000 sat channel, and mines 6 blocks. Then `GET /api/nodes` shows an active channel.
