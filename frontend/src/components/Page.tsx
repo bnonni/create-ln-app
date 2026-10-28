@@ -1,15 +1,14 @@
 import { Select, MenuItem, SelectChangeEvent } from '@mui/material';
 import { useState } from 'react';
-import { LightningStore, useLightning } from '../lightning/LightningStore';
+import { useLightning } from '../lightning/LightningStore';
 import { Button, Input, Container, Step, Text } from './Page.styles';
 import { Env } from "../Env"
 
 const Page = () => {
   const lightningStore = useLightning();
-  const [invoice, setInvoice] = useState('');
+  const [invoice] = useState('');
   const [me, setMe] = useState({id: "", name: "", macaroon: "", url: ""});
   const [name, setName] = useState('');
-  const [peer, setPeer] = useState('');
 
 
   // const [endpoint, setEndpoint] = useState<LightningStore>(REST_ENDPOINT);
@@ -58,11 +57,6 @@ const Page = () => {
     console.log("Me", Me)
     await lightningStore.whoAmI(event.target.value);
   };
-
-  const handleAddPeer = async (event: SelectChangeEvent) => {
-    setPeer(event.target.value);
-    await lightningStore.listPeers()
-  }
 
   return (
     <Container>
