@@ -8,9 +8,9 @@
     "install:frontend": "cd frontend && npm install && cd ..",
     "watch:env": "node ./scripts/setup.env.js",
     "watch:frontend": "cd frontend && npm start",
-    "watch:backend": "cd backend/docker/compose && docker compose up",
+    "watch:backend": "docker compose -f network/docker-compose.yml up",
     "start:backend:polar": "open -a Polar",
-    "start:backend:compose": "cd backend/docker/compose && docker compose up",
+    "start:backend:compose": "docker compose -f network/docker-compose.yml up",
     "lint": "npm --prefix frontend run lint",
     "typecheck": "npm --prefix frontend run typecheck"
   },

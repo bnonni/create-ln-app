@@ -25,4 +25,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-backend/docker/compose/volumes/
+
+# local regtest network data (keep the dir, so Docker does not create it as root)
+network/data/*
+!network/data/.gitkeep

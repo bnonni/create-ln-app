@@ -45,7 +45,19 @@ Known issue: in this pre-1.0 version, the app does not get the node credentials.
 
 ## Network reference
 
-The network is in `backend/docker/compose/docker-compose.yml`. Node data goes to `backend/docker/compose/volumes/`.
+The network is in `network/docker-compose.yml`: 1 bitcoind node and 3 LND nodes. Node data goes to `network/data/`.
+
+To start the network and wait until all nodes are healthy, run:
+
+```sh
+docker compose -f network/docker-compose.yml up -d --wait
+```
+
+To use `lncli` in a node, run the command as the `lnd` user (replace `alice` with the node name):
+
+```sh
+docker compose -f network/docker-compose.yml exec -u lnd alice lncli -n regtest getinfo
+```
 
 ### LND
 
@@ -58,14 +70,14 @@ The network is in `backend/docker/compose/docker-compose.yml`. Node data goes to
 Each node writes its admin macaroon and TLS cert here (replace `alice` with the node name):
 
 ```
-backend/docker/compose/volumes/lnd/alice/data/chain/bitcoin/regtest/admin.macaroon
-backend/docker/compose/volumes/lnd/alice/tls.cert
+network/data/alice/data/chain/bitcoin/regtest/admin.macaroon
+network/data/alice/tls.cert
 ```
 
 LND REST calls must send the macaroon in hex in the `Grpc-Metadata-macaroon` header. To get the hex value, run:
 
 ```sh
-xxd -ps -u -c 1000 backend/docker/compose/volumes/lnd/alice/data/chain/bitcoin/regtest/admin.macaroon
+xxd -ps -u -c 1000 network/data/alice/data/chain/bitcoin/regtest/admin.macaroon
 ```
 
 API reference: [LND REST API](https://lightning.engineering/api-docs/api/lnd/).
