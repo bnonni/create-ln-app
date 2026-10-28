@@ -116,7 +116,7 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
   - Do: add `POST /api/nodes/:name/invoices` (`{ amountSats, memo }`), `GET /api/nodes/:name/invoices/:hash`, and `POST /api/nodes/:name/payments` (`{ paymentRequest }`). For payments, use LND `POST /v2/router/send`. It streams JSON lines: read until `SUCCEEDED` or `FAILED`. Write `server/API.md` with each endpoint, body, and response.
   - Read: `server/lnd.ts`, the server entry file.
   - Exit: with `curl`, bob makes a 1,000 sat invoice, alice pays it, and the invoice lookup shows `SETTLED`.
-- [ ] **C2.4 Integration test.** Add `server/flow.test.ts` (`node:test`) and `npm run test:integration`.
+- [x] **C2.4 Integration test.** Add `server/flow.test.ts` (`node:test`) and `npm run test:integration`.
   - Do: run the full flow against the live network: connect, open channel, mine, invoice, pay, settled. The test must pass on a new network and on a network that already has a channel.
   - Read: `server/API.md`.
   - Exit: `npm run reset && npm run network && npm run test:integration` passes. A second `npm run test:integration` also passes.

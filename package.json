@@ -13,7 +13,8 @@
     "bootstrap": "node scripts/bootstrap.ts",
     "env": "node scripts/env.ts",
     "lint": "npm --prefix frontend run lint",
-    "typecheck": "tsc -p tsconfig.json && npm --prefix frontend run typecheck"
+    "typecheck": "tsc -p tsconfig.json && npm --prefix frontend run typecheck",
+    "test:integration": "node --test server/flow.test.ts"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
