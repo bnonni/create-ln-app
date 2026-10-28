@@ -186,10 +186,98 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
 
 ## After 1.0
 
-These items are not in the MVP. Do them after the release, in this order:
+Status: accepted, 2026-10-28. Base: `v1.0.0` and the landing page (`230cc6a`).
 
-1. Core Lightning (CLN) and Eclair nodes, for example `--impl cln`.
-2. A network size option, for example `--nodes 5`.
-3. More templates: JavaScript, Next.js.
-4. More install options: Homebrew formula, `curl | bash` installer, Windows (WSL2).
-5. Signet support and more examples (LNURL, Lightning Address, WebLN).
+The work protocol and the conventions of 1.0 also apply here. Each milestone ends with one minor release: M6 is `1.1.0`, M7 is `1.2.0`, and M8 is `1.3.0`. In this section, all app paths are relative to `packages/create-ln-app/template/`.
+
+| Item | Milestone | Estimate |
+|---|---|---|
+| A network size option, for example `--nodes 5` | M6 | 2-3 days |
+| Core Lightning (CLN) nodes, for example `--impl cln` | M7 | 4-6 days |
+| Eclair nodes | M8 | 3-4 days |
+| More templates: JavaScript, Next.js | C9.0 plan | after C9.0 |
+| More install options: Homebrew, `curl \| bash`, Windows (WSL2) | C10.0 plan | after C10.0 |
+| Signet support and more examples (LNURL, Lightning Address, WebLN) | C11.0 plan | after C11.0 |
+
+### Decisions after 1.0
+
+The owner confirmed decisions 6 to 8 (2026-10-28). The owner can change decision 9 before C7.1 starts.
+
+6. **Node list first.** M6 adds one node list file and a compose generator. M7 (CLN) and M8 (Eclair) use them. Reason: in 1.0, the compose file is static, and 2 scripts each hardcode alice, bob, and carol.
+7. **One impl for each node.** Each entry in `network/nodes.json` has a name and an impl (`lnd`, `cln`, or `eclair`). `--impl <impl>` sets all nodes. A developer edits `network/nodes.json` for a mix. The default stays 3 LND nodes.
+8. **Compose project name from the package name.** The generator sets the compose `name` from `package.json`. Then `npm run down` in one app does not stop the network of a second app. In 1.0, all projects use `name: create-ln-app`.
+9. **A neutral API.** The API must not show LND details. Each node client maps its errors and invoice states to one set. The app uses only that set.
+
+### Facts from the 1.0 code
+
+1. `network/docker-compose.yml` is static. Node ports: REST 8081-8083, gRPC 10001-10003, P2P 9735-9737.
+2. `scripts/bootstrap.ts:12` and `scripts/env.ts:16` hardcode `const NODES = ['alice', 'bob', 'carol']`.
+3. `scripts/doctor.ts` gets the ports from `docker compose config`. It needs no change for more nodes.
+4. The server accepts any number of LND nodes. It finds each `LND_<NAME>_REST_URL` key in the env (`server/lnd.ts:250`).
+5. The API and the app use LND details: the LND invoice state, the `FAILURE_REASON_*` error text (`frontend/src/components/Page.tsx:38`), and the peer URI from `getinfo`.
+
+### M6: Network size (branch `m6-network-size`)
+
+- [ ] **C6.1 Node list and compose generator.** Add `network/nodes.json`, `scripts/compose.ts`, and `npm run compose`.
+  - Do: `nodes.json` lists alice, bob, and carol, each with `"impl": "lnd"`. `compose.ts` writes `network/docker-compose.yml` from the list. Node `i` (from 0) gets REST port `8081+i`, gRPC port `10001+i`, and P2P port `9735+i`. Set the compose `name` from the package name (decision 8). Write a header line in the file: "Generated from nodes.json. Do not edit." `npm run network` runs `compose` first. Use only Node built-in modules, so that the CLI can run the script before install. Keep the generated file in git.
+  - Read: `network/docker-compose.yml`, the template `package.json`.
+  - Exit: `docker compose config` of the new file and of the `v1.0.0` file show the same services, ports, and volumes. Only `name` changes. `npm run network` gives 3 funded nodes. Before the test, run `npm run down` with the old file, because the new project name does not stop the old containers.
+- [ ] **C6.2 Scripts read the node list.** Add `scripts/nodes.ts`, one reader for `network/nodes.json`.
+  - Do: replace the `NODES` arrays in `bootstrap.ts` and `env.ts`. `compose.ts` also uses the reader. The reader checks the file: 2 to 10 nodes, unique names that match `^[a-z][a-z0-9]*$`, and the impl `lnd`. Show one fix for each error.
+  - Read: `scripts/bootstrap.ts`, `scripts/env.ts`, `scripts/compose.ts`.
+  - Exit: with 5 nodes in `nodes.json`, `npm run reset && npm run network` funds 5 nodes. `.env` has 5 node blocks. `curl localhost:3001/api/nodes` returns 5 nodes. With the network down, `npm run doctor` checks the ports of 5 nodes.
+- [ ] **C6.3 CLI `--nodes <n>`.** Add the flag to `packages/create-ln-app/src/cli.ts`.
+  - Do: accept 2 to 10 nodes (default 3). The names come from one list: alice, bob, carol, dave, erin, frank, grace, heidi, ivan, judy. After the package name change, the CLI writes `network/nodes.json` and runs `npm run compose` in the new project. Add the flag to the help text. Add a CI E2E job with `--nodes 5`.
+  - Read: `packages/create-ln-app/src/cli.ts`, `.github/workflows/ci.yml`.
+  - Exit: `npx --package <tgz> create-ln-app /tmp/x --nodes 5` makes a project. In `/tmp/x`, `npm run network` funds 5 nodes. The E2E test passes with `LAPP_DIR=/tmp/x`. `--nodes 11` fails and shows one fix.
+- [ ] **C6.4 Docs and release `1.1.0`.** Update the text about 3 nodes and the port tables.
+  - Do: update the 3 README files, `docs/architecture.md`, `docs/troubleshooting.md`, `index.html`, and `.env.example`. Add the `1.1.0` entry to `CHANGELOG.md`. Set version `1.1.0`.
+  - Read: only the lines that `grep -rn '3 LND\|8083\|carol'` finds in these files.
+  - Exit: lint, typecheck, and build pass. `npm publish --dry-run` lists the new files. Owner: merge, tag `v1.1.0`, and run `npm publish`.
+
+### M7: Core Lightning (branch `m7-cln`)
+
+- [ ] **C7.1 Neutral node interface.** Put the LND client behind an interface (decision 9).
+  - Do: add `server/nodes/types.ts` with a `LightningNode` interface for the operations in `server/index.ts`. Move `server/lnd.ts` to `server/nodes/lnd.ts`. Map the LND errors and invoice states to one neutral set. Add `impl` to `GET /api/nodes`. Make the app use the neutral error codes, not the `FAILURE_REASON_*` text. Update `server/API.md`.
+  - Read: `server/index.ts`, `server/lnd.ts`, `server/API.md`, `frontend/src/api.ts`.
+  - Exit: lint, typecheck, and build pass. `npm run test:integration` and the E2E test pass on 3 LND nodes.
+- [ ] **C7.2 CLN in the network.** Add the `cln` impl to `compose.ts`, `bootstrap.ts`, `env.ts`, and `nodes.ts`.
+  - Decide: use `polarlightning/clightning` if `docker manifest inspect` shows amd64 and arm64. If not, use `elementsproject/lightningd`.
+  - Do: CLN gets blocks from bitcoind RPC and serves the CLNRest API. Bootstrap uses `lightning-cli newaddr`, `listfunds`, and `getinfo`. Env makes a rune with `lightning-cli createrune`. Env writes `CLN_<NAME>_REST_URL`, `CLN_<NAME>_RUNE`, and `CLN_<NAME>_TLS_CERT_PATH`. Map a gRPC host port only if the node has a gRPC port.
+  - Read: `scripts/compose.ts`, `scripts/bootstrap.ts`, `scripts/env.ts`, `scripts/nodes.ts`.
+  - Exit: with bob as `cln`, `npm run reset && npm run network` funds all 3 nodes. A `curl` to CLNRest `/v1/getinfo` with the rune returns the bob node id.
+- [ ] **C7.3 CLN client.** Add `server/nodes/cln.ts`, a CLNRest client for the `LightningNode` interface.
+  - Do: the server selects the client from the env prefix (`LND_` or `CLN_`). Map the CLN errors and invoice states to the neutral set. The integration test must also pay in the other direction (bob pays alice).
+  - Read: `server/nodes/types.ts`, `server/API.md`, `server/flow.test.ts`.
+  - Exit: with alice as `lnd` and bob as `cln`, `npm run test:integration` passes in the 2 directions. The E2E test passes.
+- [ ] **C7.4 CLI `--impl`, CI, docs, and release `1.2.0`.** Add `--impl lnd|cln` (all nodes, default `lnd`).
+  - Do: add a CI E2E matrix: `lnd`, `cln`, and a mix (a CI step edits `nodes.json`). Update the docs (CLN commands, the rune, the ports) and `CHANGELOG.md`. Set version `1.2.0`.
+  - Read: `packages/create-ln-app/src/cli.ts`, `.github/workflows/ci.yml`.
+  - Exit: `--impl cln` makes a project, and the E2E test passes in it. Owner: the E2E matrix passes on the PR. Merge, tag `v1.2.0`, and publish.
+
+### M8: Eclair (branch `m8-eclair`)
+
+- [ ] **C8.1 Eclair in the network.** Add the `eclair` impl to `compose.ts`, `bootstrap.ts`, `env.ts`, and `nodes.ts`.
+  - Decide: the image, with the same rule as C7.2 (`polarlightning/eclair` or `acinq/eclair`).
+  - Do: Eclair has no wallet of its own. It uses a bitcoind wallet, so bootstrap makes one bitcoind wallet for each Eclair node. Eclair also needs the bitcoind ZMQ `rawblock` and `rawtx` streams. Env writes `ECLAIR_<NAME>_API_URL` and `ECLAIR_<NAME>_API_PASSWORD`. The Eclair API uses plain HTTP, so it needs no TLS cert.
+  - Read: `scripts/compose.ts`, `scripts/bootstrap.ts`, `scripts/env.ts`, `scripts/nodes.ts`.
+  - Exit: with carol as `eclair`, `npm run reset && npm run network` funds all 3 nodes. `curl -u :<password> -X POST <url>/getinfo` returns the carol node id.
+- [ ] **C8.2 Eclair client.** Add `server/nodes/eclair.ts`.
+  - Do: the Eclair API takes form-encoded POST bodies. `payinvoice` returns a payment id immediately, so the client asks `getsentinfo` until the payment succeeds or fails. Map the errors and invoice states to the neutral set. The integration test gets the node pair from the env.
+  - Read: `server/nodes/types.ts`, `server/nodes/cln.ts`, `server/flow.test.ts`.
+  - Exit: with alice as `lnd`, bob as `cln`, and carol as `eclair`, `npm run test:integration` passes for each pair in the 2 directions.
+- [ ] **C8.3 CLI, CI, docs, and release `1.3.0`.** Add `eclair` to `--impl`.
+  - Do: add `eclair` to the CI E2E matrix. Use all 3 impls in the mix. Update the docs and `CHANGELOG.md`. Set version `1.3.0`.
+  - Read: `packages/create-ln-app/src/cli.ts`, `.github/workflows/ci.yml`.
+  - Exit: `--impl eclair` makes a project, and the E2E test passes in it. Owner: the E2E matrix passes on the PR. Merge, tag `v1.3.0`, and publish.
+
+### Later: plan before work
+
+Each item below starts with one planning chunk. That chunk writes the other chunks in this file. Do not plan these items in detail now, because M6 to M8 change the template.
+
+- [ ] **C9.0 More templates: plan.** JavaScript and Next.js. Questions for the plan:
+  1. Do the templates share one base (network, scripts) and add one app layer each?
+  2. Does the pack step make the JavaScript template from the TypeScript source, or is it a second source?
+  3. Does the Next.js template put the API in route handlers, or keep the Hono server?
+- [ ] **C10.0 More install options: plan.** Homebrew, `curl | bash`, and Windows (WSL2). Fact: each option still needs Node 24 and Docker. Homebrew and `curl | bash` only start `npx create-ln-app`. Give the owner the value and the cost of each option before the plan.
+- [ ] **C11.0 Signet and examples: plan.** Fact: on signet, nobody mines a block when the app asks. Funds come from a faucet, so the bootstrap cannot fund the nodes. Plan the examples (LNURL, Lightning Address, WebLN) apart from signet.
