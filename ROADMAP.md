@@ -112,7 +112,7 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
   - Do: add `POST /api/mine` (`{ blocks }`), `POST /api/nodes/:name/peers` (`{ peer }`), and `POST /api/nodes/:name/channels` (`{ peer, amountSats }`). Add the channel list to `GET /api/nodes`. Return JSON errors with correct HTTP status codes.
   - Read: `server/lnd.ts`, the server entry file.
   - Exit: with `curl`, alice connects to bob, opens a 1,000,000 sat channel, and mines 6 blocks. Then `GET /api/nodes` shows an active channel.
-- [ ] **C2.3 Invoices and payments.** Add the payment endpoints and the API contract.
+- [x] **C2.3 Invoices and payments.** Add the payment endpoints and the API contract.
   - Do: add `POST /api/nodes/:name/invoices` (`{ amountSats, memo }`), `GET /api/nodes/:name/invoices/:hash`, and `POST /api/nodes/:name/payments` (`{ paymentRequest }`). For payments, use LND `POST /v2/router/send`. It streams JSON lines: read until `SUCCEEDED` or `FAILED`. Write `server/API.md` with each endpoint, body, and response.
   - Read: `server/lnd.ts`, the server entry file.
   - Exit: with `curl`, bob makes a 1,000 sat invoice, alice pays it, and the invoice lookup shows `SETTLED`.

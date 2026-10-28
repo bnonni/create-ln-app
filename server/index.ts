@@ -6,7 +6,7 @@ import { Hono, type Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { fileURLToPath } from 'node:url';
 import { BitcoindClient, BitcoindError, bitcoindConfigFromEnv } from './bitcoind.ts';
-import { LndClient, LndError, lndConfigsFromEnv, type Channel, type PendingChannel } from './lnd.ts';
+import { LndClient, LndError, lndConfigsFromEnv, type Channel, type Invoice, type PendingChannel } from './lnd.ts';
 
 const ENV_FILE = fileURLToPath(new URL('../.env', import.meta.url));
 const DEFAULT_PORT = 3001;
@@ -14,6 +14,9 @@ const DEFAULT_PORT = 3001;
 const BURN_ADDRESS = 'bcrt1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3xueyj';
 const MAX_BLOCKS = 1000;
 const MAX_SATS = 21_000_000 * 100_000_000;
+const PAYMENT_TIMEOUT_SECONDS = 60;
+const PAYMENT_FEE_LIMIT_SATS = 1000;
+const PAYMENT_HASH = /^[0-9a-f]{64}$/;
 
 function loadClients(): { nodes: LndClient[]; bitcoind: BitcoindClient } {
   try {
@@ -75,6 +78,24 @@ async function nodeSummary(node: LndClient) {
   };
 }
 
+function toIsoDate(unixSeconds: string): string {
+  return new Date(Number(unixSeconds) * 1000).toISOString();
+}
+
+function invoiceSummary(invoice: Invoice) {
+  return {
+    paymentHash: Buffer.from(invoice.r_hash, 'base64').toString('hex'),
+    paymentRequest: invoice.payment_request,
+    memo: invoice.memo,
+    amountSats: Number(invoice.value),
+    amountPaidSats: Number(invoice.amt_paid_sat),
+    status: invoice.state.toLowerCase(),
+    createdAt: toIsoDate(invoice.creation_date),
+    // LND sends 0 if the invoice is not settled.
+    settledAt: invoice.settle_date === '0' ? null : toIsoDate(invoice.settle_date),
+  };
+}
+
 function findNode(name: string): LndClient {
   const node = nodes.find((candidate) => candidate.name === name);
   if (!node) throw new HTTPException(404, { message: `Unknown node: ${name}` });
@@ -98,6 +119,14 @@ function integerField(body: Record<string, unknown>, key: string, max: number): 
   const value = body[key];
   if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > max) {
     throw new HTTPException(400, { message: `${key} must be an integer from 1 to ${max}` });
+  }
+  return value;
+}
+
+function stringField(body: Record<string, unknown>, key: string, required: boolean): string {
+  const value = body[key] ?? (required ? undefined : '');
+  if (typeof value !== 'string' || (required && value === '')) {
+    throw new HTTPException(400, { message: `${key} must be a ${required ? 'non-empty ' : ''}string` });
   }
   return value;
 }
@@ -139,6 +168,41 @@ app.post('/nodes/:name/channels', async (c) => {
   const point = await node.openChannel(peerPubkey, amountSats);
   const fundingTxid = Buffer.from(point.funding_txid_bytes, 'base64').reverse().toString('hex');
   return c.json({ channelPoint: `${fundingTxid}:${point.output_index}`, peer: peer.name, peerPubkey }, 201);
+});
+
+app.post('/nodes/:name/invoices', async (c) => {
+  const node = findNode(c.req.param('name'));
+  const body = await readBody(c);
+  const amountSats = integerField(body, 'amountSats', MAX_SATS);
+  const memo = stringField(body, 'memo', false);
+  const added = await node.addInvoice(amountSats, memo);
+  const paymentHash = Buffer.from(added.r_hash, 'base64').toString('hex');
+  return c.json(invoiceSummary(await node.lookupInvoice(paymentHash)), 201);
+});
+
+app.get('/nodes/:name/invoices/:hash', async (c) => {
+  const node = findNode(c.req.param('name'));
+  const paymentHash = c.req.param('hash').toLowerCase();
+  if (!PAYMENT_HASH.test(paymentHash)) {
+    throw new HTTPException(400, { message: 'The payment hash must be 64 hex characters' });
+  }
+  return c.json(invoiceSummary(await node.lookupInvoice(paymentHash)));
+});
+
+// The reply comes after the payment succeeds or fails. A failed payment gives 502.
+app.post('/nodes/:name/payments', async (c) => {
+  const node = findNode(c.req.param('name'));
+  const paymentRequest = stringField(await readBody(c), 'paymentRequest', true);
+  const payment = await node.sendPayment(paymentRequest, PAYMENT_TIMEOUT_SECONDS, PAYMENT_FEE_LIMIT_SATS);
+  return c.json(
+    {
+      paymentHash: payment.payment_hash,
+      preimage: payment.payment_preimage,
+      amountSats: Number(payment.value_sat),
+      feeSats: Number(payment.fee_sat),
+    },
+    201,
+  );
 });
 
 app.post('/mine', async (c) => {

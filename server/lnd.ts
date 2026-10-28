@@ -2,7 +2,7 @@
 // so each client trusts only the cert of its own node.
 // LND REST sends int64 values as JSON strings. The response types show this.
 import { readFileSync } from 'node:fs';
-import { Agent, fetch } from 'undici';
+import { Agent, fetch, type Response } from 'undici';
 
 export type LndConfig = {
   name: string;
@@ -53,6 +53,32 @@ export type PendingChannelsResponse = {
 export type ChannelPointResponse = {
   funding_txid_bytes: string;
   output_index: number;
+};
+
+export type AddInvoiceResponse = {
+  r_hash: string;
+  payment_request: string;
+};
+
+export type Invoice = {
+  memo: string;
+  r_hash: string;
+  value: string;
+  creation_date: string;
+  settle_date: string;
+  payment_request: string;
+  amt_paid_sat: string;
+  state: 'OPEN' | 'SETTLED' | 'CANCELED' | 'ACCEPTED';
+};
+
+// The payment hash and the preimage are hex strings, not base64.
+export type Payment = {
+  payment_hash: string;
+  payment_preimage: string;
+  value_sat: string;
+  fee_sat: string;
+  status: 'UNKNOWN' | 'IN_FLIGHT' | 'SUCCEEDED' | 'FAILED' | 'INITIATED';
+  failure_reason: string;
 };
 
 export type WalletBalanceResponse = {
@@ -136,7 +162,54 @@ export class LndClient {
     });
   }
 
+  addInvoice(amountSats: number, memo: string): Promise<AddInvoiceResponse> {
+    return this.#request('POST', '/v1/invoices', { value: String(amountSats), memo });
+  }
+
+  lookupInvoice(paymentHashHex: string): Promise<Invoice> {
+    return this.#request('GET', `/v1/invoice/${paymentHashHex}`);
+  }
+
+  // LND streams one JSON object on each line: { "result": Payment } or { "error": { "message": "..." } }.
+  // This method reads the stream until the payment succeeds or fails. A failed payment throws an LndError.
+  async sendPayment(paymentRequest: string, timeoutSeconds: number, feeLimitSats: number): Promise<Payment> {
+    const response = await this.#send('POST', '/v2/router/send', {
+      payment_request: paymentRequest,
+      timeout_seconds: timeoutSeconds,
+      fee_limit_sat: String(feeLimitSats),
+      no_inflight_updates: true,
+    });
+    if (!response.body) throw new LndError(this.name, 0, `${this.name}: the payment reply has no body`);
+    const decoder = new TextDecoder();
+    let buffer = '';
+    for await (const chunk of response.body) {
+      buffer += decoder.decode(chunk, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+      for (const line of lines) {
+        if (line.trim() === '') continue;
+        const update = JSON.parse(line) as { result?: Payment; error?: unknown };
+        if (update.error !== undefined) {
+          throw new LndError(this.name, response.status, `${this.name}: ${errorMessage(line) ?? 'payment error'}`);
+        }
+        const payment = update.result;
+        if (payment?.status === 'FAILED') {
+          throw new LndError(this.name, response.status, `${this.name}: the payment failed: ${payment.failure_reason}`);
+        }
+        // The return stops the loop, and the stop cancels the stream.
+        if (payment?.status === 'SUCCEEDED') return payment;
+      }
+    }
+    throw new LndError(this.name, 0, `${this.name}: the payment stream ended before the payment succeeded or failed`);
+  }
+
   async #request<T>(method: string, path: string, body?: unknown): Promise<T> {
+    const response = await this.#send(method, path, body);
+    return JSON.parse(await response.text()) as T;
+  }
+
+  // Sends the request. Throws an LndError if LND does not reply or replies with an error status.
+  async #send(method: string, path: string, body?: unknown): Promise<Response> {
     const headers: Record<string, string> = { 'Grpc-Metadata-macaroon': this.#macaroonHex };
     if (body !== undefined) headers['content-type'] = 'application/json';
     let response;
@@ -152,18 +225,20 @@ export class LndClient {
       const cause = error instanceof Error && error.cause instanceof Error ? error.cause.message : String(error);
       throw new LndError(this.name, 0, `Cannot reach ${this.name} at ${this.#restUrl}: ${cause}`);
     }
-    const text = await response.text();
     if (!response.ok) {
+      const text = await response.text();
       throw new LndError(this.name, response.status, `${this.name}: ${errorMessage(text) ?? `HTTP ${response.status}`}`);
     }
-    return JSON.parse(text) as T;
+    return response;
   }
 }
 
 // LND REST errors are JSON objects with a message, for example { "code": 2, "message": "..." }.
+// A stream error has the object in an error field, for example { "error": { "code": 6, "message": "..." } }.
 function errorMessage(text: string): string | undefined {
   try {
-    const message = (JSON.parse(text) as { message?: unknown }).message;
+    const parsed = JSON.parse(text) as { message?: unknown; error?: { message?: unknown } };
+    const message = parsed.error?.message ?? parsed.message;
     return typeof message === 'string' && message !== '' ? message : undefined;
   } catch {
     return undefined;
