@@ -39,11 +39,12 @@ On macOS, start Docker Desktop before you continue.
    npm run dev
    ```
 
-The `dev` command starts 1 bitcoind node and 3 LND nodes, funds the LND nodes, and writes the node values to `.env`. Then it starts the example app at <http://localhost:3000>. The first start pulls the Docker images, so it takes more time.
+The `dev` command starts 1 bitcoind node and 3 LND nodes, funds the LND nodes, and writes the node values to `.env`. Then it starts the API server at <http://localhost:3001/api> and the example app at <http://localhost:3000>. The first start pulls the Docker images, so it takes more time.
 
 | Command | Result |
 |---|---|
-| `npm run dev` | Starts the network and the example app. |
+| `npm run dev` | Starts the network, the API server, and the example app. Ctrl+C stops the server and the app. |
+| `npm run server` | Starts only the API server. It reads `.env` one time at start, so restart it after `npm run network`. Set `API_PORT` to change the port (default 3001). |
 | `npm run network` | Starts and funds the network, then writes `.env`. It does not start the app. |
 | `npm run down` | Stops the network. The node data stays in `network/data/`. |
 | `npm run reset` | Stops the network and deletes the node data. The next start makes new nodes. |

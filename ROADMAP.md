@@ -104,19 +104,19 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
 
 ### M2: API server (branch `m2-api`)
 
-- [ ] **C2.1 Server and LND client.** Add `server/` (Hono on `@hono/node-server`) and `npm run server`.
+- [x] **C2.1 Server and LND client.** Add `server/` (Hono on `@hono/node-server`) and `npm run server`.
   - Do: add `server/lnd.ts`, a typed LND REST client that trusts each node TLS cert (`undici` `Agent` with `ca`). Add `GET /api/health` and `GET /api/nodes` (name, pubkey, alias, balance, channel count). Use `API_PORT` (default 3001). Make `npm run dev` start the server and the frontend in parallel.
   - Read: `.env.example`, `package.json`.
   - Exit: `curl localhost:3001/api/nodes` returns 3 nodes with pubkeys and balances more than 0.
-- [ ] **C2.2 Peers, channels, and mine.** Add `server/bitcoind.ts`, a JSON-RPC client.
+- [x] **C2.2 Peers, channels, and mine.** Add `server/bitcoind.ts`, a JSON-RPC client.
   - Do: add `POST /api/mine` (`{ blocks }`), `POST /api/nodes/:name/peers` (`{ peer }`), and `POST /api/nodes/:name/channels` (`{ peer, amountSats }`). Add the channel list to `GET /api/nodes`. Return JSON errors with correct HTTP status codes.
   - Read: `server/lnd.ts`, the server entry file.
   - Exit: with `curl`, alice connects to bob, opens a 1,000,000 sat channel, and mines 6 blocks. Then `GET /api/nodes` shows an active channel.
-- [ ] **C2.3 Invoices and payments.** Add the payment endpoints and the API contract.
+- [x] **C2.3 Invoices and payments.** Add the payment endpoints and the API contract.
   - Do: add `POST /api/nodes/:name/invoices` (`{ amountSats, memo }`), `GET /api/nodes/:name/invoices/:hash`, and `POST /api/nodes/:name/payments` (`{ paymentRequest }`). For payments, use LND `POST /v2/router/send`. It streams JSON lines: read until `SUCCEEDED` or `FAILED`. Write `server/API.md` with each endpoint, body, and response.
   - Read: `server/lnd.ts`, the server entry file.
   - Exit: with `curl`, bob makes a 1,000 sat invoice, alice pays it, and the invoice lookup shows `SETTLED`.
-- [ ] **C2.4 Integration test.** Add `server/flow.test.ts` (`node:test`) and `npm run test:integration`.
+- [x] **C2.4 Integration test.** Add `server/flow.test.ts` (`node:test`) and `npm run test:integration`.
   - Do: run the full flow against the live network: connect, open channel, mine, invoice, pay, settled. The test must pass on a new network and on a network that already has a channel.
   - Read: `server/API.md`.
   - Exit: `npm run reset && npm run network && npm run test:integration` passes. A second `npm run test:integration` also passes.
