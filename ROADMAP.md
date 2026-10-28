@@ -137,8 +137,9 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
   - Done: the `useStep` hook in `Page.tsx` keeps the busy state, the error, and the result text of a step. Step 1 has a peer select. Step 2 opens a 1,000,000 sat channel. Step 3 mines 6 blocks and loads the nodes again after 2 s, because LND takes some time to see the blocks.
   - Read: `frontend/src/api.ts`, `frontend/src/components/Page.tsx`.
   - Exit: lint, typecheck, and build pass. Owner: in the browser, alice gets an active channel to bob (about 2 minutes).
-- [ ] **C3.4 Invoice and pay steps.** Connect these 2 steps to the API.
+- [x] **C3.4 Invoice and pay steps.** Connect these 2 steps to the API.
   - Do: show the invoice status until it is `settled`. Add a short comment at each step that tells the developer where to add their own feature.
+  - Done: step 4 requests a 1,000 sat invoice from the peer and loads its status each second until it is `settled` or `canceled`. Step 5 pays the invoice. If LND is not ready after a mine, step 5 sends the payment again, up to 5 times. Each step has a "Your feature" comment.
   - Read: `frontend/src/api.ts`, `frontend/src/components/Page.tsx`.
   - Exit: lint, typecheck, and build pass. Owner: complete all 6 steps in the browser in less than 5 minutes.
 
