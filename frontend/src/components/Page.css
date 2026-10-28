@@ -56,3 +56,11 @@
   padding: 0.2rem 0.6rem;
   text-align: left;
 }
+
+.busy {
+  color: #555;
+}
+
+.result {
+  overflow-wrap: anywhere;
+}

@@ -132,8 +132,9 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
   - Done: `api.ts` has a function for each endpoint and replaces all of `LightningStore.ts`. `Page.tsx` keeps the node state. `components/NodeInfo.tsx` shows the selected node.
   - Read: `server/API.md`, `frontend/src/components/Page.tsx`, `frontend/src/lightning/LightningStore.ts`.
   - Exit: `curl` of `/api/nodes` through the Vite proxy returns 3 nodes. `grep -ri macaroon frontend/src` returns nothing. The build passes.
-- [ ] **C3.3 Peer, channel, and mine steps.** Connect these 3 steps to the API.
+- [x] **C3.3 Peer, channel, and mine steps.** Connect these 3 steps to the API.
   - Do: show a busy state and the API error for each step.
+  - Done: the `useStep` hook in `Page.tsx` keeps the busy state, the error, and the result text of a step. Step 1 has a peer select. Step 2 opens a 1,000,000 sat channel. Step 3 mines 6 blocks and loads the nodes again after 2 s, because LND takes some time to see the blocks.
   - Read: `frontend/src/api.ts`, `frontend/src/components/Page.tsx`.
   - Exit: lint, typecheck, and build pass. Owner: in the browser, alice gets an active channel to bob (about 2 minutes).
 - [ ] **C3.4 Invoice and pay steps.** Connect these 2 steps to the API.
