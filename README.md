@@ -1,100 +1,95 @@
-# Create LN App
-Built with ❤️ ☕️ & ₿ in ATL by the [Terminus Labs](https://terminus.money/) team. This is an open-source
-effort. Feel free to steal like an artist to make your life eaier. If you find issues, pls submit them
-to the repo. If you're feelin' froggy 🐸 and want a feature now, feel free to fork, build and submit a PR.
-## What? 🧐
-Lapp: aka Lightning App; in contrast to a dApp. The term dApp was popularized by the web 3.0 / defi / crypto community. Much like the term web 3.0, the term dApp has become overused, subsequently losing its meaning. We fundamentally believe that the Lapp will supercede the dApp as the go-to framework
-to build on top of the Bitcoin Lightning Network, and this repo is are effort to help populerize that idea.
+# create-ln-app
 
-Lapps are software applications that run on top of the Bitcoin Lightning Network: (L)igtning(app).
-The idea of this repo is to enable developers to build Lapps faster and easier so as a community, we can "move fast and break things" on L2 increasing the rate of innovation in Bitcoin.
+> **Status: pre-1.0.** The example app does not work end to end yet. See [ROADMAP.md](ROADMAP.md) for the plan to 1.0.
 
-We also want to swap out the idea of a dApp for a Lapp because, as a Bitcoin-focused organization, we think the Lightning Network will scale Bitcoin to become the money of the future.
+`create-ln-app` gives you two things:
 
-## Why? 🤷🏼‍♂️
-The create-ln-app repo is meant to simplify the local dev env setup, so Lapp developers can stop fussing with the dev tooling and start building the future!
+1. A local Bitcoin Lightning Network for development: Bitcoin Core and 3 LND nodes on regtest.
+2. An example Lightning app (Lapp) that connects to that network.
 
-## How? 🛠
-Setup is easy as 0-1-2!
+You change the example app into your own Lapp. You do not configure nodes, macaroons, or TLS by hand.
 
-0. [Click here to fork](https://github.com/terminus-btc/create-ln-app/fork) this repo. Then, run the following command replacing `YOURUSERNAME` with your github username.
+## What is a Lapp?
 
-```
-git clone git@github.com:<YOURUSERNAME>/create-ln-app.git my_Lapp && cd my_Lapp
-```
+A Lapp is an application that runs on the Bitcoin Lightning Network: (L)ightning (app). The name is a contrast to "dApp". We think that the Lightning Network will scale Bitcoin, and that Lapps will replace dApps.
 
-Or, you can simply clone this repo if you prefer.
+## Why?
 
-```
-git clone https://github.com/terminus-btc/create-ln-app.git && cd create-ln-app
-```
-
-1. `npm run install:all`
-2. `npm start`
-
-We recommend using this template as a starting point for your local lightning development env.
-Over time, we plan to evolve this template to include more customizations and features for advanced
-developers.
+A local Lightning setup takes time. You must start nodes, fund wallets, and find macaroons and TLS certs. This project does that setup for you, so you can start to build your app.
 
 ## Prerequisites
-Below is a list of required and optional software packages for running this software.
-#### Required
-The software below is required to be able to properly run this code. Click the links for install instructions.
-- [node/npm](https://nodejs.org/en/download/package-manager/)
-- [npx](https://www.npmjs.com/package/npx) (requires node & npm)
-- [docker](https://docs.docker.com/engine/install/)
-- [docker-compose](https://docs.docker.com/compose/install/)
 
-Or if you're on a mac, you can install `node`, `docker` and `docker-compose` with homebrew, and then
-install `npx` using `npm`.
+- [Node.js](https://nodejs.org/) 24 (LTS) and npm.
+- [Docker](https://docs.docker.com/engine/install/) with Docker Compose v2 (the `docker compose` command).
+
+On macOS, start Docker Desktop before you continue.
+
+## Quick start
+
+1. Clone the repo:
+   ```sh
+   git clone https://github.com/bnonni/create-ln-app.git my-lapp && cd my-lapp
+   ```
+2. Install the dependencies:
+   ```sh
+   npm run install:all
+   ```
+3. Start the network and the example app:
+   ```sh
+   npm start
+   ```
+
+The example app opens at <http://localhost:3000>.
+
+Known issue: in this pre-1.0 version, the app does not get the node credentials. The env script reads macaroon paths that are not correct on your machine. Milestones M1 to M3 in [ROADMAP.md](ROADMAP.md) fix this.
+
+## Network reference
+
+The network is in `backend/docker/compose/docker-compose.yml`. Node data goes to `backend/docker/compose/volumes/`.
+
+### LND
+
+| Node | REST | gRPC | P2P |
+|---|---|---|---|
+| alice | `https://127.0.0.1:8081` | `127.0.0.1:10001` | `9735` |
+| bob | `https://127.0.0.1:8082` | `127.0.0.1:10002` | `9736` |
+| carol | `https://127.0.0.1:8083` | `127.0.0.1:10003` | `9737` |
+
+Each node writes its admin macaroon and TLS cert here (replace `alice` with the node name):
+
 ```
-brew install node docker docker-compose
-npm install -g npx
+backend/docker/compose/volumes/lnd/alice/data/chain/bitcoin/regtest/admin.macaroon
+backend/docker/compose/volumes/lnd/alice/tls.cert
 ```
 
-If you install `docker desktop`, make sure you open it and get the docker engine running.
+LND REST calls must send the macaroon in hex in the `Grpc-Metadata-macaroon` header. To get the hex value, run:
 
-#### Optional
-Homebrew is optional for mac, but it is very handy to have when you need to install packages.
-- [brew](https://brew.sh/) (mac only)
-If you want homebrew, run the following command.
-```
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
-
- `n` and `nvm` are also options, but again, they are handy node version management packages.
-I prefer `n` over `nvm` because it seems to run faster.
-- [n](https://www.npmjs.com/package/n)
-- [nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-## Useful Information
-Once the `npm start` command is executed, you'll see a new `.env` file placed at `frontend/js/.env` and `frontend/ts/.env` as well as `frontend/js/src/.env.js` and `frontend/ts/src/.env.js`. Both will have all the env variables that you need to run the example app providing you options for how you want to access env vars (i.e. `process.env` vs `import { ... } from ../.env`). In the event that fails, find the relevant info below.
-
-#### LND
-- LND REST Endpoints: you will need these urls to make REST calls to your LND nodes on polar.
-  1. alice: `https://127.0.0.1:8081/v1`
-  2. bob: `https://127.0.0.1:8082/v1`
-  3. carol: `https://127.0.0.1:8083/v1`
-- Admin Macaroons: you will need these in hex format to authenticate REST calls to your LND nodes on polar.
-  1. alice: `<path-to-repo-dir>/backend/docker/compose/create-ln-app-0/volumes/lnd/alice/data/chain/bitcoin/regtest/admin.macaroon`
-  2. bob: `<path-to-repo-dir>/backend/docker/compose/create-ln-app-0/volumes/lnd/bob/data/chain/bitcoin/regtest/admin.macaroon`
-  3. carol: `<path-to-repo-dir>/backend/docker/compose/create-ln-app-0/volumes/lnd/carol/data/chain/bitcoin/regtest/admin.macaroon`
-- To get the `admin.macaroon` in hex format, use the following command:
 ```sh
-cd backend/docker/compose/create-ln-app-0/volumes/lnd/alice/data/chain/bitcoin/regtest
-xxd -ps -u -c 1000 admin.macaroon
+xxd -ps -u -c 1000 backend/docker/compose/volumes/lnd/alice/data/chain/bitcoin/regtest/admin.macaroon
 ```
-Mac users can copy to clipboard with the following command:
-```sh
-cd backend/docker/compose/create-ln-app-0/volumes/lnd/alice/data/chain/bitcoin/regtest
-xxd -ps -u -c 1000 admin.macaroon | pbcopy
-```
-- Alternatively, you can run the following command inside either `frontend/js` or `frontend/ts` to output each `admin.macaroon` in hex format:
-```sh
-npm run env:hex-macaroons
-```
-- LND REST API Docs: [click here](https://api.lightning.community/#lnd-rest-api-reference)
 
-#### bitcoind
-- Bitcoind REST API Endpoint: http://127.0.0.1:18444/rest
-- Bitcoind REST API Docs: [click here](https://github.com/bitcoin/bitcoin/blob/master/doc/REST-interface.md)
+API reference: [LND REST API](https://lightning.engineering/api-docs/api/lnd/).
+
+### bitcoind
+
+- RPC: `http://127.0.0.1:18443`, user `polaruser`, password `polarpass`.
+- REST: `http://127.0.0.1:18443/rest/`.
+
+API reference: [Bitcoin Core REST interface](https://github.com/bitcoin/bitcoin/blob/master/doc/REST-interface.md).
+
+## Development
+
+```sh
+npm run lint        # ESLint, zero warnings allowed
+npm run typecheck   # TypeScript, no emit
+```
+
+CI runs both commands on each push to `master` and on each pull request.
+
+## Credits
+
+The [ATL BitLab](https://github.com/ATLBitLab/create-ln-app) team (formerly Terminus Labs) started `create-ln-app` in 2022. This repo continues the project.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
