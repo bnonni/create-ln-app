@@ -145,14 +145,15 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
 
 ### M4: CLI (branch `m4-cli`)
 
-- [ ] **C4.1 Workspace layout.** Move the app into `packages/create-ln-app/template/`.
+- [x] **C4.1 Workspace layout.** Move the app into `packages/create-ln-app/template/`.
   - Do: move `network/`, `scripts/`, `server/`, `frontend/`, `.env.example`, and a template README. Rename the template `.gitignore` to `gitignore`, because npm removes `.gitignore` files on publish. Make the root an npm workspace. Update the CI paths.
+  - Done: the template is a standalone npm project with its own lockfiles. It is not a workspace member, so a new project gets the same files. The root workspace has only the CLI package. The root `install:all`, `dev`, `lint`, `typecheck`, and `build` scripts run the template scripts. The template `gitignore` also has the `frontend/.gitignore` rules, so the CLI renames only one file.
   - Read: root `package.json`, `.github/workflows/ci.yml`.
   - Exit: the CI steps pass locally. `npm run dev` in the template folder still works.
 - [ ] **C4.2 CLI command.** Add `packages/create-ln-app/src/cli.ts`. Compile it to JavaScript with `tsc` in a `prepack` script.
-  - Do: check Node 24 or later first. Copy the template, rename `gitignore` to `.gitignore`, set the package name, run `npm install` and `git init`, and show the next steps. Add `--skip-install`.
+  - Do: check Node 24 or later first. Copy the template, rename `gitignore` to `.gitignore`, set the package name, run `npm install` and `git init`, and show the next steps. Add `--skip-install`. Keep `template/.env`, `template/network/data/`, and `template/frontend/dist/` out of the package. Measured on 2026-10-28: `npm pack` includes them.
   - Read: `packages/create-ln-app/package.json`.
-  - Exit: `npm pack`, then `npx ./create-ln-app-<version>.tgz /tmp/x` makes a project where `npm run lint` and `npm run typecheck` pass.
+  - Exit: `npm pack`, then `npx ./create-ln-app-<version>.tgz /tmp/x` makes a project where `npm run lint` and `npm run typecheck` pass. The tarball has no `.env` file and no node data.
 - [ ] **C4.3 Preflight check.** Add `scripts/doctor.ts` and `npm run doctor` to the template. The CLI runs it in the new project after install.
   - Do: check that the Docker daemon runs, that `docker compose version` works, and that ports 8081-8083, 10001-10003, 9735-9737, and 18443 are free. Show one fix for each failed check.
   - Read: `packages/create-ln-app/src/cli.ts`, the template `package.json`.
