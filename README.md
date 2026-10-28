@@ -1,7 +1,5 @@
 # create-ln-app
 
-> **Status: pre-1.0.** See [ROADMAP.md](ROADMAP.md) for the plan to 1.0.
-
 `create-ln-app` makes a Lightning app (Lapp) project with one command. The project has three parts:
 
 1. A local Bitcoin Lightning Network for development: Bitcoin Core and 3 LND nodes on regtest.
@@ -61,6 +59,8 @@ If a step fails, see [Troubleshooting](docs/troubleshooting.md).
 ## Development
 
 To change create-ln-app itself, see [CONTRIBUTING.md](CONTRIBUTING.md). It has the set-up steps, the checks, the tests, and the publish steps.
+
+The changes in each release are in [CHANGELOG.md](CHANGELOG.md). The plan after 1.0 is in [ROADMAP.md](ROADMAP.md#after-10).
 
 ## License
 

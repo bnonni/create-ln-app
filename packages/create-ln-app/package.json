@@ -1,6 +1,6 @@
 {
   "name": "create-ln-app",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "description": "Make a Lightning app with a local regtest network: Bitcoin Core, 3 LND nodes, an API server, and an example app.",
   "license": "MIT",
   "type": "module",

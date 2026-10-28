@@ -1,7 +1,5 @@
 # create-ln-app
 
-> **Status: pre-1.0.** See the [roadmap](https://github.com/bnonni/create-ln-app/blob/master/ROADMAP.md).
-
 Make a Lightning app (Lapp) with a local regtest network. The new project has three parts:
 
 1. A local Bitcoin Lightning Network for development: Bitcoin Core and 3 LND nodes on regtest.
@@ -44,6 +42,7 @@ The README in the new project has all the commands and the network reference.
 - Source: <https://github.com/bnonni/create-ln-app>
 - [Troubleshooting](https://github.com/bnonni/create-ln-app/blob/master/docs/troubleshooting.md)
 - [Architecture](https://github.com/bnonni/create-ln-app/blob/master/docs/architecture.md)
+- [Changelog](https://github.com/bnonni/create-ln-app/blob/master/CHANGELOG.md)
 
 ## License
 
