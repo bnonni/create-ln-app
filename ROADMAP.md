@@ -88,14 +88,14 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
   - Decide: use the Polar images if `docker manifest inspect` shows amd64 and arm64. If not, use `lightninglabs/lnd`.
   - Read: `backend/docker/compose/docker-compose.yml`, `package.json`, `README.md` ("Network reference" only).
   - Exit: `docker compose -f network/docker-compose.yml up -d --wait` exits 0. `lncli -n regtest getinfo` works in all 3 LND containers. Then run `down`.
-- [ ] **C1.2 Bootstrap script.** Add `scripts/bootstrap.ts` and `npm run bootstrap`.
+- [x] **C1.2 Bootstrap script.** Add `scripts/bootstrap.ts` and `npm run bootstrap`.
   - Do: wait for healthy containers. Fund each LND wallet: mine 1 block to a new address of each node, then mine 100 blocks (no bitcoind wallet is necessary). Wait until each node shows `synced_to_chain: true`. Use `docker compose exec` with `bitcoin-cli` and `lncli`. Run `lncli` as the `lnd` user (`exec -u lnd`). Skip the funding if the balance is already more than 0.
   - Also: add a root `tsconfig.json` (`noEmit`, `allowImportingTsExtensions`, `erasableSyntaxOnly`), `typescript` and `@types/node` as dev dependencies, and root files in `typecheck`.
   - Read: `network/docker-compose.yml`, `package.json`.
   - Exit: `npm run bootstrap` passes 2 times in sequence. Each node has a confirmed balance more than 0.
 - [ ] **C1.3 Env script.** Add `scripts/env.ts`, `npm run env`, and `.env.example`.
-  - Do: for each node, write `LND_<NAME>_REST_URL`, `LND_<NAME>_MACAROON_HEX`, and `LND_<NAME>_TLS_CERT_PATH` to a root `.env`. Also write `BITCOIND_RPC_URL`, `BITCOIND_RPC_USER`, and `BITCOIND_RPC_PASS`. If the host cannot read a file, read it with `docker compose exec`. Delete `scripts/setup.env.js` and `backend/`.
-  - Read: `network/docker-compose.yml`, `scripts/setup.env.js`, `package.json`.
+  - Do: for each node, write `LND_<NAME>_REST_URL`, `LND_<NAME>_MACAROON_HEX`, and `LND_<NAME>_TLS_CERT_PATH` to a root `.env`. Also write `BITCOIND_RPC_URL`, `BITCOIND_RPC_USER`, and `BITCOIND_RPC_PASS`. If the host cannot read a file, read it with `docker compose exec`. Delete `scripts/setup.env.cjs` and `backend/`.
+  - Read: `network/docker-compose.yml`, `scripts/setup.env.cjs`, `package.json`.
   - Exit: with values from `.env`, `curl --cacert <tls.cert> -H "Grpc-Metadata-macaroon: <hex>" https://127.0.0.1:8081/v1/getinfo` returns the alice pubkey.
 - [ ] **C1.4 Dev command.** Add `npm run network`, `npm run dev`, `npm run down`, and `npm run reset`.
   - Do: `network` runs `docker compose up`, `bootstrap`, and `env` in sequence. `dev` runs `network`, then the frontend. `reset` deletes the node data in `network/data/`, but keeps `network/data/.gitkeep`. On Linux, Docker creates a missing bind-mount directory as root, and then the user cannot delete it. Remove the old `start`, `watch:*`, and `start:backend:*` scripts. Update the README "Quick start".
