@@ -51,7 +51,7 @@ npm run typecheck   # TypeScript, no emit
 npm run build       # Vite production build of the example app
 ```
 
-CI runs the three commands on each push to `master` and on each pull request.
+CI runs the three commands on each push to `master` and on each pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for the CLI tests and the publish steps.
 
 ## License
 

@@ -160,10 +160,11 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
   - Done: the script gets the host ports from `docker compose config`, so it also checks 19444, 28334, and 29335. It also checks the API server port (`API_PORT`, default 3001). The script uses only Node built-in modules, so the CLI runs it with `--skip-install` too. A failed check does not stop the CLI. The CLI then adds `npm run doctor` to the next steps.
   - Read: `packages/create-ln-app/src/cli.ts`, the template `package.json`.
   - Exit: with Docker stopped, `npm run doctor` fails and shows the fix. With Docker on, it passes.
-- [ ] **C4.4 Prerelease.** Set version `0.9.0`. Check the `bin`, `files`, and `engines` fields (C4.2 added them).
+- [x] **C4.4 Prerelease.** Set version `0.9.0`. Check the `bin`, `files`, and `engines` fields (C4.2 added them).
   - Do: run `npm publish --dry-run`. Write the publish steps in `CONTRIBUTING.md`.
   - Read: `packages/create-ln-app/package.json`.
   - Exit: the dry run lists only the CLI build and the template. Owner: run `npm publish --tag next`, then test `npx create-ln-app@next my-lapp && cd my-lapp && npm run dev` on clean macOS and Linux machines.
+  - Done: version `0.9.0`. The `name` is free on npm. The dry run lists 40 files: `dist/cli.js`, `package.json`, a package `README.md` (the npm page), a `LICENSE` copy, and the 36 tracked template files. `CONTRIBUTING.md` has the checks, the CLI tests, and the publish steps. A packed tarball needs `npx --package <tgz> create-ln-app`, because npx runs an absolute `.tgz` path as a file.
 
 ### M5: Release 1.0 (branch `m5-release`)
 
