@@ -155,8 +155,9 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
   - Done: the package has the `bin` and `files` fields. The `files` field also excludes the template `node_modules` folders, because an explicit `files` entry includes them. The CLI makes the package name from the folder name and sets it in `package.json` and `package-lock.json`. It runs `npm run install:all`, because the template has 2 lockfiles. It does not run `git init` if the project is in a git repository. The root `typecheck` and `build` scripts also check and build the CLI.
   - Read: `packages/create-ln-app/package.json`.
   - Exit: `npm pack`, then `npx ./create-ln-app-<version>.tgz /tmp/x` makes a project where `npm run lint` and `npm run typecheck` pass. The tarball has no `.env` file and no node data.
-- [ ] **C4.3 Preflight check.** Add `scripts/doctor.ts` and `npm run doctor` to the template. The CLI runs it in the new project after install.
+- [x] **C4.3 Preflight check.** Add `scripts/doctor.ts` and `npm run doctor` to the template. The CLI runs it in the new project after install.
   - Do: check that the Docker daemon runs, that `docker compose version` works, and that ports 8081-8083, 10001-10003, 9735-9737, and 18443 are free. Show one fix for each failed check.
+  - Done: the script gets the host ports from `docker compose config`, so it also checks 19444, 28334, and 29335. It also checks the API server port (`API_PORT`, default 3001). The script uses only Node built-in modules, so the CLI runs it with `--skip-install` too. A failed check does not stop the CLI. The CLI then adds `npm run doctor` to the next steps.
   - Read: `packages/create-ln-app/src/cli.ts`, the template `package.json`.
   - Exit: with Docker stopped, `npm run doctor` fails and shows the fix. With Docker on, it passes.
 - [ ] **C4.4 Prerelease.** Set version `0.9.0`. Check the `bin`, `files`, and `engines` fields (C4.2 added them).

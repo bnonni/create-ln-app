@@ -10,6 +10,7 @@
     "network": "docker compose -f network/docker-compose.yml up -d --wait && npm run bootstrap && npm run env",
     "down": "docker compose -f network/docker-compose.yml down",
     "reset": "node scripts/reset.ts",
+    "doctor": "node scripts/doctor.ts",
     "bootstrap": "node scripts/bootstrap.ts",
     "env": "node scripts/env.ts",
     "build": "npm --prefix frontend run build",

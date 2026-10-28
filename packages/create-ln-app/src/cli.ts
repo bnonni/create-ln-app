@@ -108,11 +108,21 @@ function main(): void {
     }
   }
 
+  // The doctor script uses only Node built-in modules, so it runs with --skip-install too.
+  // A failed check does not stop the CLI, because the project is complete.
+  console.log('Checks for Docker and the ports:');
+  const ready = run('npm', ['run', '--silent', 'doctor'], target);
+
   const cdPath = relative(process.cwd(), target) || '.';
   const cdArg = /^[\w./-]+$/.test(cdPath) ? cdPath : `"${cdPath}"`;
-  const steps = [`cd ${cdArg}`, ...(skipInstall ? ['npm run install:all'] : []), 'npm run dev'];
+  const steps = [
+    `cd ${cdArg}`,
+    ...(skipInstall ? ['npm run install:all'] : []),
+    ...(ready ? [] : ['npm run doctor']),
+    'npm run dev',
+  ];
   console.log(`
-Next steps (Docker must run):
+Next steps${ready ? '' : ' (do the fixes above first)'}:
 ${steps.map((step) => `  ${step}`).join('\n')}
 
 Then open ${APP_URL}. See README.md for all commands.`);

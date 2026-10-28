@@ -35,6 +35,7 @@ The `dev` command starts 1 bitcoind node and 3 LND nodes, funds the LND nodes, a
 | `npm run server` | Starts only the API server. It reads `.env` one time at start, so restart it after `npm run network`. Set `API_PORT` to change the port (default 3001). |
 | `npm run network` | Starts and funds the network, then writes `.env`. It does not start the app. |
 | `npm run down` | Stops the network. The node data stays in `network/data/`. |
+| `npm run doctor` | Checks Docker, Docker Compose, and the ports. Run it when the network is down. It shows a fix for each failed check. |
 | `npm run reset` | Stops the network and deletes the node data. The next start makes new nodes. |
 | `npm run test:integration` | Opens a channel and pays an invoice through the API server. The network must run. |
 
