@@ -123,8 +123,8 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
 
 ### M3: Example Lapp (branch `m3-app`)
 
-- [ ] **C3.1 Vite migration.** Replace Create React App with Vite (React, TypeScript) in `frontend/`.
-  - Do: keep the current UI. Replace MUI and styled-components with plain CSS and a native `<select>`. Move ESLint to a flat config. Proxy `/api` to the server. Keep `lint` and `typecheck`. Add `build`. Update the app port in the README.
+- [x] **C3.1 Vite migration.** Replace Create React App with Vite (React, TypeScript) in `frontend/`.
+  - Do: keep the current UI. Replace MUI and styled-components with plain CSS and a native `<select>`. Replace ESLint with oxlint (decision 2026-10-28: typescript-eslint does not support TypeScript 7; the create-vite template uses oxlint). Proxy `/api` to the server. Keep `lint` and `typecheck`. Add `build`. Update the app port in the README.
   - Read: `frontend/package.json`, `frontend/src/App.tsx`, `frontend/src/index.tsx`, `frontend/src/components/Page.tsx`.
   - Exit: `npm run lint`, `npm run typecheck`, and `npm --prefix frontend run build` pass.
 - [ ] **C3.2 API client and node state.** Add `frontend/src/api.ts`, a typed client for `server/API.md`.

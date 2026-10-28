@@ -39,7 +39,7 @@ On macOS, start Docker Desktop before you continue.
    npm run dev
    ```
 
-The `dev` command starts 1 bitcoind node and 3 LND nodes, funds the LND nodes, and writes the node values to `.env`. Then it starts the API server at <http://localhost:3001/api> and the example app at <http://localhost:3000>. The first start pulls the Docker images, so it takes more time.
+The `dev` command starts 1 bitcoind node and 3 LND nodes, funds the LND nodes, and writes the node values to `.env`. Then it starts the API server at <http://localhost:3001/api> and the example app at <http://localhost:5173>. The first start pulls the Docker images, so it takes more time.
 
 | Command | Result |
 |---|---|
@@ -100,11 +100,12 @@ API reference: [Bitcoin Core REST interface](https://github.com/bitcoin/bitcoin/
 ## Development
 
 ```sh
-npm run lint        # ESLint, zero warnings allowed
+npm run lint        # oxlint, zero warnings allowed
 npm run typecheck   # TypeScript, no emit
+npm run build       # Vite production build of the example app
 ```
 
-CI runs both commands on each push to `master` and on each pull request.
+CI runs the three commands on each push to `master` and on each pull request.
 
 ## Credits
 

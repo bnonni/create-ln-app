@@ -1,7 +1,6 @@
-import { Select, MenuItem, SelectChangeEvent } from '@mui/material';
-import { useState } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import { useLightning } from '../lightning/LightningStore';
-import { Button, Input, Container, Step, Text } from './Page.styles';
+import './Page.css';
 import { Env } from "../Env"
 
 const Page = () => {
@@ -14,7 +13,7 @@ const Page = () => {
   // const [endpoint, setEndpoint] = useState<LightningStore>(REST_ENDPOINT);
   // const [macaroon, setMacaroon] = useState('')
 
-  const handleWhoAmI = async (event: SelectChangeEvent) => {
+  const handleWhoAmI = async (event: ChangeEvent<HTMLSelectElement>) => {
     const id: any = event.target.value;
     let Me: any;
     switch (id) {
@@ -59,75 +58,74 @@ const Page = () => {
   };
 
   return (
-    <Container>
-      <Text size={'2'}>Steps</Text>
-      <Step>
-        <Text>Who are you?</Text>
-        <Select
-          style={{ width: "30%" }}
-          labelId="nodeId"
+    <div className="page">
+      <p className="page-title">Steps</p>
+      <div className="step">
+        <p>Who are you?</p>
+        <select
           id="nodeId"
-          label="Age"
+          defaultValue=""
           onChange={handleWhoAmI}
         >
-          <MenuItem value={"1"}>Alice</MenuItem>
-          <MenuItem value={"2"}>Bob</MenuItem>
-          <MenuItem value={"3"}>Carol</MenuItem>
-        </Select>
-        <Text>You are now {name.toUpperCase()}</Text>
-        <Text>Connection Information:</Text>
-        <Text>ID: {me.id}</Text>
-        <Text>Name: {me.name}</Text>
-        <Text>Macaroon: {me.macaroon.slice(0, 80)}</Text>
-        <Text>URL: {me.url}</Text>
-      </Step>
+          <option value="" disabled>Select a node</option>
+          <option value={"1"}>Alice</option>
+          <option value={"2"}>Bob</option>
+          <option value={"3"}>Carol</option>
+        </select>
+        <p>You are now {name.toUpperCase()}</p>
+        <p>Connection Information:</p>
+        <p>ID: {me.id}</p>
+        <p>Name: {me.name}</p>
+        <p>Macaroon: {me.macaroon.slice(0, 80)}</p>
+        <p>URL: {me.url}</p>
+      </div>
 
-      <Step>
-        <Text>List peers</Text>
-        <Button
+      <div className="step">
+        <p>List peers</p>
+        <button
           onClick={() => lightningStore.listPeers()}
         >
           List
-        </Button>
-      </Step>
+        </button>
+      </div>
 
-      <Step>
-        <Text>2. Open a channel to Bob</Text>
-        <Button
+      <div className="step">
+        <p>2. Open a channel to Bob</p>
+        <button
           onClick={() => lightningStore.openChannel('pubkey', 10000)}
         >
           Open channel
-        </Button>
-      </Step>
+        </button>
+      </div>
 
-      <Step>
-        <Text>3. Mine a block 6 times to confirm the channel</Text>
-        <Button>Mine Block</Button>
-      </Step>
+      <div className="step">
+        <p>3. Mine a block 6 times to confirm the channel</p>
+        <button>Mine Block</button>
+      </div>
 
-      <Step>
-        <Text>4. Mine request an invoice from Bob.</Text>
-        <Button>Request Invoice</Button>
+      <div className="step">
+        <p>4. Mine request an invoice from Bob.</p>
+        <button>Request Invoice</button>
         <label>
-          <Input
+          <input
             name="invoice"
             disabled
             type="text"
             value={invoice || 'lnbc124324112341...'}
           />
         </label>
-      </Step>
+      </div>
 
-      <Step>
-        <Text>5. Pay the requested invoice.</Text>
-        <Button>Pay Invoice</Button>
-        <Input
+      <div className="step">
+        <p>5. Pay the requested invoice.</p>
+        <button>Pay Invoice</button>
+        <input
           disabled
           type="text"
           value={invoice || 'lnbc124324112341...'}
         />
-      </Step>
-    </Container>
+      </div>
+    </div>
   );
 };
 export default Page;

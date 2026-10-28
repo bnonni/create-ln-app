@@ -1,16 +1,24 @@
+import { useEffect, useState } from 'react';
 import './App.css';
-import { Container, Title, Text } from './App.styles';
 import Page from './components/Page';
+import { LightningStore, LightningStoreContext } from './lightning/LightningStore';
 
 function App() {
+  const [ lightningStore ] = useState<LightningStore>(new LightningStore());
+
+  useEffect(() => {
+    lightningStore.initialize("", "");
+  }, [lightningStore]);
 
   return (
-    <Container>
-        <Title> Create LN App </Title>
-        <Text size={'2'}> Get Started with creating a full-stack App on the Lightning Network. </Text>
+    <LightningStoreContext.Provider value={lightningStore}>
+      <div className="app">
+          <h1 className="app-title"> Create LN App </h1>
+          <p className="app-text"> Get Started with creating a full-stack App on the Lightning Network. </p>
 
-        <Page />
-    </Container>
+          <Page />
+      </div>
+    </LightningStoreContext.Provider>
   );
 }
 

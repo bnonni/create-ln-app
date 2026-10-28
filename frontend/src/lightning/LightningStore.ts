@@ -18,17 +18,17 @@ export class LightningStore {
     console.log("whoAmI", N);
     this.me = N;
     if (N === "1") {
-      this.me = process.env.REACT_APP_NODE_1_NAME;
-      this.restEndpoint = process.env.REACT_APP_NODE_1_URL;
-      this.adminMacaroon = process.env.REACT_APP_NODE_1_ADMIN_MACAROON;
+      this.me = import.meta.env.REACT_APP_NODE_1_NAME;
+      this.restEndpoint = import.meta.env.REACT_APP_NODE_1_URL;
+      this.adminMacaroon = import.meta.env.REACT_APP_NODE_1_ADMIN_MACAROON;
     } else if (N === "2"){
-      this.me = process.env.REACT_APP_NODE_2_NAME;
-      this.restEndpoint = process.env.REACT_APP_NODE_2_URL;
-      this.adminMacaroon = process.env.REACT_APP_NODE_2_ADMIN_MACAROON;
+      this.me = import.meta.env.REACT_APP_NODE_2_NAME;
+      this.restEndpoint = import.meta.env.REACT_APP_NODE_2_URL;
+      this.adminMacaroon = import.meta.env.REACT_APP_NODE_2_ADMIN_MACAROON;
     } else {
-      this.me = process.env.REACT_APP_NODE_3_NAME;
-      this.restEndpoint = process.env.REACT_APP_NODE_3_URL;
-      this.adminMacaroon = process.env.REACT_APP_NODE_3_ADMIN_MACAROON;
+      this.me = import.meta.env.REACT_APP_NODE_3_NAME;
+      this.restEndpoint = import.meta.env.REACT_APP_NODE_3_URL;
+      this.adminMacaroon = import.meta.env.REACT_APP_NODE_3_ADMIN_MACAROON;
     }
     console.log(this.me)
     console.log(this.restEndpoint)
@@ -48,7 +48,7 @@ export class LightningStore {
     console.log(data)
   }
 
-  async openChannel(pubkey: string, amount: number) {
+  async openChannel(_pubkey: string, _amount: number) {
     console.log("Open Channel");
   }
 
@@ -56,11 +56,11 @@ export class LightningStore {
     console.log(`${count} blocks mined.`);
   }
 
-  async generateInvoice(amount: number, memo: string) {
+  async generateInvoice(_amount: number, _memo: string) {
     console.log('invoice: lnbc...');
   }
 
-  async payInvoice(paymentRequest: string) {
+  async payInvoice(_paymentRequest: string) {
     console.log('invoice paid!');
   }
 
