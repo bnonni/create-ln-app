@@ -53,10 +53,6 @@ npm run build       # Vite production build of the example app
 
 CI runs the three commands on each push to `master` and on each pull request.
 
-## Credits
-
-The [ATL BitLab](https://github.com/ATLBitLab/create-ln-app) team (formerly Terminus Labs) started `create-ln-app` in 2022. This repo continues the project.
-
 ## License
 
 MIT. See [LICENSE](LICENSE).

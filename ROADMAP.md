@@ -2,7 +2,7 @@
 
 Status: accepted, 2026-10-27. Audit base: commit `d4ce9d7`.
 
-This repo is the main `create-ln-app` project. It started as a fork of [ATLBitLab/create-ln-app](https://github.com/ATLBitLab/create-ln-app) (formerly `terminus-btc/create-ln-app`). The original repo is old and does not get updates.
+This repo is the main `create-ln-app` project.
 
 ## Goal
 
@@ -48,7 +48,7 @@ Decisions 4 and 5 have owner confirmation (2026-10-27). The owner can change dec
 2. **Add a thin API server (Hono on Node 24).** The browser talks only to this server. The server talks to LND and bitcoind. This keeps macaroons out of the browser, removes the TLS and CORS problems, and gives access to bitcoind RPC to mine blocks.
 3. **Use Vite, React, TypeScript, and plain CSS.** Replace Create React App. Remove MUI and styled-components. Ship one template (TypeScript) in 1.0.
 4. **Own the network config. Use LND only in 1.0.** Remove the Polar export dependency. Latest tags on 2026-10-27: `polarlightning/lnd:0.20.0-beta`, `polarlightning/bitcoind:30.0`, `lightninglabs/lnd:v0.21.5-beta`.
-5. **This fork is the main project.** Detach it from the ATLBitLab fork network. Use `bnonni/create-ln-app` in all URLs. Publish to npm from the owner account. Keep the original MIT copyright line.
+5. **This fork is the main project.** Detach it from the fork network. Use `bnonni/create-ln-app` in all URLs. Publish to npm from the owner account. The MIT copyright line names `bnonni` (decision 2026-10-28).
 
 ## Audit (commit `d4ce9d7`)
 
@@ -79,7 +79,7 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
 
 - [x] Code: remove `frontend/.env` and unused files, rewrite the README, add `lint`, `typecheck`, and CI. Branch `chore/m0-clean-base`.
 - [ ] Owner: detach the fork: **Settings > General > Danger Zone > Leave fork network**. The fork has 0 child forks, 0 issues, and 0 stars, so it loses no data. This change is permanent. Reference: [Detaching a fork](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/detaching-a-fork).
-- [ ] Owner: open a PR for `chore/m0-clean-base` and make sure that CI is green. Detach first. Before the detach, `gh pr create` targets ATLBitLab, so use `gh pr create -R bnonni/create-ln-app --base master`.
+- [ ] Owner: open a PR for `chore/m0-clean-base` and make sure that CI is green. Detach first. Before the detach, `gh pr create` targets the parent repo, so use `gh pr create -R bnonni/create-ln-app --base master`.
 
 ### M1: Regtest network (branch `m1-network`)
 
