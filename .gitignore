@@ -7,6 +7,10 @@ node_modules/
 # Logs
 npm-debug.log*
 
+# CLI build output and npm pack files
+packages/create-ln-app/dist/
+*.tgz
+
 # Template files that a local run makes. The template ignore file is
 # packages/create-ln-app/template/gitignore, and git does not read it.
 packages/create-ln-app/template/.env

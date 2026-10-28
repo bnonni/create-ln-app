@@ -9,7 +9,28 @@
     "url": "git+https://github.com/bnonni/create-ln-app.git",
     "directory": "packages/create-ln-app"
   },
+  "bin": {
+    "create-ln-app": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "template",
+    "!template/**/node_modules",
+    "!template/.env",
+    "!template/frontend/dist",
+    "!template/network/data/*",
+    "template/network/data/.gitkeep"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepack": "npm run build"
+  },
   "engines": {
     "node": ">=24"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2"
   }
 }

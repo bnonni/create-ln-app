@@ -150,15 +150,16 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
   - Done: the template is a standalone npm project with its own lockfiles. It is not a workspace member, so a new project gets the same files. The root workspace has only the CLI package. The root `install:all`, `dev`, `lint`, `typecheck`, and `build` scripts run the template scripts. The template `gitignore` also has the `frontend/.gitignore` rules, so the CLI renames only one file.
   - Read: root `package.json`, `.github/workflows/ci.yml`.
   - Exit: the CI steps pass locally. `npm run dev` in the template folder still works.
-- [ ] **C4.2 CLI command.** Add `packages/create-ln-app/src/cli.ts`. Compile it to JavaScript with `tsc` in a `prepack` script.
+- [x] **C4.2 CLI command.** Add `packages/create-ln-app/src/cli.ts`. Compile it to JavaScript with `tsc` in a `prepack` script.
   - Do: check Node 24 or later first. Copy the template, rename `gitignore` to `.gitignore`, set the package name, run `npm install` and `git init`, and show the next steps. Add `--skip-install`. Keep `template/.env`, `template/network/data/`, and `template/frontend/dist/` out of the package. Measured on 2026-10-28: `npm pack` includes them.
+  - Done: the package has the `bin` and `files` fields. The `files` field also excludes the template `node_modules` folders, because an explicit `files` entry includes them. The CLI makes the package name from the folder name and sets it in `package.json` and `package-lock.json`. It runs `npm run install:all`, because the template has 2 lockfiles. It does not run `git init` if the project is in a git repository. The root `typecheck` and `build` scripts also check and build the CLI.
   - Read: `packages/create-ln-app/package.json`.
   - Exit: `npm pack`, then `npx ./create-ln-app-<version>.tgz /tmp/x` makes a project where `npm run lint` and `npm run typecheck` pass. The tarball has no `.env` file and no node data.
 - [ ] **C4.3 Preflight check.** Add `scripts/doctor.ts` and `npm run doctor` to the template. The CLI runs it in the new project after install.
   - Do: check that the Docker daemon runs, that `docker compose version` works, and that ports 8081-8083, 10001-10003, 9735-9737, and 18443 are free. Show one fix for each failed check.
   - Read: `packages/create-ln-app/src/cli.ts`, the template `package.json`.
   - Exit: with Docker stopped, `npm run doctor` fails and shows the fix. With Docker on, it passes.
-- [ ] **C4.4 Prerelease.** Set version `0.9.0` and the `bin`, `files`, and `engines` fields.
+- [ ] **C4.4 Prerelease.** Set version `0.9.0`. Check the `bin`, `files`, and `engines` fields (C4.2 added them).
   - Do: run `npm publish --dry-run`. Write the publish steps in `CONTRIBUTING.md`.
   - Read: `packages/create-ln-app/package.json`.
   - Exit: the dry run lists only the CLI build and the template. Owner: run `npm publish --tag next`, then test `npx create-ln-app@next my-lapp && cd my-lapp && npm run dev` on clean macOS and Linux machines.

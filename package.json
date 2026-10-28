@@ -9,7 +9,7 @@
     "install:all": "npm install && npm --prefix packages/create-ln-app/template run install:all",
     "dev": "npm --prefix packages/create-ln-app/template run dev",
     "lint": "npm --prefix packages/create-ln-app/template run lint",
-    "typecheck": "npm --prefix packages/create-ln-app/template run typecheck",
-    "build": "npm --prefix packages/create-ln-app/template run build"
+    "typecheck": "npm run typecheck -w create-ln-app && npm --prefix packages/create-ln-app/template run typecheck",
+    "build": "npm run build -w create-ln-app && npm --prefix packages/create-ln-app/template run build"
   }
 }
