@@ -76,11 +76,11 @@ M3 can start in parallel with M2 after M2 defines the API contract.
 
 Code:
 
-- [ ] Remove `frontend/.env` from git. Add `.env` to `.gitignore`.
-- [ ] Remove the unused files in "Hygiene" item 3. Replace the `docker-compose` v1 command with `docker compose`.
-- [ ] Rewrite the README: pre-1.0 status, fork URLs, and credit to the original authors. Remove the instructions that do not match the code.
-- [ ] Add `lint` and `typecheck` scripts. Lint must allow zero warnings.
-- [ ] Add a GitHub Actions workflow that runs `npm ci`, `lint`, and `typecheck`.
+- [x] Remove `frontend/.env` from git. Add `.env` to `.gitignore`.
+- [x] Remove the unused files in "Hygiene" item 3. Replace the `docker-compose` v1 command with `docker compose`.
+- [x] Rewrite the README: pre-1.0 status, fork URLs, and credit to the original authors. Remove the instructions that do not match the code.
+- [x] Add `lint` and `typecheck` scripts. Lint must allow zero warnings.
+- [x] Add a GitHub Actions workflow that runs `npm ci`, `lint`, and `typecheck`.
 
 GitHub (owner action):
 
