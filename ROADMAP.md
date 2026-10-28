@@ -182,7 +182,7 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
   - Do: select the landing page for `create-ln-app.dev`. GitHub Pages serves the repo root now, so `README.md` is the landing page. Remove the old to-do page in `docs/index.html`. Add `CHANGELOG.md`. Set version `1.0.0`.
   - Read: `docs/index.html`, the CLI `package.json`.
   - Exit: all 5 checks in "Definition of done for 1.0" pass. Owner: tag `v1.0.0`, merge, and run `npm publish`.
-  - Done: `README.md` is the landing page. The old to-do page `docs/index.html` is removed. `CHANGELOG.md` is at the repo root. The version is `1.0.0`. The "Status: pre-1.0" lines are removed. On Linux, the packed `1.0.0` tarball passes checks 1 to 4. The E2E test passes with `LAPP_DIR` set to the new project. With cached images and npm packages, the time from `npx` to a ready app is 22 s. The checks in CI and on macOS are for the owner.
+  - Done: `README.md` is the landing page. After the release, a short `index.html` at the repo root replaced it (owner request). The old to-do page `docs/index.html` is removed. `CHANGELOG.md` is at the repo root. The version is `1.0.0`. The "Status: pre-1.0" lines are removed. On Linux, the packed `1.0.0` tarball passes checks 1 to 4. The E2E test passes with `LAPP_DIR` set to the new project. With cached images and npm packages, the time from `npx` to a ready app is 22 s. The checks in CI and on macOS are for the owner.
 
 ## After 1.0
 
