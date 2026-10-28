@@ -4,13 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "concurrently npm:watch:*",
-    "install:all": "npm install && npm run install:frontend",
-    "install:frontend": "cd frontend && npm install && cd ..",
-    "watch:frontend": "cd frontend && npm start",
-    "watch:backend": "docker compose -f network/docker-compose.yml up",
-    "start:backend:polar": "open -a Polar",
-    "start:backend:compose": "docker compose -f network/docker-compose.yml up",
+    "install:all": "npm install && npm --prefix frontend install",
+    "dev": "npm run network && npm --prefix frontend start",
+    "network": "docker compose -f network/docker-compose.yml up -d --wait && npm run bootstrap && npm run env",
+    "down": "docker compose -f network/docker-compose.yml down",
+    "reset": "node scripts/reset.ts",
     "bootstrap": "node scripts/bootstrap.ts",
     "env": "node scripts/env.ts",
     "lint": "npm --prefix frontend run lint",
@@ -18,7 +16,6 @@
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
-    "concurrently": "^7.5.0",
     "typescript": "^7.0.2"
   }
 }

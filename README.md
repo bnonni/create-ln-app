@@ -36,12 +36,19 @@ On macOS, start Docker Desktop before you continue.
    ```
 3. Start the network and the example app:
    ```sh
-   npm start
+   npm run dev
    ```
 
-The example app opens at <http://localhost:3000>.
+The `dev` command starts 1 bitcoind node and 3 LND nodes, funds the LND nodes, and writes the node values to `.env`. Then it starts the example app at <http://localhost:3000>. The first start pulls the Docker images, so it takes more time.
 
-Known issue: in this pre-1.0 version, the app does not get the node credentials. The env script reads macaroon paths that are not correct on your machine. Milestones M1 to M3 in [ROADMAP.md](ROADMAP.md) fix this.
+| Command | Result |
+|---|---|
+| `npm run dev` | Starts the network and the example app. |
+| `npm run network` | Starts and funds the network, then writes `.env`. It does not start the app. |
+| `npm run down` | Stops the network. The node data stays in `network/data/`. |
+| `npm run reset` | Stops the network and deletes the node data. The next start makes new nodes. |
+
+Known issue: in this pre-1.0 version, the example app does not read the node values in `.env`. Milestones M2 and M3 in [ROADMAP.md](ROADMAP.md) fix this.
 
 ## Network reference
 
