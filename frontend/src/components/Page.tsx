@@ -1,60 +1,41 @@
-import { useState, type ChangeEvent } from 'react';
-import { useLightning } from '../lightning/LightningStore';
+import { useEffect, useState } from 'react';
+import { getNodes, type LightningNode } from '../api';
+import NodeInfo from './NodeInfo';
 import './Page.css';
-import { Env } from "../Env"
 
 const Page = () => {
-  const lightningStore = useLightning();
   const [invoice] = useState('');
-  const [me, setMe] = useState({id: "", name: "", macaroon: "", url: ""});
+  const [nodes, setNodes] = useState<LightningNode[]>([]);
   const [name, setName] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  // Each refresh increments the version. A new version loads the nodes again.
+  const [version, setVersion] = useState(0);
+  const node = nodes.find((n) => n.name === name);
 
+  useEffect(() => {
+    // If a newer refresh starts first, ignore this reply.
+    let ignore = false;
+    getNodes()
+      .then((data) => {
+        if (ignore) return;
+        setNodes(data);
+        setError('');
+      })
+      .catch((err: unknown) => {
+        if (!ignore) setError(err instanceof Error ? err.message : String(err));
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [version]);
 
-  // const [endpoint, setEndpoint] = useState<LightningStore>(REST_ENDPOINT);
-  // const [macaroon, setMacaroon] = useState('')
-
-  const handleWhoAmI = async (event: ChangeEvent<HTMLSelectElement>) => {
-    const id: any = event.target.value;
-    let Me: any;
-    switch (id) {
-      case "1":
-        Me = {
-          id: id,
-          name: Env.NODE_1_NAME,
-          macaroon: Env.NODE_1_ADMIN_MACAROON,
-          url: Env.NODE_1_URL,
-        }
-        break;
-      case "2":
-        Me = {
-          id: "id",
-          name: Env.NODE_2_NAME,
-          macaroon: Env.NODE_2_ADMIN_MACAROON,
-          url: Env.NODE_2_URL,
-        }
-        break;
-      case "3":
-        Me = {
-          id: "id",
-          name: Env.NODE_3_NAME,
-          macaroon: Env.NODE_3_ADMIN_MACAROON,
-          url: Env.NODE_3_URL,
-        }
-        break;
-      default:
-        Me = {
-          id: id,
-          name: Env.NODE_1_NAME,
-          macaroon: Env.NODE_1_ADMIN_MACAROON,
-          url: Env.NODE_1_URL,
-        }
-        break;
-    }
-    setMe(Me)
-    setName(Me.name)
-
-    console.log("Me", Me)
-    await lightningStore.whoAmI(event.target.value);
+  const refresh = () => {
+    setLoading(true);
+    setVersion((v) => v + 1);
   };
 
   return (
@@ -62,40 +43,34 @@ const Page = () => {
       <p className="page-title">Steps</p>
       <div className="step">
         <p>Who are you?</p>
-        <select
-          id="nodeId"
-          defaultValue=""
-          onChange={handleWhoAmI}
-        >
-          <option value="" disabled>Select a node</option>
-          <option value={"1"}>Alice</option>
-          <option value={"2"}>Bob</option>
-          <option value={"3"}>Carol</option>
-        </select>
-        <p>You are now {name.toUpperCase()}</p>
-        <p>Connection Information:</p>
-        <p>ID: {me.id}</p>
-        <p>Name: {me.name}</p>
-        <p>Macaroon: {me.macaroon.slice(0, 80)}</p>
-        <p>URL: {me.url}</p>
+        <div className="row">
+          <select
+            id="nodeName"
+            value={name}
+            disabled={nodes.length === 0}
+            onChange={(event) => setName(event.target.value)}
+          >
+            <option value="" disabled>Select a node</option>
+            {nodes.map((n) => (
+              <option key={n.name} value={n.name}>{n.name}</option>
+            ))}
+          </select>
+          <button disabled={loading} onClick={refresh}>
+            Refresh
+          </button>
+        </div>
+        {error && <p className="error">{error}</p>}
+        {node && <NodeInfo node={node} nodes={nodes} />}
       </div>
 
       <div className="step">
         <p>List peers</p>
-        <button
-          onClick={() => lightningStore.listPeers()}
-        >
-          List
-        </button>
+        <button disabled>List</button>
       </div>
 
       <div className="step">
         <p>2. Open a channel to Bob</p>
-        <button
-          onClick={() => lightningStore.openChannel('pubkey', 10000)}
-        >
-          Open channel
-        </button>
+        <button disabled>Open channel</button>
       </div>
 
       <div className="step">

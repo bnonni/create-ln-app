@@ -127,8 +127,9 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
   - Do: keep the current UI. Replace MUI and styled-components with plain CSS and a native `<select>`. Replace ESLint with oxlint (decision 2026-10-28: typescript-eslint does not support TypeScript 7; the create-vite template uses oxlint). Proxy `/api` to the server. Keep `lint` and `typecheck`. Add `build`. Update the app port in the README.
   - Read: `frontend/package.json`, `frontend/src/App.tsx`, `frontend/src/index.tsx`, `frontend/src/components/Page.tsx`.
   - Exit: `npm run lint`, `npm run typecheck`, and `npm --prefix frontend run build` pass.
-- [ ] **C3.2 API client and node state.** Add `frontend/src/api.ts`, a typed client for `server/API.md`.
+- [x] **C3.2 API client and node state.** Add `frontend/src/api.ts`, a typed client for `server/API.md`.
   - Do: load the node list from `GET /api/nodes`. Show the balance and channels of the selected node, with a refresh button. Delete `Env.tsx` and the macaroon code in `LightningStore.ts`.
+  - Done: `api.ts` has a function for each endpoint and replaces all of `LightningStore.ts`. `Page.tsx` keeps the node state. `components/NodeInfo.tsx` shows the selected node.
   - Read: `server/API.md`, `frontend/src/components/Page.tsx`, `frontend/src/lightning/LightningStore.ts`.
   - Exit: `curl` of `/api/nodes` through the Vite proxy returns 3 nodes. `grep -ri macaroon frontend/src` returns nothing. The build passes.
 - [ ] **C3.3 Peer, channel, and mine steps.** Connect these 3 steps to the API.
@@ -136,7 +137,7 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
   - Read: `frontend/src/api.ts`, `frontend/src/components/Page.tsx`.
   - Exit: lint, typecheck, and build pass. Owner: in the browser, alice gets an active channel to bob (about 2 minutes).
 - [ ] **C3.4 Invoice and pay steps.** Connect these 2 steps to the API.
-  - Do: show the invoice status until it is `SETTLED`. Add a short comment at each step that tells the developer where to add their own feature.
+  - Do: show the invoice status until it is `settled`. Add a short comment at each step that tells the developer where to add their own feature.
   - Read: `frontend/src/api.ts`, `frontend/src/components/Page.tsx`.
   - Exit: lint, typecheck, and build pass. Owner: complete all 6 steps in the browser in less than 5 minutes.
 

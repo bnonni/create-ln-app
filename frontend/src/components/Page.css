@@ -31,5 +31,28 @@
 }
 
 .step select {
-  width: 30%;
+  min-width: 12rem;
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.error {
+  color: #b00020;
+}
+
+.node-info code {
+  word-break: break-all;
+}
+
+.node-info table {
+  border-collapse: collapse;
+}
+
+.node-info th,
+.node-info td {
+  padding: 0.2rem 0.6rem;
+  text-align: left;
 }
