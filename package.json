@@ -9,7 +9,13 @@
     "install:all": "npm install && npm --prefix packages/create-ln-app/template run install:all",
     "dev": "npm --prefix packages/create-ln-app/template run dev",
     "lint": "npm --prefix packages/create-ln-app/template run lint",
-    "typecheck": "npm run typecheck -w create-ln-app && npm --prefix packages/create-ln-app/template run typecheck",
-    "build": "npm run build -w create-ln-app && npm --prefix packages/create-ln-app/template run build"
+    "typecheck": "tsc -p e2e && npm run typecheck -w create-ln-app && npm --prefix packages/create-ln-app/template run typecheck",
+    "build": "npm run build -w create-ln-app && npm --prefix packages/create-ln-app/template run build",
+    "test:e2e": "playwright test -c e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2"
   }
 }

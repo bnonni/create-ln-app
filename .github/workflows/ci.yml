@@ -37,3 +37,49 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # Packs the CLI, makes a project with it, starts the regtest network, and runs the browser steps.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # The Chromium headless shell is a download of about 130 MB.
+      - name: Install the browser
+        run: npx playwright install --with-deps --only-shell chromium
+
+      - name: Make a project with the packed CLI
+        run: |
+          npm pack -w create-ln-app --pack-destination "$RUNNER_TEMP"
+          cd "$RUNNER_TEMP"
+          npx --yes --package "$RUNNER_TEMP"/create-ln-app-*.tgz create-ln-app e2e-app
+
+      - name: Start the network
+        working-directory: ${{ runner.temp }}/e2e-app
+        run: npm run network
+
+      - name: Run the E2E test
+        env:
+          LAPP_DIR: ${{ runner.temp }}/e2e-app
+        run: npm run test:e2e
+
+      - name: Show the network logs
+        if: failure()
+        working-directory: ${{ runner.temp }}/e2e-app
+        run: docker compose -f network/docker-compose.yml logs --tail 200
+
+      - name: Upload the test traces
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-test-results
+          path: e2e/test-results/

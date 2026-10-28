@@ -18,6 +18,7 @@
 | --- | --- |
 | `packages/create-ln-app/src/` | The CLI (`npx create-ln-app`). |
 | `packages/create-ln-app/template/` | The project that the CLI copies. It is a standalone npm project, not a workspace member. |
+| `e2e/` | The Playwright test of the browser steps. |
 
 ## Checks
 
@@ -36,6 +37,23 @@ npm run network
 npm run test:integration
 npm run down
 ```
+
+The E2E test does the browser steps of the example app in Chromium. It starts the API server and Vite. If they already run, the test uses them. The network must run first.
+
+1. Install the browser one time (about 130 MB):
+   ```sh
+   npx playwright install --only-shell chromium
+   ```
+2. Start the network in `packages/create-ln-app/template/`:
+   ```sh
+   npm run network
+   ```
+3. Run the test from the repo root:
+   ```sh
+   npm run test:e2e
+   ```
+
+To test a project that the CLI made, set `LAPP_DIR` to the project folder, for example `LAPP_DIR=/tmp/test-app npm run test:e2e`. CI packs the CLI, makes a project, and runs the test on it. If the test fails in CI, the job shows the network logs and uploads the Playwright traces.
 
 ## Test the CLI
 

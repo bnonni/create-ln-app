@@ -17,3 +17,6 @@ packages/create-ln-app/template/.env
 packages/create-ln-app/template/frontend/dist/
 packages/create-ln-app/template/network/data/*
 !packages/create-ln-app/template/network/data/.gitkeep
+
+# Playwright output
+e2e/test-results/
