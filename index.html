@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>create-ln-app: make a Lightning app with one command</title>
+  <meta name="description" content="Make a Lightning app with a local regtest network: Bitcoin Core, 3 LND nodes, an API server, and an example app.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <style>
+    :root { color-scheme: light dark; --accent: #f7931a; --muted: #6b7280; --code-bg: rgb(127 127 127 / 0.12); }
+    body { margin: 0; font: 1.0625rem/1.6 system-ui, sans-serif; }
+    main { max-width: 40rem; margin: 0 auto; padding: 4rem 1.25rem 3rem; }
+    h1 { margin: 0; font-size: 2.25rem; }
+    h1 span { color: var(--accent); }
+    h2 { margin-top: 2.5rem; font-size: 1.125rem; }
+    .lead { margin-top: 0.5rem; font-size: 1.25rem; color: var(--muted); }
+    pre { padding: 1rem 1.25rem; border-radius: 0.5rem; background: var(--code-bg); overflow-x: auto; }
+    code { font: 0.95em ui-monospace, monospace; }
+    a { color: inherit; text-decoration-color: var(--accent); text-underline-offset: 0.2em; }
+    ul { padding-left: 1.25rem; }
+    nav { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin-top: 2.5rem; }
+    footer { margin-top: 3rem; font-size: 0.875rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1><span>⚡</span> create-ln-app</h1>
+    <p class="lead">Make a Lightning app with one command. Get a local regtest network that is ready to use.</p>
+
+    <pre><code>npx create-ln-app my-lapp
+cd my-lapp
+npm run dev</code></pre>
+    <p>Then open <code>http://localhost:5173</code> and pay your first invoice.</p>
+
+    <h2>What you get</h2>
+    <ul>
+      <li>Bitcoin Core and 3 LND nodes on regtest, funded and ready.</li>
+      <li>An API server that holds the macaroons and TLS certs. No secret goes to the browser.</li>
+      <li>An example React app: connect a peer, open a channel, make an invoice, and pay it.</li>
+    </ul>
+
+    <h2>What you need</h2>
+    <ul>
+      <li><a href="https://nodejs.org/">Node.js</a> 24 or later.</li>
+      <li><a href="https://docs.docker.com/engine/install/">Docker</a> with Docker Compose v2.</li>
+    </ul>
+
+    <nav>
+      <a href="https://github.com/bnonni/create-ln-app">GitHub</a>
+      <a href="https://www.npmjs.com/package/create-ln-app">npm</a>
+      <a href="https://github.com/bnonni/create-ln-app/blob/master/docs/architecture.md">Architecture</a>
+      <a href="https://github.com/bnonni/create-ln-app/blob/master/docs/troubleshooting.md">Troubleshooting</a>
+      <a href="https://github.com/bnonni/create-ln-app/blob/master/CHANGELOG.md">Changelog</a>
+    </nav>
+
+    <footer>MIT license.</footer>
+  </main>
+</body>
+</html>
