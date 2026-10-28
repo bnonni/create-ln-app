@@ -129,7 +129,7 @@ Pays an invoice from the node.
 - The maximum routing fee is 1,000 sats.
 - The server cannot pay an invoice with no amount, because the body has no amount field. LND rejects the request.
 - A failed payment gives 502. The error has the LND failure reason, for example `alice: the payment failed: FAILURE_REASON_NO_ROUTE`.
-- After a new channel becomes `active`, LND can need about 1 second more before it can send a payment over the channel. Before that, the payment fails with `FAILURE_REASON_INSUFFICIENT_BALANCE`. Send the same payment request again.
+- After a new channel becomes `active`, LND can need about 1 second more before it can send a payment over the channel. Before that, the payment fails with `FAILURE_REASON_INSUFFICIENT_BALANCE`. If the node has other channels, the payment fails with `FAILURE_REASON_NO_ROUTE`. Send the same payment request again.
 - If the invoice is already paid, the server sends 409.
 
 ## Errors

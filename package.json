@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "install:all": "npm install && npm --prefix frontend install",
-    "dev": "npm run network && concurrently -k -n server,frontend \"npm run server\" \"npm --prefix frontend start\"",
+    "dev": "npm run network && concurrently -k -n server,frontend \"npm run server\" \"npm --prefix frontend run dev\"",
     "server": "node server/index.ts",
     "network": "docker compose -f network/docker-compose.yml up -d --wait && npm run bootstrap && npm run env",
     "down": "docker compose -f network/docker-compose.yml down",
     "reset": "node scripts/reset.ts",
     "bootstrap": "node scripts/bootstrap.ts",
     "env": "node scripts/env.ts",
+    "build": "npm --prefix frontend run build",
     "lint": "npm --prefix frontend run lint",
     "typecheck": "tsc -p tsconfig.json && npm --prefix frontend run typecheck",
     "test:integration": "node --test server/flow.test.ts"
