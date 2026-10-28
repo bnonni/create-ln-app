@@ -168,10 +168,11 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
 
 ### M5: Release 1.0 (branch `m5-release`)
 
-- [ ] **C5.1 E2E test.** Add a Playwright test for the 6 browser steps.
+- [x] **C5.1 E2E test.** Add a Playwright test for the 6 browser steps.
   - Do: add a CI job that packs the CLI, makes a project, runs `npm run network`, and runs Playwright.
   - Read: `.github/workflows/ci.yml`, the template `frontend/src/components/Page.tsx`.
   - Exit: the E2E test passes locally. Owner: the E2E job passes on the PR.
+  - Done: `e2e/flow.spec.ts` selects alice, connects bob, opens a channel, mines 6 blocks, waits until the channel is active, requests an invoice, and pays it. The test checks the `settled` status and that the page has no exception. Playwright starts the API server and Vite. `LAPP_DIR` selects the project folder (default: the template). If the network does not run, the test stops in less than 1 s with the API error. The CI job `e2e` packs the CLI, makes a project in `$RUNNER_TEMP`, runs `npm run network`, and runs the test. It downloads the Chromium headless shell (about 130 MB). Local runs: on clean data 1 channel and 1 payment, a second run on the same network also passes, and the CI steps pass with `CI=1`.
 - [ ] **C5.2 Docs.** Write the user docs.
   - Do: rewrite the README quickstart for `npx create-ln-app`. Add `docs/architecture.md` (browser, API server, nodes) and `docs/troubleshooting.md` (ports, Docker memory, Apple Silicon, `npm run reset`).
   - Read: `README.md`, the template `server/API.md`.
