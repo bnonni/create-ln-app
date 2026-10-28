@@ -81,10 +81,11 @@ cd test-app && npm run dev
 
 You must have publish rights for the `create-ln-app` package on npm.
 
-1. In a pull request, set the version. The command also updates `package-lock.json`. Commit the two files.
+1. In a pull request, set the version. The command also updates `package-lock.json`.
    ```sh
    npm version <version> --no-git-tag-version -w create-ln-app
    ```
+   Add a section for the version to `CHANGELOG.md`. Commit the three files.
 2. Merge the pull request. Make sure that CI is green on `master`.
 3. Get `master`. Make sure that `git status` shows no changes.
 4. Run the dry run. For a stable release, remove `--tag next`.
@@ -96,7 +97,7 @@ You must have publish rights for the `create-ln-app` package on npm.
    - The `template/` files are the same as the output of `git ls-files packages/create-ln-app/template`.
    - The list has no `.env`, no `node_modules`, and no node data. `template/network/data/.gitkeep` is the only file in `template/network/data/`.
 6. Do the packed-tarball test in [Test the CLI](#test-the-cli).
-7. Log in and publish:
+7. Log in and publish. For a stable release, remove `--tag next`.
    ```sh
    npm login
    npm publish -w create-ln-app --tag next
@@ -106,7 +107,7 @@ You must have publish rights for the `create-ln-app` package on npm.
    git tag -s v<version> -m "v<version>"
    git push origin v<version>
    ```
-9. Check the tags on npm, then test the published package on a clean machine:
+9. Check the tags on npm, then test the published package on a clean machine. For a stable release, remove `@next`.
    ```sh
    npm view create-ln-app dist-tags
    npx create-ln-app@next my-lapp && cd my-lapp && npm run dev

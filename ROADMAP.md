@@ -178,10 +178,11 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
   - Read: `README.md`, the template `server/API.md`.
   - Exit: owner: a new user follows the README to a paid invoice in less than 5 minutes.
   - Done: the README quick start is `npx create-ln-app my-lapp`, `npm run dev`, and the 6 steps on the page to a settled invoice. `docs/architecture.md` shows the browser, the Vite proxy, the API server, and the nodes. `docs/troubleshooting.md` has the fixes for Docker, the ports, the app errors, Apple Silicon, and `npm run reset`. Each error text in it comes from a local run. `npm run env` now keeps the `.env` lines that it does not own (all lines except `LND_` and `BITCOIND_`), so `API_PORT` in `.env` stays. The template README and the package README link to the new pages. `CONTRIBUTING.md` has the `npm run dev` step for a clone.
-- [ ] **C5.3 Landing page and release.** Prepare `v1.0.0`.
+- [x] **C5.3 Landing page and release.** Prepare `v1.0.0`.
   - Do: select the landing page for `create-ln-app.dev`. GitHub Pages serves the repo root now, so `README.md` is the landing page. Remove the old to-do page in `docs/index.html`. Add `CHANGELOG.md`. Set version `1.0.0`.
   - Read: `docs/index.html`, the CLI `package.json`.
   - Exit: all 5 checks in "Definition of done for 1.0" pass. Owner: tag `v1.0.0`, merge, and run `npm publish`.
+  - Done: `README.md` is the landing page. The old to-do page `docs/index.html` is removed. `CHANGELOG.md` is at the repo root. The version is `1.0.0`. The "Status: pre-1.0" lines are removed. On Linux, the packed `1.0.0` tarball passes checks 1 to 4. The E2E test passes with `LAPP_DIR` set to the new project. With cached images and npm packages, the time from `npx` to a ready app is 22 s. The checks in CI and on macOS are for the owner.
 
 ## After 1.0
 
