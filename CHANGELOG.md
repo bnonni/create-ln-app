@@ -2,6 +2,23 @@
 
 This file records the changes to the `create-ln-app` npm package in each release. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-10-29
+
+### Added
+
+- Eclair 0.11.0 nodes, with the image `polarlightning/eclair:0.11.0`. In `network/nodes.json`, a node has the impl `lnd`, `cln`, or `eclair`. A network can have the 3 impls.
+- The CLI value `--impl eclair`. It makes a project with only Eclair nodes.
+- An Eclair client for the API server, `server/nodes/eclair.ts`. It uses the Eclair API. The API of the server and the error codes are the same for the 3 impls.
+- `npm run env` writes the keys `ECLAIR_<NAME>_API_URL` and `ECLAIR_<NAME>_API_PASSWORD` for each Eclair node. An Eclair node uses the REST host port and the P2P host port of an LND node in the same position. It has no gRPC port.
+- An Eclair node has no wallet of its own. It uses a bitcoind wallet with the node name. The node container makes the wallet before Eclair starts.
+- `GET /api/nodes` sends the impl `eclair` for an Eclair node.
+- `FLOW_NODES` selects the node pair of the integration test, for example `FLOW_NODES=alice,carol npm run test:integration`. The default is `alice,bob`.
+- The project README has the `eclair-cli` command, the Eclair ports, the API password, and an Eclair API example.
+
+### Changed
+
+- bitcoind sends the ZMQ `hashblock` stream on port 28336 in the network. Eclair uses this stream.
+
 ## [1.2.0] - 2026-10-29
 
 ### Added
@@ -49,6 +66,7 @@ The first release.
 - The project commands `network`, `down`, `reset`, `doctor`, `env`, and `test:integration`.
 - The docs: a quick start, an [architecture](docs/architecture.md) page, and a [troubleshooting](docs/troubleshooting.md) page.
 
+[1.3.0]: https://github.com/bnonni/create-ln-app/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/bnonni/create-ln-app/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/bnonni/create-ln-app/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/bnonni/create-ln-app/releases/tag/v1.0.0

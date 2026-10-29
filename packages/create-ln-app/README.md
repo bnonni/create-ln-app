@@ -2,7 +2,7 @@
 
 Make a Lightning app (Lapp) with a local regtest network. The new project has three parts:
 
-1. A local Bitcoin Lightning Network for development: Bitcoin Core and 2 to 10 Lightning nodes on regtest. Each node is LND or Core Lightning (CLN). The default is 3 LND nodes.
+1. A local Bitcoin Lightning Network for development: Bitcoin Core and 2 to 10 Lightning nodes on regtest. Each node is LND, Core Lightning (CLN), or Eclair. The default is 3 LND nodes.
 2. An API server that connects to the nodes.
 3. An example app that uses the API server.
 
@@ -32,7 +32,7 @@ Options:
 | Option           | Effect                                                                                  |
 | ---------------- | --------------------------------------------------------------------------------------- |
 | `--nodes <n>`    | Make a network with n nodes, from 2 to 10. The default is 3.                            |
-| `--impl <impl>`  | Use this impl for all the nodes: `lnd` or `cln` (Core Lightning). The default is `lnd`. |
+| `--impl <impl>`  | Use this impl for all the nodes: `lnd`, `cln` (Core Lightning), or `eclair`. The default is `lnd`. |
 | `--skip-install` | Do not install the npm packages.                                                        |
 | `-h`, `--help`   | Show the help.                                                                          |
 

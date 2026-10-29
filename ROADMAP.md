@@ -276,10 +276,13 @@ The owner confirmed decisions 6 to 8 (2026-10-28) and decision 9 (2026-10-29).
   - Done: `open` and `connect` send HTTP 200 with a text result also if they fail. The client examines the text. `open` needs `fundingFeeBudgetSatoshis`, because the default budget (1000 sat) is too low for the regtest fee rate.
   - Done: Eclair pays an invoice again if it is already paid. Thus, the client looks for an earlier payment with `getsentinfo` first and gives `conflict`. The client also gives `payment_rejected` for an expired invoice, as the CLN client does.
   - Done: the server finds an Eclair node by its `ECLAIR_<NAME>_API_URL` key. `FLOW_NODES` selects the node pair of the integration test, for example `FLOW_NODES=alice,carol`. The default is `alice,bob`.
-- [ ] **C8.3 CLI, CI, docs, and release `1.3.0`.** Add `eclair` to `--impl`.
+- [x] **C8.3 CLI, CI, docs, and release `1.3.0`.** Add `eclair` to `--impl`.
   - Do: add `eclair` to the CI E2E matrix. Use all 3 impls in the mix. Update the docs and `CHANGELOG.md`. Set version `1.3.0`.
   - Read: `packages/create-ln-app/src/cli.ts`, `.github/workflows/ci.yml`.
   - Exit: `--impl eclair` makes a project, and the E2E test passes in it. Owner: the E2E matrix passes on the PR. Merge, tag `v1.3.0`, and publish.
+  - Done: the CI E2E jobs are `lnd`, `lnd-5-nodes`, `cln`, `eclair`, and `mix`. The `mix` job writes `nodes.json` with alice as `lnd`, bob as `cln`, and carol as `eclair`. The E2E test uses alice and bob, so the `mix` job also runs the integration test for the 3 node pairs.
+  - Done: 2 Eclair nodes use dual funding. Thus, `open` returns before the peers sign the funding transaction, and the client gets the channel again until it has the funding transaction. C8.2 did not find this, because it tested Eclair only with LND and CLN peers.
+  - Done: on Linux, a project from the packed CLI with `--impl eclair` passes the E2E test and the integration test (16 of 16). The mix passes the E2E test and the integration test for the 3 pairs (16 of 16 each). The version is `1.3.0`. The E2E matrix on the PR, the merge, the tag, and the publish are for the owner.
 
 ### Later: plan before work
 
