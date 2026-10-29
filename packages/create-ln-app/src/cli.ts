@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Make a new Lightning app project from the template in ../template.
-// Usage: npx create-ln-app <project-dir> [--skip-install]
+// Usage: npx create-ln-app <project-dir> [--nodes <n>] [--skip-install]
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
@@ -12,9 +12,14 @@ const TEMPLATE_DIR = fileURLToPath(new URL('../template', import.meta.url));
 const DATA_DIR = join('network', 'data');
 const KEEP = '.gitkeep';
 const APP_URL = 'http://localhost:5173';
-const USAGE = `Usage: npx create-ln-app <project-dir> [--skip-install]
+// The template script scripts/nodes.ts accepts 2 to 10 nodes. Node i gets name i of this list.
+const NODE_NAMES = ['alice', 'bob', 'carol', 'dave', 'erin', 'frank', 'grace', 'heidi', 'ivan', 'judy'];
+const MIN_NODES = 2;
+const DEFAULT_NODES = '3';
+const USAGE = `Usage: npx create-ln-app <project-dir> [--nodes <n>] [--skip-install]
 
 Options:
+  --nodes <n>     Make a network with n LND nodes, from ${MIN_NODES} to ${NODE_NAMES.length}. The default is ${DEFAULT_NODES}.
   --skip-install  Do not install the npm packages.
   -h, --help      Show this help.`;
 
@@ -46,6 +51,20 @@ function setName(file: string, name: string): void {
   writeFileSync(file, `${JSON.stringify(json, null, 2)}\n`);
 }
 
+function nodeCount(value: string): number {
+  const count = Number(value);
+  if (!/^\d+$/.test(value) || count < MIN_NODES || count > NODE_NAMES.length) {
+    throw new Error(`--nodes ${value} is not valid. Fix: use a number from ${MIN_NODES} to ${NODE_NAMES.length}.`);
+  }
+  return count;
+}
+
+// Write the same format as the template file: one node on each line.
+function writeNodes(file: string, count: number): void {
+  const lines = NODE_NAMES.slice(0, count).map((name) => `  { "name": "${name}", "impl": "lnd" }`);
+  writeFileSync(file, `[\n${lines.join(',\n')}\n]\n`);
+}
+
 function run(command: string, args: string[], cwd: string): boolean {
   // On Windows, npm is a .cmd file, and Node starts a .cmd file only through a shell.
   const result = spawnSync(command, args, { cwd, stdio: 'inherit', shell: process.platform === 'win32' });
@@ -71,6 +90,7 @@ function main(): void {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
     options: {
+      nodes: { type: 'string', default: DEFAULT_NODES },
       'skip-install': { type: 'boolean' },
       help: { type: 'boolean', short: 'h' },
     },
@@ -85,6 +105,7 @@ function main(): void {
     return;
   }
 
+  const count = nodeCount(values.nodes);
   const target = resolve(positionals[0]);
   if (existsSync(target) && readdirSync(target).length > 0) {
     throw new Error(`${target} is not empty. Use a new or empty folder.`);
@@ -96,7 +117,13 @@ function main(): void {
   renameSync(join(target, 'gitignore'), join(target, '.gitignore'));
   setName(join(target, 'package.json'), name);
   setName(join(target, 'package-lock.json'), name);
-  console.log(`Made ${name} in ${target}.`);
+  writeNodes(join(target, 'network', 'nodes.json'), count);
+  // The compose file gets the node list and a project name from the new package name.
+  // The compose script uses only Node built-in modules, so it runs with --skip-install too.
+  if (!run('npm', ['run', '--silent', 'compose'], target)) {
+    throw new Error(`npm run compose failed. Fix the error, then run npm run compose in ${target}.`);
+  }
+  console.log(`Made ${name} in ${target} with ${count} LND nodes.`);
 
   initGit(target);
 
