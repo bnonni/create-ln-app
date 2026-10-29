@@ -5,12 +5,11 @@ import { execFile } from 'node:child_process';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+import { readNodes } from './nodes.ts';
 
 const run = promisify(execFile);
 
 const COMPOSE_FILE = fileURLToPath(new URL('../network/docker-compose.yml', import.meta.url));
-const NODES = ['alice', 'bob', 'carol'];
-const SERVICES = ['bitcoind', ...NODES];
 const BITCOIN_CLI = ['bitcoin-cli', '-regtest', '-rpcuser=polaruser', '-rpcpassword=polarpass'];
 // A wallet can spend a coinbase output only after 100 confirmations.
 const MATURITY_BLOCKS = 100;
@@ -50,12 +49,12 @@ async function containerStates(): Promise<ContainerState[]> {
   return out.split('\n').filter(Boolean).map((line) => JSON.parse(line) as ContainerState);
 }
 
-async function waitForHealthy(): Promise<void> {
+async function waitForHealthy(nodes: string[]): Promise<void> {
   await waitFor('all containers are healthy', async () => {
     const states = await containerStates();
-    const stopped = SERVICES.filter((service) => !states.some((state) => state.Service === service));
+    const stopped = ['bitcoind', ...nodes].filter((service) => !states.some((state) => state.Service === service));
     if (stopped.length > 0) {
-      throw new Error(`Not running: ${stopped.join(', ')}. Start the network first: docker compose -f network/docker-compose.yml up -d`);
+      throw new Error(`Not running: ${stopped.join(', ')}. Start the network first: npm run network`);
     }
     return states.every((state) => state.Health === 'healthy');
   });
@@ -76,11 +75,12 @@ async function mine(blocks: number, address: string): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  const nodes = (await readNodes()).map((node) => node.name);
   console.log('Wait for healthy containers.');
-  await waitForHealthy();
+  await waitForHealthy(nodes);
 
   const unfunded: string[] = [];
-  for (const node of NODES) {
+  for (const node of nodes) {
     if ((await balance(node)) === 0) unfunded.push(node);
   }
 
@@ -96,12 +96,12 @@ async function main(): Promise<void> {
     // bitcoind stays in initial block download while the tip is more than 24 hours old.
     // LND does not sync during initial block download, so 1 new block is necessary.
     const { initialblockdownload } = JSON.parse(await bitcoinCli('getblockchaininfo')) as { initialblockdownload: boolean };
-    if (initialblockdownload) await mine(1, await newAddress(NODES[0]));
+    if (initialblockdownload) await mine(1, await newAddress(nodes[0]));
   }
 
   console.log('Wait for chain sync.');
   const height = Number(await bitcoinCli('getblockcount'));
-  for (const node of NODES) {
+  for (const node of nodes) {
     await waitFor(`${node} syncs to block ${height}`, async () => {
       const info = await lncli<GetInfo>(node, 'getinfo');
       return info.synced_to_chain && info.block_height >= height;

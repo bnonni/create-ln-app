@@ -222,7 +222,7 @@ The owner confirmed decisions 6 to 8 (2026-10-28). The owner can change decision
   - Do: `nodes.json` lists alice, bob, and carol, each with `"impl": "lnd"`. `compose.ts` writes `network/docker-compose.yml` from the list. Node `i` (from 0) gets REST port `8081+i`, gRPC port `10001+i`, and P2P port `9735+i`. Set the compose `name` from the package name (decision 8). Write a header line in the file: "Generated from nodes.json. Do not edit." `npm run network` runs `compose` first. Use only Node built-in modules, so that the CLI can run the script before install. Keep the generated file in git.
   - Read: `network/docker-compose.yml`, the template `package.json`.
   - Exit: `docker compose config` of the new file and of the `v1.0.0` file show the same services, ports, and volumes. Only `name` changes. `npm run network` gives 3 funded nodes. Before the test, run `npm run down` with the old file, because the new project name does not stop the old containers.
-- [ ] **C6.2 Scripts read the node list.** Add `scripts/nodes.ts`, one reader for `network/nodes.json`.
+- [x] **C6.2 Scripts read the node list.** Add `scripts/nodes.ts`, one reader for `network/nodes.json`.
   - Do: replace the `NODES` arrays in `bootstrap.ts` and `env.ts`. `compose.ts` also uses the reader. The reader checks the file: 2 to 10 nodes, unique names that match `^[a-z][a-z0-9]*$`, and the impl `lnd`. Show one fix for each error.
   - Read: `scripts/bootstrap.ts`, `scripts/env.ts`, `scripts/compose.ts`.
   - Exit: with 5 nodes in `nodes.json`, `npm run reset && npm run network` funds 5 nodes. `.env` has 5 node blocks. `curl localhost:3001/api/nodes` returns 5 nodes. With the network down, `npm run doctor` checks the ports of 5 nodes.
