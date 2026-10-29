@@ -2,7 +2,7 @@
 
 Make a Lightning app (Lapp) with a local regtest network. The new project has three parts:
 
-1. A local Bitcoin Lightning Network for development: Bitcoin Core and 2 to 10 LND nodes on regtest. The default is 3 nodes.
+1. A local Bitcoin Lightning Network for development: Bitcoin Core and 2 to 10 Lightning nodes on regtest. Each node is LND or Core Lightning (CLN). The default is 3 LND nodes.
 2. An API server that connects to the nodes.
 3. An example app that uses the API server.
 
@@ -29,11 +29,12 @@ The command copies the template to `my-lapp`, runs `git init`, installs the npm 
 
 Options:
 
-| Option           | Effect                                                                 |
-| ---------------- | ---------------------------------------------------------------------- |
-| `--nodes <n>`    | Make a network with n LND nodes, from 2 to 10. The default is 3.       |
-| `--skip-install` | Do not install the npm packages.                                       |
-| `-h`, `--help`   | Show the help.                                                         |
+| Option           | Effect                                                                                  |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| `--nodes <n>`    | Make a network with n nodes, from 2 to 10. The default is 3.                            |
+| `--impl <impl>`  | Use this impl for all the nodes: `lnd` or `cln` (Core Lightning). The default is `lnd`. |
+| `--skip-install` | Do not install the npm packages.                                                        |
+| `-h`, `--help`   | Show the help.                                                                          |
 
 The README in the new project has all the commands and the network reference.
 

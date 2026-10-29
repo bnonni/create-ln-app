@@ -51,9 +51,9 @@ Run `npm run dev` again. If the error occurs again, examine your internet connec
 | --- | --- |
 | 5173 | The example app (Vite dev server) |
 | 3001 | The API server |
-| 8081, 8082, 8083, ... | LND REST (alice, bob, carol, ...) |
-| 10001, 10002, 10003, ... | LND gRPC (alice, bob, carol, ...) |
-| 9735, 9736, 9737, ... | LND P2P (alice, bob, carol, ...) |
+| 8081, 8082, 8083, ... | LND REST or CLNRest (alice, bob, carol, ...) |
+| 10001, 10002, 10003, ... | LND gRPC or CLN gRPC (alice, bob, carol, ...) |
+| 9735, 9736, 9737, ... | Lightning P2P (alice, bob, carol, ...) |
 | 18443, 19444, 28334, 29335 | bitcoind RPC, P2P, and ZMQ |
 
 Node n in `network/nodes.json` uses the ports `8080+n`, `10000+n`, and `9734+n`. For example, a network with 10 nodes uses the ports 8081 to 8090, 10001 to 10010, and 9735 to 9744.
@@ -80,7 +80,7 @@ The doctor shows a failed "API server port" check, or the API server stops with 
    ```
 2. Run `npm run dev`.
 
-The API server, the Vite proxy, and the doctor read the same value. `npm run network` replaces only the `LND_` and `BITCOIND_` lines in `.env`, so the value stays.
+The API server, the Vite proxy, and the doctor read the same value. `npm run network` replaces only the `LND_`, `CLN_`, and `BITCOIND_` lines in `.env`, so the value stays.
 
 ### Port 5173 is in use
 
@@ -94,7 +94,7 @@ The network does not run. Run `npm run network`.
 
 ### `Cannot reach alice at https://127.0.0.1:8081: self-signed certificate`
 
-The node data is new, for example after `npm run reset`. The API server still has the old TLS certs and macaroons, because it reads `.env` only when it starts.
+The node data is new, for example after `npm run reset`. The API server still has the old TLS certs, macaroons, and runes, because it reads `.env` only when it starts.
 
 1. Press Ctrl+C to stop the API server and the app.
 2. Run `npm run dev`.
@@ -112,7 +112,7 @@ The Vite dev server runs, but the API server does not run. For example, you star
 The channel is not active yet. A new channel becomes active after 6 blocks.
 
 1. Do step 3: "Mine 6 blocks to confirm the channel".
-2. Click Refresh until the channel status is `active`. LND needs some seconds to see the new blocks.
+2. Click Refresh until the channel status is `active`. A node needs some seconds to see the new blocks.
 3. Do step 5 again.
 
 ## Apple Silicon

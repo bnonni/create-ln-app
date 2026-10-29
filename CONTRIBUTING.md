@@ -57,7 +57,7 @@ The E2E test does the browser steps of the example app in Chromium. It starts th
    npm run test:e2e
    ```
 
-To test a project that the CLI made, set `LAPP_DIR` to the project folder, for example `LAPP_DIR=/tmp/test-app npm run test:e2e`. CI packs the CLI, makes a project, and runs the test on it. If the test fails in CI, the job shows the network logs and uploads the Playwright traces.
+To test a project that the CLI made, set `LAPP_DIR` to the project folder, for example `LAPP_DIR=/tmp/test-app npm run test:e2e`. CI packs the CLI, makes a project, and runs the test on it. The E2E jobs test 3 LND nodes, 5 LND nodes, 3 CLN nodes, and a mix of LND and CLN nodes. If the test fails in CI, the job shows the network logs and uploads the Playwright traces.
 
 ## Test the CLI
 
