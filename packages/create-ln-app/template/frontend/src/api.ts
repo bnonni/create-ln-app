@@ -13,7 +13,7 @@ export type Channel = {
 };
 
 // The node implementation.
-export type NodeImpl = 'lnd';
+export type NodeImpl = 'lnd' | 'cln';
 
 export type LightningNode = {
   name: string;
