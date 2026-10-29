@@ -230,7 +230,7 @@ The owner confirmed decisions 6 to 8 (2026-10-28). The owner can change decision
   - Do: accept 2 to 10 nodes (default 3). The names come from one list: alice, bob, carol, dave, erin, frank, grace, heidi, ivan, judy. After the package name change, the CLI writes `network/nodes.json` and runs `npm run compose` in the new project. Add the flag to the help text. Add a CI E2E job with `--nodes 5`.
   - Read: `packages/create-ln-app/src/cli.ts`, `.github/workflows/ci.yml`.
   - Exit: `npx --package <tgz> create-ln-app /tmp/x --nodes 5` makes a project. In `/tmp/x`, `npm run network` funds 5 nodes. The E2E test passes with `LAPP_DIR=/tmp/x`. `--nodes 11` fails and shows one fix.
-- [ ] **C6.4 Docs and release `1.1.0`.** Update the text about 3 nodes and the port tables.
+- [x] **C6.4 Docs and release `1.1.0`.** Update the text about 3 nodes and the port tables.
   - Do: update the 3 README files, `docs/architecture.md`, `docs/troubleshooting.md`, `index.html`, and `.env.example`. Add the `1.1.0` entry to `CHANGELOG.md`. Set version `1.1.0`.
   - Read: only the lines that `grep -rn '3 LND\|8083\|carol'` finds in these files.
   - Exit: lint, typecheck, and build pass. `npm publish --dry-run` lists the new files. Owner: merge, tag `v1.1.0`, and run `npm publish`.

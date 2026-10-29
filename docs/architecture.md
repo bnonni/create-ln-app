@@ -13,13 +13,13 @@ Vite dev server (port 5173)
    v
 API server: Hono on Node.js (port 3001)
    |
-   |-- LND REST, macaroon and TLS cert --> alice (8081), bob (8082), carol (8083)
+   |-- LND REST, macaroon and TLS cert --> alice (8081), bob (8082), carol (8083), ...
    |
    '-- JSON-RPC, user and password -----> bitcoind (18443)
 
-Docker Compose project "create-ln-app" (regtest):
-   alice, bob, carol <-- RPC and ZMQ ----> bitcoind
-   alice, bob, carol <-- Lightning P2P --> alice, bob, carol
+Docker Compose project "<name in package.json>" (regtest):
+   alice, bob, carol, ... <-- RPC and ZMQ ----> bitcoind
+   alice, bob, carol, ... <-- Lightning P2P --> alice, bob, carol, ...
 ```
 
 ## The example app
@@ -48,7 +48,9 @@ The browser does not connect to the nodes directly, for three reasons:
 
 ## The network
 
-- File: `network/docker-compose.yml`. The Docker Compose project name is `create-ln-app`.
+- Files: `network/nodes.json` lists the LND nodes: 2 to 10 nodes, and the default is 3. `npm run compose` (`scripts/compose.ts`) writes `network/docker-compose.yml` from the list.
+- Node n in the list gets REST port `8080+n`, gRPC port `10000+n`, and P2P port `9734+n` on the host.
+- The Docker Compose project name comes from the `name` in `package.json`. Thus, each project has its own containers.
 - Images: `polarlightning/bitcoind:30.0` and `polarlightning/lnd:0.20.0-beta`. Each image has an `amd64` build and an `arm64` build.
 - The chain is regtest. A block comes only when you mine it. The coins have no value.
 - The node data goes to `network/data/`. `npm run down` keeps the data. `npm run reset` deletes the data.
@@ -56,12 +58,13 @@ The browser does not connect to the nodes directly, for three reasons:
 
 ## What `npm run dev` does
 
-1. `docker compose ... up -d --wait` starts bitcoind and the 3 LND nodes. The command waits until all health checks pass.
-2. `npm run bootstrap` (`scripts/bootstrap.ts`) mines blocks to fund each LND node. Then it waits until each node is synced to the chain. It does not fund a node that has a balance.
-3. `npm run env` (`scripts/env.ts`) writes `.env`. The file has the REST URL, the macaroon in hex, and the TLS cert path of each node. It also has the bitcoind RPC values. Only your user can read the file.
-4. `concurrently` starts the API server (`npm run server`) and the Vite dev server. Ctrl+C stops the two servers. The network continues to run. To stop it, run `npm run down`.
+1. `npm run compose` (`scripts/compose.ts`) writes `network/docker-compose.yml` from `network/nodes.json`.
+2. `docker compose ... up -d --wait` starts bitcoind and the LND nodes. The command waits until all health checks pass.
+3. `npm run bootstrap` (`scripts/bootstrap.ts`) mines blocks to fund each LND node. Then it waits until each node is synced to the chain. It does not fund a node that has a balance.
+4. `npm run env` (`scripts/env.ts`) writes `.env`. The file has the REST URL, the macaroon in hex, and the TLS cert path of each node. It also has the bitcoind RPC values. Only your user can read the file.
+5. `concurrently` starts the API server (`npm run server`) and the Vite dev server. Ctrl+C stops the two servers. The network continues to run. To stop it, run `npm run down`.
 
-Steps 1 to 3 are the `npm run network` command.
+Steps 1 to 4 are the `npm run network` command.
 
 ## Where to make a change
 
@@ -69,7 +72,7 @@ Steps 1 to 3 are the `npm run network` command.
 | --- | --- |
 | Change a step in the app | `frontend/src/components/Page.tsx` |
 | Add an API endpoint | `server/index.ts`, `server/lnd.ts` or `server/bitcoind.ts`, `frontend/src/api.ts`, `server/API.md` |
-| Add an LND node | `network/docker-compose.yml`, and `NODES` in `scripts/bootstrap.ts` and `scripts/env.ts` |
+| Add or remove an LND node | `network/nodes.json`. See "Change the nodes" in the project README. |
 
 ## Security
 

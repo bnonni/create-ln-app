@@ -2,7 +2,7 @@
 
 A Lightning app (Lapp) made with [create-ln-app](https://create-ln-app.dev). It has three parts:
 
-1. A local Bitcoin Lightning Network for development: Bitcoin Core and 3 LND nodes on regtest.
+1. A local Bitcoin Lightning Network for development: Bitcoin Core and LND nodes on regtest. `network/nodes.json` lists the LND nodes.
 2. An API server that connects to the nodes.
 3. An example app that uses the API server.
 
@@ -27,13 +27,14 @@ On macOS, start Docker Desktop before you continue.
    ```
 3. Open <http://localhost:5173>.
 
-The `dev` command starts 1 bitcoind node and 3 LND nodes, funds the LND nodes, and writes the node values to `.env`. Then it starts the API server at <http://localhost:3001/api> and the example app at <http://localhost:5173>. The first start pulls the Docker images, so it takes more time.
+The `dev` command starts 1 bitcoind node and the LND nodes in `network/nodes.json`, funds the LND nodes, and writes the node values to `.env`. Then it starts the API server at <http://localhost:3001/api> and the example app at <http://localhost:5173>. The first start pulls the Docker images, so it takes more time.
 
 | Command | Result |
 |---|---|
 | `npm run dev` | Starts the network, the API server, and the example app. Ctrl+C stops the server and the app. |
 | `npm run server` | Starts only the API server. It reads `.env` one time at start, so restart it after `npm run network`. Set `API_PORT` in `.env` to change the port (default 3001). |
 | `npm run network` | Starts and funds the network, then writes `.env`. It does not start the app. |
+| `npm run compose` | Writes `network/docker-compose.yml` from `network/nodes.json`. `npm run network` and `npm run doctor` run it first. |
 | `npm run down` | Stops the network. The node data stays in `network/data/`. |
 | `npm run doctor` | Checks Docker, Docker Compose, and the ports. Run it when the network is down. It shows a fix for each failed check. |
 | `npm run reset` | Stops the network and deletes the node data. The next start makes new nodes. |
@@ -43,8 +44,8 @@ The `dev` command starts 1 bitcoind node and 3 LND nodes, funds the LND nodes, a
 
 | Folder | Contents |
 |---|---|
-| `network/` | The Docker Compose file for the network. Node data goes to `network/data/`. |
-| `scripts/` | The scripts for `npm run bootstrap`, `npm run env`, and `npm run reset`. |
+| `network/` | The node list (`nodes.json`) and the Docker Compose file that `npm run compose` makes from it. Node data goes to `network/data/`. |
+| `scripts/` | The scripts for `npm run compose`, `npm run bootstrap`, `npm run env`, `npm run doctor`, and `npm run reset`. |
 | `server/` | The API server. `server/API.md` is the API reference. |
 | `frontend/` | The example app: Vite, React, TypeScript, and plain CSS. |
 
@@ -59,7 +60,7 @@ The example app shows the steps of a Lightning payment: connect to a peer, open 
 
 ## Network reference
 
-The network is in `network/docker-compose.yml`: 1 bitcoind node and 3 LND nodes. Node data goes to `network/data/`.
+The network has 1 bitcoind node and the LND nodes in `network/nodes.json`. `npm run compose` writes `network/docker-compose.yml` from the list. The Docker Compose project name comes from the `name` in `package.json`. Node data goes to `network/data/`.
 
 To start the network and wait until all nodes are healthy, run:
 
@@ -73,13 +74,38 @@ To use `lncli` in a node, run the command as the `lnd` user (replace `alice` wit
 docker compose -f network/docker-compose.yml exec -u lnd alice lncli -n regtest getinfo
 ```
 
+### Change the nodes
+
+`network/nodes.json` has 2 to 10 nodes. Each node has a name and the impl `lnd`:
+
+```json
+[
+  { "name": "alice", "impl": "lnd" },
+  { "name": "bob", "impl": "lnd" },
+  { "name": "carol", "impl": "lnd" }
+]
+```
+
+A name starts with a lowercase letter and has only lowercase letters and digits. Each name must be unique. The name `bitcoind` is not permitted.
+
+To add or remove a node:
+
+1. Run `npm run down`.
+2. Edit `network/nodes.json`.
+3. Run `npm run dev`. The network starts the new nodes, funds them, and writes them to `.env`.
+
+Do not edit `network/docker-compose.yml`. The next `npm run compose` replaces it. If you remove a node, its data stays in `network/data/`. `npm run reset` deletes it.
+
 ### LND
+
+The host ports of a node come from its position in `network/nodes.json`, not from its name. `.env` has the REST URL of each node.
 
 | Node | REST | gRPC | P2P |
 |---|---|---|---|
-| alice | `https://127.0.0.1:8081` | `127.0.0.1:10001` | `9735` |
-| bob | `https://127.0.0.1:8082` | `127.0.0.1:10002` | `9736` |
-| carol | `https://127.0.0.1:8083` | `127.0.0.1:10003` | `9737` |
+| 1 (alice) | `https://127.0.0.1:8081` | `127.0.0.1:10001` | `9735` |
+| 2 (bob) | `https://127.0.0.1:8082` | `127.0.0.1:10002` | `9736` |
+| 3 (carol) | `https://127.0.0.1:8083` | `127.0.0.1:10003` | `9737` |
+| n | `https://127.0.0.1:<8080+n>` | `127.0.0.1:<10000+n>` | `<9734+n>` |
 
 Each node writes its admin macaroon and TLS cert here (replace `alice` with the node name):
 
