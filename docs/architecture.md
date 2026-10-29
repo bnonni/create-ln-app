@@ -71,7 +71,7 @@ Steps 1 to 4 are the `npm run network` command.
 | Change | Files |
 | --- | --- |
 | Change a step in the app | `frontend/src/components/Page.tsx` |
-| Add an API endpoint | `server/index.ts`, `server/lnd.ts` or `server/bitcoind.ts`, `frontend/src/api.ts`, `server/API.md` |
+| Add an API endpoint | `server/index.ts`, `server/nodes/types.ts` and `server/nodes/lnd.ts`, or `server/bitcoind.ts`, `frontend/src/api.ts`, `server/API.md` |
 | Add or remove an LND node | `network/nodes.json`. See "Change the nodes" in the project README. |
 
 ## Security

@@ -1,6 +1,8 @@
 # API server contract
 
-The API server is the only part of the app that talks to the nodes. The browser sends all requests to this server. The macaroons and the TLS certs stay on the server.
+The API server is the only part of the app that talks to the nodes. The browser sends all requests to this server. The node credentials (for example, the LND macaroons) and the TLS certs stay on the server.
+
+The API is the same for each node implementation. Each node client in `server/nodes/` maps the data, the errors, and the invoice states of its node to one set. `server/nodes/types.ts` has the set.
 
 - Base URL: `http://localhost:3001/api`. The `API_PORT` variable in `.env` changes the port.
 - Start: `npm run server`, or `npm run dev` for the server and the app.
@@ -39,6 +41,7 @@ Shows each node, its balances, and its channels.
 [
   {
     "name": "alice",
+    "impl": "lnd",
     "pubkey": "02ab...",
     "alias": "alice",
     "onchainBalanceSats": 4999000000,
@@ -57,6 +60,7 @@ Shows each node, its balances, and its channels.
 ]
 ```
 
+- `impl` is the node implementation. This version supports only `lnd`.
 - `onchainBalanceSats` is the confirmed wallet balance. An unconfirmed output, for example the change of a channel open, is not in it.
 - `channelBalanceSats` is the local balance of all open channels.
 - `status` is `pending`, `active`, or `inactive`. A `pending` channel waits for its funding transaction to confirm.
@@ -77,7 +81,7 @@ Opens a channel from the node to a peer. The node funds the channel from its on-
 
 - Body: `{ "peer": "bob", "amountSats": 1000000 }`. `amountSats` is an integer from 1 to 2,100,000,000,000,000.
 - Success: 201 `{ "channelPoint": "<txid>:<index>", "peer": "bob", "peerPubkey": "03cd..." }`.
-- Connect the nodes with `POST /nodes/:name/peers` before you open the channel. If the nodes are not connected, LND rejects the request.
+- Connect the nodes with `POST /nodes/:name/peers` before you open the channel. If the nodes are not connected, the node rejects the request.
 - LND rejects a channel of less than 20,000 sats.
 - The channel is `pending` until its funding transaction confirms. Mine 6 blocks to make it `active`.
 
@@ -115,9 +119,13 @@ Shows an invoice of the node. The hash is the `paymentHash` of the invoice: 64 h
 }
 ```
 
-- `status` is `open`, `accepted`, `settled`, or `canceled`.
+- `status` is one of these values:
+  - `open`: the invoice is not paid.
+  - `accepted`: the node holds the payment, but did not settle it.
+  - `settled`: the invoice is paid.
+  - `canceled`: no one can pay the invoice, for example because it expired.
 - `settledAt` is `null` if the invoice is not settled.
-- If the node has no invoice with the hash, the server sends 404.
+- If the node has no invoice with the hash, the server sends 404 with the code `not_found`.
 
 ### `POST /nodes/:name/payments`
 
@@ -127,31 +135,38 @@ Pays an invoice from the node.
 - Success: 201 `{ "paymentHash": "702e...", "preimage": "0141...", "amountSats": 1000, "feeSats": 0 }`.
 - The server sends the reply after the payment succeeds or fails. The node tries for a maximum of 60 seconds.
 - The maximum routing fee is 1,000 sats.
-- The server cannot pay an invoice with no amount, because the body has no amount field. LND rejects the request.
-- A failed payment gives 502. The error has the LND failure reason, for example `alice: the payment failed: FAILURE_REASON_NO_ROUTE`.
-- After a new channel becomes `active`, LND can need about 1 second more before it can send a payment over the channel. Before that, the payment fails with `FAILURE_REASON_INSUFFICIENT_BALANCE`. If the node has other channels, the payment fails with `FAILURE_REASON_NO_ROUTE`. Send the same payment request again.
-- If the invoice is already paid, the server sends 409.
+- The server cannot pay an invoice with no amount, because the body has no amount field. The node rejects the request.
+- A failed payment gives 502 with a payment code (see [Errors](#errors)). For example, the code `no_route` gives the error `alice: the payment failed: no_route`.
+- After a new channel becomes `active`, LND can need about 1 second more before it can send a payment over the channel. Before that, the payment fails with the code `insufficient_balance`. If the node has other channels, the code is `no_route`. Send the same payment request again.
+- If the invoice is already paid, the server sends 409 with the code `conflict`.
 
 ## Errors
 
 An error body has this shape:
 
 ```json
-{ "error": "alice: the payment failed: FAILURE_REASON_NO_ROUTE", "node": "alice" }
+{ "error": "alice: the payment failed: no_route", "code": "no_route", "node": "alice" }
 ```
 
 - `error` is a message for a person. Show it to the user.
+- `code` is a code from the table below. Use the code in the app logic, not the `error` text. The codes are the same for each node implementation.
 - `node` is the node that sent the error: a node name or `bitcoind`. If the error comes from the server, the body has no `node`.
 
-| Status | Cause |
-| --- | --- |
-| 400 | The server or LND rejected the body or a path value. |
-| 404 | The node, the path, or the LND object (for example, an invoice) does not exist. |
-| 409 | LND found a conflict, for example an invoice that is already paid. |
-| 502 | LND or bitcoind rejected the request, did not reply, or the payment failed. |
-| 500 | The server has a bug. The server log has the details. |
+| Code | Status | Cause |
+| --- | --- | --- |
+| `invalid_request` | 400 | The server or the node rejected a value in the body or the path. |
+| `not_found` | 404 | The node, the path, or the object (for example, an invoice) does not exist. |
+| `conflict` | 409 | The request conflicts with the node state, for example the invoice is already paid. |
+| `no_route` | 502 | The payment found no route to the payee. |
+| `insufficient_balance` | 502 | The channels do not have the balance for the payment. |
+| `payment_timeout` | 502 | The payment did not succeed in 60 seconds. |
+| `payment_rejected` | 502 | The payee rejected the payment, for example because the invoice expired. |
+| `payment_failed` | 502 | The payment failed for a different reason. |
+| `node_error` | 502 | The node or bitcoind sent a different error. |
+| `node_unreachable` | 502 | The node or bitcoind did not reply. |
+| `internal_error` | 500 | The server has a bug. The server log has the details. |
 
-LND sends most errors as HTTP 500. Thus the server cannot tell a bad request from a node fault, and it sends 502 for both. Read `error` to find the cause. Examples of 502 errors for a bad request:
+LND sends most errors as HTTP 500. Thus the server cannot tell a bad request from a node fault, and it sends `node_error` for both. Read `error` to find the cause. Examples of `node_error` errors for a bad request:
 
 - `bob: self-payments not allowed`
 - `alice: invalid bech32 string length 3`

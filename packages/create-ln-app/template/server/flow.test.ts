@@ -27,7 +27,7 @@ type Channel = {
   remoteBalanceSats: number;
 };
 
-type Node = { name: string; pubkey: string; channels: Channel[] };
+type Node = { name: string; impl: string; pubkey: string; channels: Channel[] };
 
 type Invoice = {
   paymentHash: string;
@@ -122,6 +122,8 @@ describe('payment flow: alice pays bob over a new channel', () => {
   test('GET /nodes shows alice and bob', async () => {
     alice = await getNode('alice');
     bob = await getNode('bob');
+    assert.equal(alice.impl, 'lnd');
+    assert.equal(bob.impl, 'lnd');
     assert.match(alice.pubkey, /^[0-9a-f]{66}$/);
     assert.match(bob.pubkey, /^[0-9a-f]{66}$/);
   });
@@ -171,10 +173,10 @@ describe('payment flow: alice pays bob over a new channel', () => {
 
   test('alice pays the invoice', async () => {
     // LND can need about 1 second after "active" before it can send over a new channel.
-    // Before that, the payment fails with FAILURE_REASON_INSUFFICIENT_BALANCE. Then try again.
+    // Before that, the payment fails with the code insufficient_balance. Then try again.
     const payment = await waitFor('alice pays the invoice', CHANNEL_READY_TIMEOUT_MS, async () => {
       const response = await api('POST', '/nodes/alice/payments', { paymentRequest: invoice.paymentRequest });
-      if (response.status === 502 && /INSUFFICIENT_BALANCE/.test(response.body.error)) return undefined;
+      if (response.status === 502 && response.body.code === 'insufficient_balance') return undefined;
       assert.equal(response.status, 201, `POST /nodes/alice/payments: ${JSON.stringify(response.body)}`);
       return response.body;
     });
@@ -196,5 +198,6 @@ describe('payment flow: alice pays bob over a new channel', () => {
       paymentRequest: invoice.paymentRequest,
     });
     assert.equal(typeof result.error, 'string');
+    assert.equal(result.code, 'conflict');
   });
 });

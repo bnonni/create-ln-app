@@ -12,8 +12,12 @@ export type Channel = {
   remoteBalanceSats: number;
 };
 
+// The node implementation.
+export type NodeImpl = 'lnd';
+
 export type LightningNode = {
   name: string;
+  impl: NodeImpl;
   pubkey: string;
   alias: string;
   onchainBalanceSats: number;
@@ -39,16 +43,33 @@ export type OpenedChannel = { channelPoint: string; peer: string; peerPubkey: st
 export type MinedBlocks = { height: number; blockHashes: string[] };
 export type Payment = { paymentHash: string; preimage: string; amountSats: number; feeSats: number };
 
-// The API server sent an error. Show `message` to the user.
+// The error codes in server/API.md. The codes are the same for each node implementation.
+export type ErrorCode =
+  | 'invalid_request'
+  | 'not_found'
+  | 'conflict'
+  | 'no_route'
+  | 'insufficient_balance'
+  | 'payment_timeout'
+  | 'payment_rejected'
+  | 'payment_failed'
+  | 'node_error'
+  | 'node_unreachable'
+  | 'internal_error';
+
+// The API server sent an error. Show `message` to the user. Use `code` in the app logic.
+// `code` is undefined if the reply has no JSON error, for example if the API server does not run.
 // `node` is the node or `bitcoind` that sent the error. It is undefined for a server error.
 export class ApiError extends Error {
   readonly status: number;
+  readonly code: ErrorCode | undefined;
   readonly node: string | undefined;
 
-  constructor(message: string, status: number, node?: string) {
+  constructor(message: string, status: number, code?: ErrorCode, node?: string) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.code = code;
     this.node = node;
   }
 }
@@ -63,7 +84,7 @@ async function request<T>(method: 'GET' | 'POST', path: string, body?: object): 
   if (!response.ok) {
     // If the API server does not run, the Vite proxy sends an error with no JSON body.
     const message = data?.error ?? `The API server sent HTTP ${response.status}. Make sure that it runs: npm run dev.`;
-    throw new ApiError(message, response.status, data?.node);
+    throw new ApiError(message, response.status, data?.code, data?.node);
   }
   return data as T;
 }
