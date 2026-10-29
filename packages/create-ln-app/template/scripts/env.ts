@@ -1,7 +1,7 @@
 // Write the connection values for the local regtest network to the root .env file.
 // Start and fund the network first: docker compose -f network/docker-compose.yml up -d --wait && npm run bootstrap
 // The values stay valid until you delete the node data in network/data/.
-// The script owns the LND_, CLN_, and BITCOIND_ keys. It keeps all other lines, for example API_PORT.
+// The script owns the LND_, CLN_, ECLAIR_, and BITCOIND_ keys. It keeps all other lines, for example API_PORT.
 import { execFile } from 'node:child_process';
 import { constants } from 'node:fs';
 import { access, readFile, writeFile } from 'node:fs/promises';
@@ -23,8 +23,11 @@ const CLN_REST_PORT = 3010;
 // CLNRest signs its TLS cert with this CA cert. The TLS cert names only the hosts cln and localhost,
 // so the REST URL uses localhost and not 127.0.0.1.
 const CLN_TLS_CERT = 'regtest/ca.pem';
-const HEADER = '# Written by `npm run env`. The next run replaces the LND_, CLN_, and BITCOIND_ values and keeps the other lines.';
-const OWNED_LINE = /^(# Written by `npm run env`|LND_|CLN_|BITCOIND_)/;
+// The Eclair API uses plain HTTP and a password. The compose file sets this password.
+const ECLAIR_API_PORT = 8080;
+const ECLAIR_API_PASSWORD = 'eclairpw';
+const HEADER = '# Written by `npm run env`. The next run replaces the LND_, CLN_, ECLAIR_, and BITCOIND_ values and keeps the other lines.';
+const OWNED_LINE = /^(# Written by `npm run env`|LND_|CLN_|ECLAIR_|BITCOIND_)/;
 const BITCOIND_RPC_PORT = 18443;
 // The -rpcauth value in the compose file is the hash of this password.
 const BITCOIND_RPC_USER = 'polaruser';
@@ -120,7 +123,15 @@ async function clnEnv(config: ComposeConfig, node: string): Promise<string[]> {
   ];
 }
 
-const NODE_ENVS: Record<Impl, (config: ComposeConfig, node: string) => Promise<string[]>> = { lnd: lndEnv, cln: clnEnv };
+function eclairEnv(config: ComposeConfig, node: string): Promise<string[]> {
+  const prefix = `ECLAIR_${node.toUpperCase()}`;
+  return Promise.resolve([
+    `${prefix}_API_URL=http://127.0.0.1:${hostPort(config, node, ECLAIR_API_PORT)}`,
+    `${prefix}_API_PASSWORD=${ECLAIR_API_PASSWORD}`,
+  ]);
+}
+
+const NODE_ENVS: Record<Impl, (config: ComposeConfig, node: string) => Promise<string[]>> = { lnd: lndEnv, cln: clnEnv, eclair: eclairEnv };
 
 function nodeEnv(config: ComposeConfig, node: Node): Promise<string[]> {
   return NODE_ENVS[node.impl](config, node.name);
@@ -148,7 +159,7 @@ async function main(): Promise<void> {
     `BITCOIND_RPC_USER=${BITCOIND_RPC_USER}`,
     `BITCOIND_RPC_PASS=${BITCOIND_RPC_PASS}`,
   ];
-  // The admin macaroons and runes give full control of the nodes, so only the owner can read the file.
+  // The admin macaroons, the runes, and the Eclair API passwords give full control of the nodes, so only the owner can read the file.
   await writeFile(ENV_FILE, `${lines.join('\n')}\n`, { mode: 0o600 });
   console.log(`Wrote ${ENV_FILE}`);
 }

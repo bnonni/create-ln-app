@@ -11,6 +11,8 @@ const PACKAGE_FILE = fileURLToPath(new URL('../package.json', import.meta.url));
 const REST_PORT = 8081;
 const GRPC_PORT = 10001;
 const P2P_PORT = 9735;
+// The Eclair API password. The env script writes it to .env.
+const ECLAIR_API_PASSWORD = 'eclairpw';
 
 // A compose project name has only lowercase letters, digits, dashes, and underscores.
 // It starts with a letter or a digit. For example, "@me/My.App" gives "me-my-app".
@@ -94,6 +96,52 @@ const IMPL_SPECS: Record<Impl, ImplSpec> = {
       --grpc-host=0.0.0.0 --grpc-port=10009
       --developer --dev-bitcoind-poll=1 --dev-fast-gossip`,
   },
+  eclair: {
+    anchor: `x-eclair: &eclair
+  image: polarlightning/eclair:0.13.1
+  restart: unless-stopped
+  # Eclair has no wallet of its own. It uses the bitcoind wallet with the node name (the host name).
+  # Before Eclair starts, the entrypoint makes the wallet, or loads the wallet if it exists.
+  # With load_on_startup, bitcoind loads the wallet again after a restart.
+  entrypoint:
+    - bash
+    - -c
+    - |
+      wallet=$$(hostname)
+      curl -s -o /dev/null -u polaruser:polarpass http://bitcoind:18443/ -d '{"method":"createwallet","params":{"wallet_name":"'$$wallet'","load_on_startup":true}}'
+      curl -s -o /dev/null -u polaruser:polarpass http://bitcoind:18443/ -d '{"method":"loadwallet","params":{"filename":"'$$wallet'","load_on_startup":true}}'
+      exec /entrypoint.sh "$$@"
+    - eclair
+  environment:
+    USERID: \${USERID:-1000}
+    GROUPID: \${GROUPID:-1000}
+  depends_on:
+    bitcoind:
+      condition: service_healthy
+  healthcheck:
+    # For manual calls, run \`docker compose exec <node> eclair-cli -p ${ECLAIR_API_PASSWORD} ...\`.
+    test: ['CMD', 'eclair-cli', '-p', '${ECLAIR_API_PASSWORD}', 'getinfo']
+    interval: 2s
+    timeout: 5s
+    retries: 60
+  expose:
+    - '8080'
+    - '9735'
+`,
+    dataDir: '/home/eclair/.eclair',
+    rest: 8080,
+    // Eclair gets the block hashes and the raw transactions from the bitcoind ZMQ streams.
+    // The entrypoint changes each --key=value to -Declair.key=value, and puts the container IP in public-ips.
+    // The regtest fee rates of the other impls are not real, so the feerate-tolerance options accept all fee rates.
+    command: (name) => `polar-eclair --chain=regtest --node-alias=${name}
+      --server.port=9735 --server.public-ips.0=${name}
+      --api.enabled=true --api.binding-ip=0.0.0.0 --api.port=8080 --api.password=${ECLAIR_API_PASSWORD}
+      --bitcoind.host=bitcoind --bitcoind.rpcport=18443
+      --bitcoind.rpcuser=polaruser --bitcoind.rpcpassword=polarpass --bitcoind.wallet=${name}
+      --bitcoind.zmqblock=tcp://bitcoind:28336 --bitcoind.zmqtx=tcp://bitcoind:28335
+      --on-chain-fees.feerate-tolerance.ratio-low=0.00001 --on-chain-fees.feerate-tolerance.ratio-high=10000.0
+      --datadir=/home/eclair/.eclair --printToConsole=true`,
+  },
 };
 
 function nodeService(node: Node, i: number): string {
@@ -148,6 +196,7 @@ services:
       - '18444'
       - '28334'
       - '28335'
+      - '28336'
     ports:
       - '18443:18443'
       - '19444:18444'

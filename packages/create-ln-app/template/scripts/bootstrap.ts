@@ -15,6 +15,8 @@ const BITCOIN_CLI = ['bitcoin-cli', '-regtest', '-rpcuser=polaruser', '-rpcpassw
 const MATURITY_BLOCKS = 100;
 const TIMEOUT_MS = 120_000;
 const POLL_MS = 1_000;
+// The compose file sets this Eclair API password.
+const ECLAIR_API_PASSWORD = 'eclairpw';
 
 type ContainerState = { Service: string; Health: string };
 type LndInfo = { synced_to_chain: boolean; block_height: number };
@@ -25,6 +27,9 @@ type ClnInfo = { blockheight: number; warning_bitcoind_sync?: string; warning_li
 type ClnFunds = { outputs: { amount_msat: number; status: string }[] };
 // CLN 25.12 signs a coinbase output to its bech32 address with the wrong key, so a channel open fails. A p2tr output works.
 type ClnAddress = { p2tr: string };
+// Eclair shows the balance of its bitcoind wallet in sats.
+type EclairBalance = { confirmed: number };
+type EclairInfo = { blockHeight: number };
 
 // The wallet calls for one impl. A balance is in sats.
 type Wallet = {
@@ -50,6 +55,11 @@ async function lightningCli<T>(node: string, ...args: string[]): Promise<T> {
   return JSON.parse(await compose('exec', '-T', '-u', 'clightning', node, 'lightning-cli', '--network=regtest', ...args)) as T;
 }
 
+// eclair-cli shows a string result with no quotes, so the function does not parse the output.
+function eclairCli(node: string, ...args: string[]): Promise<string> {
+  return compose('exec', '-T', node, 'eclair-cli', '-p', ECLAIR_API_PASSWORD, ...args);
+}
+
 const WALLETS: Record<Impl, Wallet> = {
   lnd: {
     balance: async (node) => Number((await lncli<LndBalance>(node, 'walletbalance')).confirmed_balance),
@@ -70,6 +80,11 @@ const WALLETS: Record<Impl, Wallet> = {
       const info = await lightningCli<ClnInfo>(node, 'getinfo');
       return !info.warning_bitcoind_sync && !info.warning_lightningd_sync && info.blockheight >= height;
     },
+  },
+  eclair: {
+    balance: async (node) => (JSON.parse(await eclairCli(node, 'onchainbalance')) as EclairBalance).confirmed,
+    newAddress: (node) => eclairCli(node, 'getnewaddress'),
+    synced: async (node, height) => (JSON.parse(await eclairCli(node, 'getinfo')) as EclairInfo).blockHeight >= height,
   },
 };
 

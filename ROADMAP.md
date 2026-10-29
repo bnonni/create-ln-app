@@ -260,11 +260,14 @@ The owner confirmed decisions 6 to 8 (2026-10-28) and decision 9 (2026-10-29).
 
 ### M8: Eclair (branch `m8-eclair`)
 
-- [ ] **C8.1 Eclair in the network.** Add the `eclair` impl to `compose.ts`, `bootstrap.ts`, `env.ts`, and `nodes.ts`.
+- [x] **C8.1 Eclair in the network.** Add the `eclair` impl to `compose.ts`, `bootstrap.ts`, `env.ts`, and `nodes.ts`.
   - Decide: the image, with the same rule as C7.2 (`polarlightning/eclair` or `acinq/eclair`).
   - Do: Eclair has no wallet of its own. It uses a bitcoind wallet, so bootstrap makes one bitcoind wallet for each Eclair node. Eclair also needs the bitcoind ZMQ `rawblock` and `rawtx` streams. Env writes `ECLAIR_<NAME>_API_URL` and `ECLAIR_<NAME>_API_PASSWORD`. The Eclair API uses plain HTTP, so it needs no TLS cert.
   - Read: `scripts/compose.ts`, `scripts/bootstrap.ts`, `scripts/env.ts`, `scripts/nodes.ts`.
   - Exit: with carol as `eclair`, `npm run reset && npm run network` funds all 3 nodes. `curl -u :<password> -X POST <url>/getinfo` returns the carol node id.
+  - Done: the image is `polarlightning/eclair:0.13.1` (amd64 and arm64). Eclair starts only if its bitcoind wallet exists. `npm run network` waits for healthy nodes before bootstrap, so the Eclair entrypoint makes the wallet, not bootstrap.
+  - Done: the wallet has the node name and `load_on_startup`, so bitcoind loads it again after a restart. Eclair uses the ZMQ `hashblock` stream (port 28336) and the `rawtx` stream, not `rawblock`.
+  - Done: the alias key is `node-alias`. The API password is `eclairpw`. The `feerate-tolerance` options accept all fee rates, as in Polar. A network with `lnd`, `cln`, and 2 `eclair` nodes also funds all nodes.
 - [ ] **C8.2 Eclair client.** Add `server/nodes/eclair.ts`.
   - Do: the Eclair API takes form-encoded POST bodies. `payinvoice` returns a payment id immediately, so the client asks `getsentinfo` until the payment succeeds or fails. Map the errors and invoice states to the neutral set. The integration test gets the node pair from the env.
   - Read: `server/nodes/types.ts`, `server/nodes/cln.ts`, `server/flow.test.ts`.
