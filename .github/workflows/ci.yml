@@ -39,9 +39,19 @@ jobs:
         run: npm run build
 
   # Packs the CLI, makes a project with it, starts the regtest network, and runs the browser steps.
+  # One job uses the default node list, and one job uses 5 nodes.
   e2e:
+    name: e2e (${{ matrix.nodes }} nodes)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nodes: 3
+            args: ''
+          - nodes: 5
+            args: --nodes 5
     steps:
       - uses: actions/checkout@v7
 
@@ -61,7 +71,7 @@ jobs:
         run: |
           npm pack -w create-ln-app --pack-destination "$RUNNER_TEMP"
           cd "$RUNNER_TEMP"
-          npx --yes --package "$RUNNER_TEMP"/create-ln-app-*.tgz create-ln-app e2e-app
+          npx --yes --package "$RUNNER_TEMP"/create-ln-app-*.tgz create-ln-app e2e-app ${{ matrix.args }}
 
       - name: Start the network
         working-directory: ${{ runner.temp }}/e2e-app
@@ -81,5 +91,5 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: e2e-test-results
+          name: e2e-test-results-${{ matrix.nodes }}-nodes
           path: e2e/test-results/

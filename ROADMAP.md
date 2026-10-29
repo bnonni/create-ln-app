@@ -226,7 +226,7 @@ The owner confirmed decisions 6 to 8 (2026-10-28). The owner can change decision
   - Do: replace the `NODES` arrays in `bootstrap.ts` and `env.ts`. `compose.ts` also uses the reader. The reader checks the file: 2 to 10 nodes, unique names that match `^[a-z][a-z0-9]*$`, and the impl `lnd`. Show one fix for each error.
   - Read: `scripts/bootstrap.ts`, `scripts/env.ts`, `scripts/compose.ts`.
   - Exit: with 5 nodes in `nodes.json`, `npm run reset && npm run network` funds 5 nodes. `.env` has 5 node blocks. `curl localhost:3001/api/nodes` returns 5 nodes. With the network down, `npm run doctor` checks the ports of 5 nodes.
-- [ ] **C6.3 CLI `--nodes <n>`.** Add the flag to `packages/create-ln-app/src/cli.ts`.
+- [x] **C6.3 CLI `--nodes <n>`.** Add the flag to `packages/create-ln-app/src/cli.ts`.
   - Do: accept 2 to 10 nodes (default 3). The names come from one list: alice, bob, carol, dave, erin, frank, grace, heidi, ivan, judy. After the package name change, the CLI writes `network/nodes.json` and runs `npm run compose` in the new project. Add the flag to the help text. Add a CI E2E job with `--nodes 5`.
   - Read: `packages/create-ln-app/src/cli.ts`, `.github/workflows/ci.yml`.
   - Exit: `npx --package <tgz> create-ln-app /tmp/x --nodes 5` makes a project. In `/tmp/x`, `npm run network` funds 5 nodes. The E2E test passes with `LAPP_DIR=/tmp/x`. `--nodes 11` fails and shows one fix.
