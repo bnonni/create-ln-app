@@ -1,6 +1,6 @@
 // Read the node list in network/nodes.json and check it.
 // The file is a JSON array of 2 to 10 nodes. Each node is { "name": "alice", "impl": "lnd" }.
-// The impl is "lnd" (LND) or "cln" (Core Lightning).
+// The impl is "lnd" (LND), "cln" (Core Lightning), or "eclair" (Eclair).
 // A name is a host name and a part of the .env keys, so it has only lowercase letters and digits.
 // The script uses only Node built-in modules, so it can run before npm install.
 import { readFile } from 'node:fs/promises';
@@ -10,7 +10,7 @@ const NODES_FILE = fileURLToPath(new URL('../network/nodes.json', import.meta.ur
 const MIN_NODES = 2;
 const MAX_NODES = 10;
 const NAME = /^[a-z][a-z0-9]*$/;
-export const IMPLS = ['lnd', 'cln'] as const;
+export const IMPLS = ['lnd', 'cln', 'eclair'] as const;
 // The compose file has a bitcoind service, so a node cannot have this name.
 const RESERVED_NAMES = ['bitcoind'];
 const EXAMPLE = '[{ "name": "alice", "impl": "lnd" }, { "name": "bob", "impl": "lnd" }]';
