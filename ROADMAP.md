@@ -201,7 +201,7 @@ The work protocol and the conventions of 1.0 also apply here. Each milestone end
 
 ### Decisions after 1.0
 
-The owner confirmed decisions 6 to 8 (2026-10-28). The owner can change decision 9 before C7.1 starts.
+The owner confirmed decisions 6 to 8 (2026-10-28) and decision 9 (2026-10-29).
 
 6. **Node list first.** M6 adds one node list file and a compose generator. M7 (CLN) and M8 (Eclair) use them. Reason: in 1.0, the compose file is static, and 2 scripts each hardcode alice, bob, and carol.
 7. **One impl for each node.** Each entry in `network/nodes.json` has a name and an impl (`lnd`, `cln`, or `eclair`). `--impl <impl>` sets all nodes. A developer edits `network/nodes.json` for a mix. The default stays 3 LND nodes.
@@ -237,7 +237,7 @@ The owner confirmed decisions 6 to 8 (2026-10-28). The owner can change decision
 
 ### M7: Core Lightning (branch `m7-cln`)
 
-- [ ] **C7.1 Neutral node interface.** Put the LND client behind an interface (decision 9).
+- [x] **C7.1 Neutral node interface.** Put the LND client behind an interface (decision 9).
   - Do: add `server/nodes/types.ts` with a `LightningNode` interface for the operations in `server/index.ts`. Move `server/lnd.ts` to `server/nodes/lnd.ts`. Map the LND errors and invoice states to one neutral set. Add `impl` to `GET /api/nodes`. Make the app use the neutral error codes, not the `FAILURE_REASON_*` text. Update `server/API.md`.
   - Read: `server/index.ts`, `server/lnd.ts`, `server/API.md`, `frontend/src/api.ts`.
   - Exit: lint, typecheck, and build pass. `npm run test:integration` and the E2E test pass on 3 LND nodes.

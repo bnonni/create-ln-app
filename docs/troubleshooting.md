@@ -107,7 +107,7 @@ The Vite dev server runs, but the API server does not run. For example, you star
 2. Run `npm run dev`.
 3. If the API server stops, read the `[server]` lines in the terminal. Each server error tells the fix.
 
-### `alice: the payment failed: FAILURE_REASON_NO_ROUTE`
+### `alice: the payment failed: no_route`
 
 The channel is not active yet. A new channel becomes active after 6 blocks.
 

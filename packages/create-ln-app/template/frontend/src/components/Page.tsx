@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  ApiError,
   connectPeer,
   createInvoice,
   getInvoice,
@@ -7,6 +8,7 @@ import {
   mineBlocks,
   openChannel,
   payInvoice,
+  type ErrorCode,
   type Invoice,
   type LightningNode,
 } from '../api';
@@ -24,7 +26,7 @@ const INVOICE_SATS = 1000;
 const INVOICE_MEMO = 'create-ln-app example';
 // Step 4 loads the invoice status again at this interval until the invoice is settled or canceled.
 const INVOICE_POLL_MS = 1000;
-// If LND is not ready, step 5 sends the payment again (see payWithRetry).
+// If the node is not ready, step 5 sends the payment again (see payWithRetry).
 const PAY_ATTEMPTS = 5;
 const PAY_RETRY_MS = 1000;
 
@@ -33,18 +35,18 @@ const errorMessage = (err: unknown) => (err instanceof Error ? err.message : Str
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-// For about 1 s after a new channel becomes active, LND can reject a payment with one of these reasons.
-// If the node has other channels, the reason is FAILURE_REASON_NO_ROUTE.
-const NOT_READY_REASONS = ['FAILURE_REASON_INSUFFICIENT_BALANCE', 'FAILURE_REASON_NO_ROUTE'];
+// For about 1 s after a new channel becomes active, a node can reject a payment with one of these codes.
+// If the node has other channels, the code is no_route.
+const NOT_READY_CODES: (ErrorCode | undefined)[] = ['insufficient_balance', 'no_route'];
 
-// After LND is ready, the same payment request works. Thus, send it again.
+// After the node is ready, the same payment request works. Thus, send it again.
 // If no channel can send the payment, the error shows after the last attempt.
 const payWithRetry = async (name: string, paymentRequest: string) => {
   for (let attempt = 1; ; attempt++) {
     try {
       return await payInvoice(name, paymentRequest);
     } catch (err) {
-      const notReady = NOT_READY_REASONS.some((reason) => errorMessage(err).includes(reason));
+      const notReady = err instanceof ApiError && NOT_READY_CODES.includes(err.code);
       if (!notReady || attempt === PAY_ATTEMPTS) throw err;
       await sleep(PAY_RETRY_MS);
     }
