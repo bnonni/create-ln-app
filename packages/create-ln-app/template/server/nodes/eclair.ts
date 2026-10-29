@@ -112,7 +112,9 @@ const PAYMENT_FAILURES: Partial<Record<string, PaymentFailureCode>> = {
 const FUNDING_FEE_BUDGET_SATS = 100_000;
 // BOLT 11: an invoice with no expiry field expires after 1 hour.
 const DEFAULT_INVOICE_EXPIRY_SECONDS = 3600;
-const PAYMENT_POLL_INTERVAL_MS = 250;
+const POLL_INTERVAL_MS = 250;
+// The time to wait for the funding transaction of a new channel.
+const FUNDING_TX_TIMEOUT_MS = 10_000;
 // The connect and open methods send a text result also if they fail.
 const CONNECTED = /^(already )?connected$/;
 const CHANNEL_CREATED = /^created channel ([0-9a-f]{64}) /;
@@ -188,9 +190,17 @@ export class EclairClient implements LightningNode {
     });
     const created = CHANNEL_CREATED.exec(result);
     if (!created) throw new NodeError(this.name, 'node_error', `${this.name}: ${result}`);
-    const [channel] = toChannel(await this.#call<EclairChannel>('channel', { channelId: created[1] }));
-    if (!channel) throw new NodeError(this.name, 'node_error', `${this.name}: channel ${created[1]} has no funding transaction`);
-    return channel.channelPoint;
+    // If the peer uses dual funding (for example an Eclair peer), open returns before the peers sign the funding transaction.
+    // Until then, the channel has no commitments. Thus, get the channel again until it has the funding transaction.
+    const deadline = Date.now() + FUNDING_TX_TIMEOUT_MS;
+    for (;;) {
+      const [channel] = toChannel(await this.#call<EclairChannel>('channel', { channelId: created[1] }));
+      if (channel) return channel.channelPoint;
+      if (Date.now() > deadline) {
+        throw new NodeError(this.name, 'node_error', `${this.name}: channel ${created[1]} has no funding transaction`);
+      }
+      await sleep(POLL_INTERVAL_MS);
+    }
   }
 
   async createInvoice(amountSats: number, memo: string): Promise<Invoice> {
@@ -252,7 +262,7 @@ export class EclairClient implements LightningNode {
         throw paymentFailed(this.name, (failure && PAYMENT_FAILURES[failure.failureMessage]) ?? 'payment_failed');
       }
       if (Date.now() > deadline) throw paymentFailed(this.name, 'payment_timeout');
-      await sleep(PAYMENT_POLL_INTERVAL_MS);
+      await sleep(POLL_INTERVAL_MS);
     }
   }
 
