@@ -98,7 +98,9 @@ const IMPL_SPECS: Record<Impl, ImplSpec> = {
   },
   eclair: {
     anchor: `x-eclair: &eclair
-  image: polarlightning/eclair:0.13.1
+  # Do not use the 0.12.0 or the 0.13.1 image. They use Alpine Linux, but their secp256k1 library needs glibc.
+  # Thus, Eclair crashes when it opens a channel.
+  image: polarlightning/eclair:0.11.0
   restart: unless-stopped
   # Eclair has no wallet of its own. It uses the bitcoind wallet with the node name (the host name).
   # Before Eclair starts, the entrypoint makes the wallet, or loads the wallet if it exists.

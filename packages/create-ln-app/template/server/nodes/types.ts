@@ -3,7 +3,7 @@
 // Thus the API and the app do not show the details of one node implementation.
 
 // The node implementations that the server supports.
-export type NodeImpl = 'lnd' | 'cln';
+export type NodeImpl = 'lnd' | 'cln' | 'eclair';
 
 export type NodeInfo = {
   pubkey: string;

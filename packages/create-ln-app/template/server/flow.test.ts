@@ -2,6 +2,7 @@
 // Start the network before the test: `npm run network`.
 // The test starts its own API server on a free port and talks to it as a client does.
 // The flow runs in the 2 directions: alice pays bob, then bob pays alice. Thus each node is a payer and a payee.
+// To use a different node pair, set FLOW_NODES, for example `FLOW_NODES=alice,carol npm run test:integration`.
 // Each flow opens a new channel from the payer, so the test also passes if a channel already exists.
 
 import assert from 'node:assert/strict';
@@ -18,7 +19,11 @@ const POLL_INTERVAL_MS = 250;
 const CHANNEL_SATS = 1_000_000;
 const INVOICE_SATS = 1_000;
 const CONFIRMATION_BLOCKS = 6;
-const IMPLS = ['lnd', 'cln'];
+const IMPLS = ['lnd', 'cln', 'eclair'];
+const [NODE_A, NODE_B, ...otherNodes] = (process.env.FLOW_NODES ?? 'alice,bob').split(',').map((name) => name.trim());
+if (!NODE_A || !NODE_B || NODE_A === NODE_B || otherNodes.length > 0) {
+  throw new Error(`FLOW_NODES must be 2 different node names, for example alice,bob. It is: ${process.env.FLOW_NODES}`);
+}
 
 type Channel = {
   channelPoint: string;
@@ -116,7 +121,7 @@ describe('payment flow', () => {
     await once(server, 'exit');
   });
 
-  for (const [payerName, payeeName] of [['alice', 'bob'], ['bob', 'alice']] as const) {
+  for (const [payerName, payeeName] of [[NODE_A, NODE_B], [NODE_B, NODE_A]]) {
     describe(`${payerName} pays ${payeeName} over a new channel`, () => {
       let payer: Node;
       let payee: Node;

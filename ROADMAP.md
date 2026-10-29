@@ -265,13 +265,17 @@ The owner confirmed decisions 6 to 8 (2026-10-28) and decision 9 (2026-10-29).
   - Do: Eclair has no wallet of its own. It uses a bitcoind wallet, so bootstrap makes one bitcoind wallet for each Eclair node. Eclair also needs the bitcoind ZMQ `rawblock` and `rawtx` streams. Env writes `ECLAIR_<NAME>_API_URL` and `ECLAIR_<NAME>_API_PASSWORD`. The Eclair API uses plain HTTP, so it needs no TLS cert.
   - Read: `scripts/compose.ts`, `scripts/bootstrap.ts`, `scripts/env.ts`, `scripts/nodes.ts`.
   - Exit: with carol as `eclair`, `npm run reset && npm run network` funds all 3 nodes. `curl -u :<password> -X POST <url>/getinfo` returns the carol node id.
-  - Done: the image is `polarlightning/eclair:0.13.1` (amd64 and arm64). Eclair starts only if its bitcoind wallet exists. `npm run network` waits for healthy nodes before bootstrap, so the Eclair entrypoint makes the wallet, not bootstrap.
+  - Done: the image is `polarlightning/eclair:0.11.0` (amd64 and arm64). C8.2 changed it from `0.13.1`. Eclair starts only if its bitcoind wallet exists. `npm run network` waits for healthy nodes before bootstrap, so the Eclair entrypoint makes the wallet, not bootstrap.
   - Done: the wallet has the node name and `load_on_startup`, so bitcoind loads it again after a restart. Eclair uses the ZMQ `hashblock` stream (port 28336) and the `rawtx` stream, not `rawblock`.
   - Done: the alias key is `node-alias`. The API password is `eclairpw`. The `feerate-tolerance` options accept all fee rates, as in Polar. A network with `lnd`, `cln`, and 2 `eclair` nodes also funds all nodes.
-- [ ] **C8.2 Eclair client.** Add `server/nodes/eclair.ts`.
+- [x] **C8.2 Eclair client.** Add `server/nodes/eclair.ts`.
   - Do: the Eclair API takes form-encoded POST bodies. `payinvoice` returns a payment id immediately, so the client asks `getsentinfo` until the payment succeeds or fails. Map the errors and invoice states to the neutral set. The integration test gets the node pair from the env.
   - Read: `server/nodes/types.ts`, `server/nodes/cln.ts`, `server/flow.test.ts`.
   - Exit: with alice as `lnd`, bob as `cln`, and carol as `eclair`, `npm run test:integration` passes for each pair in the 2 directions.
+  - Done: the image is `polarlightning/eclair:0.11.0` (Debian, glibc), not `0.13.1`. The `0.12.0` and `0.13.1` images use Alpine Linux (musl). Their `libsecp256k1-jni.so` calls the glibc function `__memcpy_chk`, and musl does not have it. Thus, the JVM crashes with `SIGSEGV` when Eclair opens a channel. The `acinq/eclair` images are amd64 only.
+  - Done: `open` and `connect` send HTTP 200 with a text result also if they fail. The client examines the text. `open` needs `fundingFeeBudgetSatoshis`, because the default budget (1000 sat) is too low for the regtest fee rate.
+  - Done: Eclair pays an invoice again if it is already paid. Thus, the client looks for an earlier payment with `getsentinfo` first and gives `conflict`. The client also gives `payment_rejected` for an expired invoice, as the CLN client does.
+  - Done: the server finds an Eclair node by its `ECLAIR_<NAME>_API_URL` key. `FLOW_NODES` selects the node pair of the integration test, for example `FLOW_NODES=alice,carol`. The default is `alice,bob`.
 - [ ] **C8.3 CLI, CI, docs, and release `1.3.0`.** Add `eclair` to `--impl`.
   - Do: add `eclair` to the CI E2E matrix. Use all 3 impls in the mix. Update the docs and `CHANGELOG.md`. Set version `1.3.0`.
   - Read: `packages/create-ln-app/src/cli.ts`, `.github/workflows/ci.yml`.

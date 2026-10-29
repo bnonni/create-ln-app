@@ -7,6 +7,7 @@ import { HTTPException } from 'hono/http-exception';
 import { fileURLToPath } from 'node:url';
 import { BitcoindClient, BitcoindError, bitcoindConfigFromEnv } from './bitcoind.ts';
 import { ClnClient, clnConfigFromEnv } from './nodes/cln.ts';
+import { EclairClient, eclairConfigFromEnv } from './nodes/eclair.ts';
 import { LndClient, lndConfigFromEnv } from './nodes/lnd.ts';
 import { NodeError, type LightningNode, type NodeErrorCode } from './nodes/types.ts';
 
@@ -20,19 +21,21 @@ const PAYMENT_TIMEOUT_SECONDS = 60;
 const PAYMENT_FEE_LIMIT_SATS = 1000;
 const PAYMENT_HASH = /^[0-9a-f]{64}$/;
 
-// Each node has a REST URL key in .env, for example LND_ALICE_REST_URL. The key prefix selects the client.
+// Each node has a URL key in .env, for example LND_ALICE_REST_URL or ECLAIR_CAROL_API_URL. The key prefix selects the client.
 const CLIENTS: Record<string, (env: NodeJS.ProcessEnv, envName: string) => LightningNode> = {
   LND: (env, envName) => new LndClient(lndConfigFromEnv(env, envName)),
   CLN: (env, envName) => new ClnClient(clnConfigFromEnv(env, envName)),
+  ECLAIR: (env, envName) => new EclairClient(eclairConfigFromEnv(env, envName)),
 };
-const REST_URL_KEY = /^(LND|CLN)_([A-Z0-9_]+)_REST_URL$/;
+// Group 1 and group 2 match an LND or a CLN key. Group 3 and group 4 match an Eclair key.
+const URL_KEY = /^(LND|CLN)_([A-Z0-9_]+)_REST_URL$|^(ECLAIR)_([A-Z0-9_]+)_API_URL$/;
 
 // The process.env keys are in alphabetical order, so CLN_ keys come before LND_ keys. Thus, sort the nodes by name.
 function nodesFromEnv(env: NodeJS.ProcessEnv): LightningNode[] {
   const nodes: LightningNode[] = [];
-  for (const [key, restUrl] of Object.entries(env)) {
-    const match = REST_URL_KEY.exec(key);
-    if (match && restUrl) nodes.push(CLIENTS[match[1]](env, match[2]));
+  for (const [key, url] of Object.entries(env)) {
+    const match = URL_KEY.exec(key);
+    if (match && url) nodes.push(CLIENTS[match[1] ?? match[3]](env, match[2] ?? match[4]));
   }
   if (nodes.length === 0) throw new Error('.env has no nodes. Run: npm run network');
   return nodes.sort((a, b) => a.name.localeCompare(b.name));
