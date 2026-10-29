@@ -7,7 +7,7 @@ The API is the same for each node implementation. Each node client in `server/no
 - Base URL: `http://localhost:3001/api`. The `API_PORT` variable in `.env` changes the port.
 - Start: `npm run server`, or `npm run dev` for the server and the app.
 - The server reads `.env` one time at start. After `npm run network` or `npm run reset`, restart the server.
-- A node name is the lowercase `<NAME>` of an `LND_<NAME>_REST_URL` or a `CLN_<NAME>_REST_URL` key in `.env`. The server uses an LND client or a CLN client for the node. The default nodes are `alice`, `bob`, and `carol`. `network/nodes.json` lists the nodes.
+- A node name is the lowercase `<NAME>` of an `LND_<NAME>_REST_URL`, a `CLN_<NAME>_REST_URL`, or an `ECLAIR_<NAME>_API_URL` key in `.env`. The server uses an LND client, a CLN client, or an Eclair client for the node. The default nodes are `alice`, `bob`, and `carol`. `network/nodes.json` lists the nodes.
 - All amounts are in satoshis and are JSON numbers. A field name with an amount ends in `Sats`.
 - All hashes, preimages, and public keys are lowercase hex strings.
 - A request body must be a JSON object. Send the header `content-type: application/json`.
