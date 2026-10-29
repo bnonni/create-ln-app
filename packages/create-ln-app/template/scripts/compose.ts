@@ -4,7 +4,7 @@
 // The script uses only Node built-in modules, so it can run before npm install.
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { type Node, readNodes } from './nodes.ts';
+import { type Impl, type Node, readNodes } from './nodes.ts';
 
 const COMPOSE_FILE = fileURLToPath(new URL('../network/docker-compose.yml', import.meta.url));
 const PACKAGE_FILE = fileURLToPath(new URL('../package.json', import.meta.url));
@@ -22,37 +22,12 @@ function projectName(packageName: string): string {
   return name || 'lapp';
 }
 
-function lndService(node: Node, i: number): string {
-  const { name } = node;
-  return `  ${name}:
-    <<: *lnd
-    hostname: ${name}
-    command: >-
-      lnd --noseedbackup --trickledelay=5000 --alias=${name} --externalip=${name}
-      --tlsextradomain=${name} --tlsextraip=127.0.0.1
-      --listen=0.0.0.0:9735 --rpclisten=0.0.0.0:10009 --restlisten=0.0.0.0:8080
-      --bitcoin.regtest --bitcoin.node=bitcoind
-      --bitcoind.rpchost=bitcoind --bitcoind.rpcuser=polaruser
-      --bitcoind.rpcpass=polarpass
-      --bitcoind.zmqpubrawblock=tcp://bitcoind:28334
-      --bitcoind.zmqpubrawtx=tcp://bitcoind:28335
-    volumes:
-      - ./data/${name}:/home/lnd/.lnd
-    ports:
-      - '${REST_PORT + i}:8080'
-      - '${GRPC_PORT + i}:10009'
-      - '${P2P_PORT + i}:9735'
-`;
-}
+// The container ports and the data dir of each impl. A node without a gRPC port gets no gRPC host port.
+type ImplSpec = { anchor: string; dataDir: string; rest: number; grpc?: number; command: (name: string) => string };
 
-function composeFile(project: string, nodes: Node[]): string {
-  const names = nodes.map((node) => node.name).join(', ');
-  return `# Generated from nodes.json. Do not edit. To change the nodes, edit network/nodes.json and run: npm run compose
-# Local regtest network: 1 bitcoind and ${nodes.length} LND nodes (${names}).
-# Node data goes to ./data/ (ignored in git).
-name: ${project}
-
-x-lnd: &lnd
+const IMPL_SPECS: Record<Impl, ImplSpec> = {
+  lnd: {
+    anchor: `x-lnd: &lnd
   image: polarlightning/lnd:0.20.0-beta
   restart: unless-stopped
   environment:
@@ -72,7 +47,80 @@ x-lnd: &lnd
     - '8080'
     - '10009'
     - '9735'
+`,
+    dataDir: '/home/lnd/.lnd',
+    rest: 8080,
+    grpc: 10009,
+    command: (name) => `lnd --noseedbackup --trickledelay=5000 --alias=${name} --externalip=${name}
+      --tlsextradomain=${name} --tlsextraip=127.0.0.1
+      --listen=0.0.0.0:9735 --rpclisten=0.0.0.0:10009 --restlisten=0.0.0.0:8080
+      --bitcoin.regtest --bitcoin.node=bitcoind
+      --bitcoind.rpchost=bitcoind --bitcoind.rpcuser=polaruser
+      --bitcoind.rpcpass=polarpass
+      --bitcoind.zmqpubrawblock=tcp://bitcoind:28334
+      --bitcoind.zmqpubrawtx=tcp://bitcoind:28335`,
+  },
+  cln: {
+    anchor: `x-cln: &cln
+  image: polarlightning/clightning:25.12
+  restart: unless-stopped
+  environment:
+    USERID: \${USERID:-1000}
+    GROUPID: \${GROUPID:-1000}
+  depends_on:
+    bitcoind:
+      condition: service_healthy
+  healthcheck:
+    # The health check runs as root, so it gives lightning-cli the CLN dir.
+    # For manual calls, run \`docker compose exec -u clightning <node> lightning-cli --network=regtest ...\`.
+    test: ['CMD', 'lightning-cli', '--lightning-dir=/home/clightning/.lightning', '--network=regtest', 'getinfo']
+    interval: 2s
+    timeout: 5s
+    retries: 60
+  expose:
+    - '3010'
+    - '10009'
+    - '9735'
+`,
+    dataDir: '/home/clightning/.lightning',
+    rest: 3010,
+    grpc: 10009,
+    // CLN polls bitcoind for new blocks. The dev options make the poll and the gossip fast.
+    command: (name) => `lightningd --network=regtest --alias=${name}
+      --bind-addr=0.0.0.0:9735 --announce-addr=${name}:9735
+      --bitcoin-rpcconnect=bitcoind --bitcoin-rpcport=18443
+      --bitcoin-rpcuser=polaruser --bitcoin-rpcpassword=polarpass
+      --clnrest-host=0.0.0.0 --clnrest-port=3010
+      --grpc-host=0.0.0.0 --grpc-port=10009
+      --developer --dev-bitcoind-poll=1 --dev-fast-gossip`,
+  },
+};
 
+function nodeService(node: Node, i: number): string {
+  const { name, impl } = node;
+  const spec = IMPL_SPECS[impl];
+  const ports = [`${REST_PORT + i}:${spec.rest}`, ...(spec.grpc ? [`${GRPC_PORT + i}:${spec.grpc}`] : []), `${P2P_PORT + i}:9735`];
+  return `  ${name}:
+    <<: *${impl}
+    hostname: ${name}
+    command: >-
+      ${spec.command(name)}
+    volumes:
+      - ./data/${name}:${spec.dataDir}
+    ports:
+${ports.map((port) => `      - '${port}'`).join('\n')}
+`;
+}
+
+function composeFile(project: string, nodes: Node[]): string {
+  const names = nodes.map((node) => `${node.name} ${node.impl}`).join(', ');
+  const impls = [...new Set(nodes.map((node) => node.impl))];
+  return `# Generated from nodes.json. Do not edit. To change the nodes, edit network/nodes.json and run: npm run compose
+# Local regtest network: 1 bitcoind and ${nodes.length} Lightning nodes (${names}).
+# Node data goes to ./data/ (ignored in git).
+name: ${project}
+
+${impls.map((impl) => IMPL_SPECS[impl].anchor).join('\n')}
 services:
   bitcoind:
     image: polarlightning/bitcoind:30.0
@@ -105,7 +153,7 @@ services:
       - '19444:18444'
       - '28334:28334'
       - '29335:28335'
-${nodes.map((node, i) => `\n${lndService(node, i)}`).join('')}`;
+${nodes.map((node, i) => `\n${nodeService(node, i)}`).join('')}`;
 }
 
 async function main(): Promise<void> {

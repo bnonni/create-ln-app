@@ -1,5 +1,5 @@
 # Generated from nodes.json. Do not edit. To change the nodes, edit network/nodes.json and run: npm run compose
-# Local regtest network: 1 bitcoind and 3 LND nodes (alice, bob, carol).
+# Local regtest network: 1 bitcoind and 3 Lightning nodes (alice lnd, bob lnd, carol lnd).
 # Node data goes to ./data/ (ignored in git).
 name: lapp-template
 
