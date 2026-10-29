@@ -2,6 +2,25 @@
 
 This file records the changes to the `create-ln-app` npm package in each release. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-10-29
+
+### Added
+
+- Core Lightning (CLN) 25.12 nodes, with the image `polarlightning/clightning:25.12`. In `network/nodes.json`, a node has the impl `lnd` or `cln`. A network can have the two impls.
+- The CLI option `--impl <impl>`. It sets the impl of all the nodes: `lnd` or `cln`. The default is `lnd`.
+- A CLN client for the API server, `server/nodes/cln.ts`. It uses CLNRest. The API is the same for LND and CLN nodes.
+- `npm run env` writes the keys `CLN_<NAME>_REST_URL`, `CLN_<NAME>_RUNE`, and `CLN_<NAME>_TLS_CERT_PATH` for each CLN node. The rune has no restrictions. A CLN node uses the same host ports as an LND node in the same position.
+- `GET /api/nodes` sends the `impl` of each node.
+- Each API error has a `code` field, for example `no_route` or `not_found`. The codes are the same for LND and CLN. `ApiError` in `frontend/src/api.ts` has the code. `server/API.md` has the table of codes.
+- The project README has the `lightning-cli` command, the CLN ports, the rune, and a CLNRest example.
+
+### Changed
+
+- The message of a failed payment has the code, not the LND failure reason. For example, `alice: the payment failed: no_route` replaces `alice: the payment failed: FAILURE_REASON_NO_ROUTE`.
+- The API server sends the nodes in name order.
+- The LND client moved from `server/lnd.ts` to `server/nodes/lnd.ts`. It implements the node interface in `server/nodes/types.ts`.
+- `npm run bootstrap` funds a CLN node to a `p2tr` address.
+
 ## [1.1.0] - 2026-10-29
 
 ### Added
@@ -30,5 +49,6 @@ The first release.
 - The project commands `network`, `down`, `reset`, `doctor`, `env`, and `test:integration`.
 - The docs: a quick start, an [architecture](docs/architecture.md) page, and a [troubleshooting](docs/troubleshooting.md) page.
 
+[1.2.0]: https://github.com/bnonni/create-ln-app/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/bnonni/create-ln-app/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/bnonni/create-ln-app/releases/tag/v1.0.0

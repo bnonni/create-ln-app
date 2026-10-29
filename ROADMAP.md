@@ -252,10 +252,11 @@ The owner confirmed decisions 6 to 8 (2026-10-28) and decision 9 (2026-10-29).
   - Read: `server/nodes/types.ts`, `server/API.md`, `server/flow.test.ts`.
   - Exit: with alice as `lnd` and bob as `cln`, `npm run test:integration` passes in the 2 directions. The E2E test passes.
   - Done: the client pays with `xpay`, because `pay` sends the error code 0 if it finds no route. `xpay` code 205 gives `no_route`, also for a low channel balance. Code 218 (already paid) gives `conflict`. `getInvoice` gets the creation date from `decode`. Each invoice gets a random label. The server sorts the nodes by name, because `process.env` puts the `CLN_` keys first. Bootstrap now funds a CLN node at a `p2tr` address: CLN 25.12 signed the coinbase output to its `bech32` address with the wrong key, so `fundchannel` failed. The 2 clients share `server/nodes/http.ts`. The integration test runs the flow in the 2 directions.
-- [ ] **C7.4 CLI `--impl`, CI, docs, and release `1.2.0`.** Add `--impl lnd|cln` (all nodes, default `lnd`).
+- [x] **C7.4 CLI `--impl`, CI, docs, and release `1.2.0`.** Add `--impl lnd|cln` (all nodes, default `lnd`).
   - Do: add a CI E2E matrix: `lnd`, `cln`, and a mix (a CI step edits `nodes.json`). Update the docs (CLN commands, the rune, the ports) and `CHANGELOG.md`. Set version `1.2.0`.
   - Read: `packages/create-ln-app/src/cli.ts`, `.github/workflows/ci.yml`.
   - Exit: `--impl cln` makes a project, and the E2E test passes in it. Owner: the E2E matrix passes on the PR. Merge, tag `v1.2.0`, and publish.
+  - Done: the CI E2E jobs are `lnd`, `lnd-5-nodes`, `cln`, and `mix`. The `mix` job writes `nodes.json` with bob as `cln`. On Linux, a project from the packed CLI with `--impl cln` passes the E2E test and the integration test (16 of 16). The version is `1.2.0`. The E2E matrix on the PR, the merge, the tag, and the publish are for the owner.
 
 ### M8: Eclair (branch `m8-eclair`)
 
