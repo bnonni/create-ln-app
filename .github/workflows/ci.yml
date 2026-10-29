@@ -39,8 +39,9 @@ jobs:
         run: npm run build
 
   # Packs the CLI, makes a project with it, starts the regtest network, and runs the browser steps.
-  # The jobs use the default node list (3 LND nodes), 5 LND nodes, 3 CLN nodes, and a mix of LND and CLN.
-  # The mix job writes network/nodes.json after the CLI makes the project.
+  # The jobs use the default node list (3 LND nodes), 5 LND nodes, 3 CLN nodes, 3 Eclair nodes, and a mix.
+  # The mix job writes network/nodes.json with the 3 impls after the CLI makes the project.
+  # The E2E test uses alice and bob, so the mix job also runs the integration test for each node pair.
   e2e:
     name: e2e (${{ matrix.name }})
     runs-on: ubuntu-latest
@@ -55,14 +56,17 @@ jobs:
             args: --nodes 5
           - name: cln
             args: --impl cln
+          - name: eclair
+            args: --impl eclair
           - name: mix
             args: ''
             nodes-json: |
               [
                 { "name": "alice", "impl": "lnd" },
                 { "name": "bob", "impl": "cln" },
-                { "name": "carol", "impl": "lnd" }
+                { "name": "carol", "impl": "eclair" }
               ]
+            flow-pairs: alice,bob bob,carol alice,carol
     steps:
       - uses: actions/checkout@v7
 
@@ -101,6 +105,18 @@ jobs:
         env:
           LAPP_DIR: ${{ runner.temp }}/e2e-app
         run: npm run test:e2e
+
+      # Each run of the integration test does the payment flow in the 2 directions.
+      - name: Run the integration test for each node pair
+        if: matrix.flow-pairs
+        working-directory: ${{ runner.temp }}/e2e-app
+        env:
+          FLOW_PAIRS: ${{ matrix.flow-pairs }}
+        run: |
+          for pair in $FLOW_PAIRS; do
+            echo "Node pair: $pair"
+            FLOW_NODES="$pair" npm run test:integration
+          done
 
       - name: Show the network logs
         if: failure()

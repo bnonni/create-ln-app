@@ -17,15 +17,16 @@ const NODE_NAMES = ['alice', 'bob', 'carol', 'dave', 'erin', 'frank', 'grace', '
 const MIN_NODES = 2;
 const DEFAULT_NODES = '3';
 // The impls of scripts/nodes.ts in the template, with the names that the CLI shows.
-const IMPLS = { lnd: 'LND', cln: 'CLN' } as const;
+const IMPLS = { lnd: 'LND', cln: 'CLN', eclair: 'Eclair' } as const;
 type Impl = keyof typeof IMPLS;
 const DEFAULT_IMPL: Impl = 'lnd';
-const IMPL_LIST = Object.keys(IMPLS).join(' or ');
+// For example "lnd, cln, or eclair".
+const IMPL_LIST = new Intl.ListFormat('en', { type: 'disjunction' }).format(Object.keys(IMPLS));
 const USAGE = `Usage: npx create-ln-app <project-dir> [--nodes <n>] [--impl <impl>] [--skip-install]
 
 Options:
   --nodes <n>     Make a network with n nodes, from ${MIN_NODES} to ${NODE_NAMES.length}. The default is ${DEFAULT_NODES}.
-  --impl <impl>   Use this impl for all the nodes: ${IMPL_LIST} (Core Lightning). The default is ${DEFAULT_IMPL}.
+  --impl <impl>   Use this impl for all the nodes: ${IMPL_LIST}. cln is Core Lightning. The default is ${DEFAULT_IMPL}.
   --skip-install  Do not install the npm packages.
   -h, --help      Show this help.`;
 
