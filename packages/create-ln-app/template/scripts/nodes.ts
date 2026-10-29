@@ -1,5 +1,6 @@
 // Read the node list in network/nodes.json and check it.
 // The file is a JSON array of 2 to 10 nodes. Each node is { "name": "alice", "impl": "lnd" }.
+// The impl is "lnd" (LND) or "cln" (Core Lightning).
 // A name is a host name and a part of the .env keys, so it has only lowercase letters and digits.
 // The script uses only Node built-in modules, so it can run before npm install.
 import { readFile } from 'node:fs/promises';
@@ -9,12 +10,13 @@ const NODES_FILE = fileURLToPath(new URL('../network/nodes.json', import.meta.ur
 const MIN_NODES = 2;
 const MAX_NODES = 10;
 const NAME = /^[a-z][a-z0-9]*$/;
-const IMPLS = ['lnd'];
+export const IMPLS = ['lnd', 'cln'] as const;
 // The compose file has a bitcoind service, so a node cannot have this name.
 const RESERVED_NAMES = ['bitcoind'];
 const EXAMPLE = '[{ "name": "alice", "impl": "lnd" }, { "name": "bob", "impl": "lnd" }]';
 
-export type Node = { name: string; impl: string };
+export type Impl = (typeof IMPLS)[number];
+export type Node = { name: string; impl: Impl };
 
 // Show a missing key as "no name", and other values as JSON.
 function shown(key: string, value: unknown): string {
@@ -35,8 +37,8 @@ function nodeProblems(value: unknown, i: number, names: string[]): string[] {
   } else if (names.includes(name)) {
     problems.push(`${node} has the name "${name}", the same as node ${names.indexOf(name) + 1}. Fix: give each node a different name.`);
   }
-  if (typeof impl !== 'string' || !IMPLS.includes(impl)) {
-    problems.push(`${node} has ${shown('impl', impl)}. This version supports only "lnd". Fix: set "impl" to "lnd".`);
+  if (typeof impl !== 'string' || !(IMPLS as readonly string[]).includes(impl)) {
+    problems.push(`${node} has ${shown('impl', impl)}. Fix: set "impl" to ${IMPLS.map((i) => `"${i}"`).join(' or ')}.`);
   }
   return problems;
 }

@@ -1,11 +1,11 @@
-// Fund the LND nodes on the local regtest network and wait for chain sync.
+// Fund the Lightning nodes on the local regtest network and wait for chain sync.
 // Start the network first: docker compose -f network/docker-compose.yml up -d
 // You can run this script again. It does not fund a node that has a balance.
 import { execFile } from 'node:child_process';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
-import { readNodes } from './nodes.ts';
+import { type Impl, type Node, readNodes } from './nodes.ts';
 
 const run = promisify(execFile);
 
@@ -17,9 +17,20 @@ const TIMEOUT_MS = 120_000;
 const POLL_MS = 1_000;
 
 type ContainerState = { Service: string; Health: string };
-type GetInfo = { synced_to_chain: boolean; block_height: number };
-type WalletBalance = { confirmed_balance: string };
-type NewAddress = { address: string };
+type LndInfo = { synced_to_chain: boolean; block_height: number };
+type LndBalance = { confirmed_balance: string };
+type LndAddress = { address: string };
+// CLN shows a warning in getinfo while it or bitcoind syncs.
+type ClnInfo = { blockheight: number; warning_bitcoind_sync?: string; warning_lightningd_sync?: string };
+type ClnFunds = { outputs: { amount_msat: number; status: string }[] };
+type ClnAddress = { bech32: string };
+
+// The wallet calls for one impl. A balance is in sats.
+type Wallet = {
+  balance: (node: string) => Promise<number>;
+  newAddress: (node: string) => Promise<string>;
+  synced: (node: string, height: number) => Promise<boolean>;
+};
 
 async function compose(...args: string[]): Promise<string> {
   const { stdout } = await run('docker', ['compose', '-f', COMPOSE_FILE, ...args]);
@@ -33,6 +44,33 @@ function bitcoinCli(...args: string[]): Promise<string> {
 async function lncli<T>(node: string, ...args: string[]): Promise<T> {
   return JSON.parse(await compose('exec', '-T', '-u', 'lnd', node, 'lncli', '-n', 'regtest', ...args)) as T;
 }
+
+async function lightningCli<T>(node: string, ...args: string[]): Promise<T> {
+  return JSON.parse(await compose('exec', '-T', '-u', 'clightning', node, 'lightning-cli', '--network=regtest', ...args)) as T;
+}
+
+const WALLETS: Record<Impl, Wallet> = {
+  lnd: {
+    balance: async (node) => Number((await lncli<LndBalance>(node, 'walletbalance')).confirmed_balance),
+    newAddress: async (node) => (await lncli<LndAddress>(node, 'newaddress', 'p2wkh')).address,
+    synced: async (node, height) => {
+      const info = await lncli<LndInfo>(node, 'getinfo');
+      return info.synced_to_chain && info.block_height >= height;
+    },
+  },
+  cln: {
+    balance: async (node) => {
+      const { outputs } = await lightningCli<ClnFunds>(node, 'listfunds');
+      const msat = outputs.filter((output) => output.status === 'confirmed').reduce((sum, output) => sum + output.amount_msat, 0);
+      return Math.floor(msat / 1000);
+    },
+    newAddress: async (node) => (await lightningCli<ClnAddress>(node, 'newaddr', 'bech32')).bech32,
+    synced: async (node, height) => {
+      const info = await lightningCli<ClnInfo>(node, 'getinfo');
+      return !info.warning_bitcoind_sync && !info.warning_lightningd_sync && info.blockheight >= height;
+    },
+  },
+};
 
 async function waitFor(goal: string, check: () => Promise<boolean>): Promise<void> {
   const deadline = Date.now() + TIMEOUT_MS;
@@ -60,14 +98,12 @@ async function waitForHealthy(nodes: string[]): Promise<void> {
   });
 }
 
-async function balance(node: string): Promise<number> {
-  const { confirmed_balance } = await lncli<WalletBalance>(node, 'walletbalance');
-  return Number(confirmed_balance);
+function balance(node: Node): Promise<number> {
+  return WALLETS[node.impl].balance(node.name);
 }
 
-async function newAddress(node: string): Promise<string> {
-  const { address } = await lncli<NewAddress>(node, 'newaddress', 'p2wkh');
-  return address;
+function newAddress(node: Node): Promise<string> {
+  return WALLETS[node.impl].newAddress(node.name);
 }
 
 async function mine(blocks: number, address: string): Promise<void> {
@@ -75,17 +111,17 @@ async function mine(blocks: number, address: string): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  const nodes = (await readNodes()).map((node) => node.name);
+  const nodes = await readNodes();
   console.log('Wait for healthy containers.');
-  await waitForHealthy(nodes);
+  await waitForHealthy(nodes.map((node) => node.name));
 
-  const unfunded: string[] = [];
+  const unfunded: Node[] = [];
   for (const node of nodes) {
     if ((await balance(node)) === 0) unfunded.push(node);
   }
 
   if (unfunded.length > 0) {
-    console.log(`Fund ${unfunded.join(', ')}.`);
+    console.log(`Fund ${unfunded.map((node) => node.name).join(', ')}.`);
     let address = '';
     for (const node of unfunded) {
       address = await newAddress(node);
@@ -94,7 +130,7 @@ async function main(): Promise<void> {
     await mine(MATURITY_BLOCKS, address);
   } else {
     // bitcoind stays in initial block download while the tip is more than 24 hours old.
-    // LND does not sync during initial block download, so 1 new block is necessary.
+    // The nodes do not sync during initial block download, so 1 new block is necessary.
     const { initialblockdownload } = JSON.parse(await bitcoinCli('getblockchaininfo')) as { initialblockdownload: boolean };
     if (initialblockdownload) await mine(1, await newAddress(nodes[0]));
   }
@@ -102,12 +138,9 @@ async function main(): Promise<void> {
   console.log('Wait for chain sync.');
   const height = Number(await bitcoinCli('getblockcount'));
   for (const node of nodes) {
-    await waitFor(`${node} syncs to block ${height}`, async () => {
-      const info = await lncli<GetInfo>(node, 'getinfo');
-      return info.synced_to_chain && info.block_height >= height;
-    });
-    await waitFor(`${node} has a confirmed balance`, async () => (await balance(node)) > 0);
-    console.log(`${node}: ${await balance(node)} sats`);
+    await waitFor(`${node.name} syncs to block ${height}`, () => WALLETS[node.impl].synced(node.name, height));
+    await waitFor(`${node.name} has a confirmed balance`, async () => (await balance(node)) > 0);
+    console.log(`${node.name}: ${await balance(node)} sats`);
   }
 }
 

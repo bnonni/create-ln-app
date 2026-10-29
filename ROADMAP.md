@@ -241,11 +241,12 @@ The owner confirmed decisions 6 to 8 (2026-10-28) and decision 9 (2026-10-29).
   - Do: add `server/nodes/types.ts` with a `LightningNode` interface for the operations in `server/index.ts`. Move `server/lnd.ts` to `server/nodes/lnd.ts`. Map the LND errors and invoice states to one neutral set. Add `impl` to `GET /api/nodes`. Make the app use the neutral error codes, not the `FAILURE_REASON_*` text. Update `server/API.md`.
   - Read: `server/index.ts`, `server/lnd.ts`, `server/API.md`, `frontend/src/api.ts`.
   - Exit: lint, typecheck, and build pass. `npm run test:integration` and the E2E test pass on 3 LND nodes.
-- [ ] **C7.2 CLN in the network.** Add the `cln` impl to `compose.ts`, `bootstrap.ts`, `env.ts`, and `nodes.ts`.
+- [x] **C7.2 CLN in the network.** Add the `cln` impl to `compose.ts`, `bootstrap.ts`, `env.ts`, and `nodes.ts`.
   - Decide: use `polarlightning/clightning` if `docker manifest inspect` shows amd64 and arm64. If not, use `elementsproject/lightningd`.
   - Do: CLN gets blocks from bitcoind RPC and serves the CLNRest API. Bootstrap uses `lightning-cli newaddr`, `listfunds`, and `getinfo`. Env makes a rune with `lightning-cli createrune`. Env writes `CLN_<NAME>_REST_URL`, `CLN_<NAME>_RUNE`, and `CLN_<NAME>_TLS_CERT_PATH`. Map a gRPC host port only if the node has a gRPC port.
   - Read: `scripts/compose.ts`, `scripts/bootstrap.ts`, `scripts/env.ts`, `scripts/nodes.ts`.
   - Exit: with bob as `cln`, `npm run reset && npm run network` funds all 3 nodes. A `curl` to CLNRest `/v1/getinfo` with the rune returns the bob node id.
+  - Done: the image is `polarlightning/clightning:25.12` (amd64 and arm64). CLN has a gRPC port, so it gets a gRPC host port. The CLNRest TLS cert names only `cln` and `localhost`, so `CLN_<NAME>_REST_URL` uses `localhost`. `CLN_<NAME>_TLS_CERT_PATH` is the CA cert `regtest/ca.pem`. Env uses the first rune with no restrictions, so the rune stays the same on each run. CLN announces its container IP, the same as LND.
 - [ ] **C7.3 CLN client.** Add `server/nodes/cln.ts`, a CLNRest client for the `LightningNode` interface.
   - Do: the server selects the client from the env prefix (`LND_` or `CLN_`). Map the CLN errors and invoice states to the neutral set. The integration test must also pay in the other direction (bob pays alice).
   - Read: `server/nodes/types.ts`, `server/API.md`, `server/flow.test.ts`.
