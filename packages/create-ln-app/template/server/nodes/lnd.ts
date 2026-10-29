@@ -1,8 +1,7 @@
 // A client for the LND REST API. It maps the LND data and errors to the neutral types in types.ts.
-// Each node uses a self-signed TLS cert, so each client trusts only the cert of its own node.
 // LND REST sends int64 values as JSON strings. The response types show this.
-import { readFileSync } from 'node:fs';
-import { Agent, fetch, type Response } from 'undici';
+import type { Agent, Response } from 'undici';
+import { fetchNode, tlsAgent } from './http.ts';
 import {
   NodeError,
   paymentFailed,
@@ -163,13 +162,7 @@ export class LndClient implements LightningNode {
     this.name = config.name;
     this.#restUrl = config.restUrl;
     this.#macaroonHex = config.macaroonHex;
-    let ca: Buffer;
-    try {
-      ca = readFileSync(config.tlsCertPath);
-    } catch {
-      throw new Error(`Cannot read the TLS cert of ${config.name} at ${config.tlsCertPath}. Run: npm run network`);
-    }
-    this.#dispatcher = new Agent({ connect: { ca } });
+    this.#dispatcher = tlsAgent(config.name, config.tlsCertPath);
   }
 
   async getInfo(): Promise<NodeInfo> {
@@ -274,19 +267,12 @@ export class LndClient implements LightningNode {
   async #send(method: string, path: string, body?: unknown): Promise<Response> {
     const headers: Record<string, string> = { 'Grpc-Metadata-macaroon': this.#macaroonHex };
     if (body !== undefined) headers['content-type'] = 'application/json';
-    let response;
-    try {
-      response = await fetch(`${this.#restUrl}${path}`, {
-        method,
-        headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
-        dispatcher: this.#dispatcher,
-      });
-    } catch (error) {
-      // undici puts the network or TLS error in the cause.
-      const cause = error instanceof Error && error.cause instanceof Error ? error.cause.message : String(error);
-      throw new NodeError(this.name, 'node_unreachable', `Cannot reach ${this.name} at ${this.#restUrl}: ${cause}`);
-    }
+    const response = await fetchNode(this.name, this.#restUrl, path, {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+      dispatcher: this.#dispatcher,
+    });
     if (!response.ok) {
       const text = await response.text();
       const message = `${this.name}: ${errorMessage(text) ?? `HTTP ${response.status}`}`;
@@ -308,21 +294,15 @@ function errorMessage(text: string): string | undefined {
   }
 }
 
-// The .env file has 3 keys for each node:
+// The .env file has 3 keys for each LND node:
 // LND_<NAME>_REST_URL, LND_<NAME>_MACAROON_HEX, and LND_<NAME>_TLS_CERT_PATH.
-export function lndConfigsFromEnv(env: NodeJS.ProcessEnv): LndConfig[] {
-  const configs: LndConfig[] = [];
-  for (const [key, restUrl] of Object.entries(env)) {
-    const match = /^LND_([A-Z0-9_]+)_REST_URL$/.exec(key);
-    if (!match || !restUrl) continue;
-    const prefix = `LND_${match[1]}`;
-    const macaroonHex = env[`${prefix}_MACAROON_HEX`];
-    const tlsCertPath = env[`${prefix}_TLS_CERT_PATH`];
-    if (!macaroonHex || !tlsCertPath) {
-      throw new Error(`.env must set ${prefix}_MACAROON_HEX and ${prefix}_TLS_CERT_PATH. Run: npm run env`);
-    }
-    configs.push({ name: match[1].toLowerCase(), restUrl, macaroonHex, tlsCertPath });
+export function lndConfigFromEnv(env: NodeJS.ProcessEnv, envName: string): LndConfig {
+  const prefix = `LND_${envName}`;
+  const restUrl = env[`${prefix}_REST_URL`];
+  const macaroonHex = env[`${prefix}_MACAROON_HEX`];
+  const tlsCertPath = env[`${prefix}_TLS_CERT_PATH`];
+  if (!restUrl || !macaroonHex || !tlsCertPath) {
+    throw new Error(`.env must set ${prefix}_MACAROON_HEX and ${prefix}_TLS_CERT_PATH. Run: npm run env`);
   }
-  if (configs.length === 0) throw new Error('.env has no LND nodes. Run: npm run network');
-  return configs;
+  return { name: envName.toLowerCase(), restUrl, macaroonHex, tlsCertPath };
 }

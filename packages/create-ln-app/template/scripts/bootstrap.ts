@@ -23,7 +23,8 @@ type LndAddress = { address: string };
 // CLN shows a warning in getinfo while it or bitcoind syncs.
 type ClnInfo = { blockheight: number; warning_bitcoind_sync?: string; warning_lightningd_sync?: string };
 type ClnFunds = { outputs: { amount_msat: number; status: string }[] };
-type ClnAddress = { bech32: string };
+// CLN 25.12 signs a coinbase output to its bech32 address with the wrong key, so a channel open fails. A p2tr output works.
+type ClnAddress = { p2tr: string };
 
 // The wallet calls for one impl. A balance is in sats.
 type Wallet = {
@@ -64,7 +65,7 @@ const WALLETS: Record<Impl, Wallet> = {
       const msat = outputs.filter((output) => output.status === 'confirmed').reduce((sum, output) => sum + output.amount_msat, 0);
       return Math.floor(msat / 1000);
     },
-    newAddress: async (node) => (await lightningCli<ClnAddress>(node, 'newaddr', 'bech32')).bech32,
+    newAddress: async (node) => (await lightningCli<ClnAddress>(node, 'newaddr', 'p2tr')).p2tr,
     synced: async (node, height) => {
       const info = await lightningCli<ClnInfo>(node, 'getinfo');
       return !info.warning_bitcoind_sync && !info.warning_lightningd_sync && info.blockheight >= height;

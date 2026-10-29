@@ -247,10 +247,11 @@ The owner confirmed decisions 6 to 8 (2026-10-28) and decision 9 (2026-10-29).
   - Read: `scripts/compose.ts`, `scripts/bootstrap.ts`, `scripts/env.ts`, `scripts/nodes.ts`.
   - Exit: with bob as `cln`, `npm run reset && npm run network` funds all 3 nodes. A `curl` to CLNRest `/v1/getinfo` with the rune returns the bob node id.
   - Done: the image is `polarlightning/clightning:25.12` (amd64 and arm64). CLN has a gRPC port, so it gets a gRPC host port. The CLNRest TLS cert names only `cln` and `localhost`, so `CLN_<NAME>_REST_URL` uses `localhost`. `CLN_<NAME>_TLS_CERT_PATH` is the CA cert `regtest/ca.pem`. Env uses the first rune with no restrictions, so the rune stays the same on each run. CLN announces its container IP, the same as LND.
-- [ ] **C7.3 CLN client.** Add `server/nodes/cln.ts`, a CLNRest client for the `LightningNode` interface.
+- [x] **C7.3 CLN client.** Add `server/nodes/cln.ts`, a CLNRest client for the `LightningNode` interface.
   - Do: the server selects the client from the env prefix (`LND_` or `CLN_`). Map the CLN errors and invoice states to the neutral set. The integration test must also pay in the other direction (bob pays alice).
   - Read: `server/nodes/types.ts`, `server/API.md`, `server/flow.test.ts`.
   - Exit: with alice as `lnd` and bob as `cln`, `npm run test:integration` passes in the 2 directions. The E2E test passes.
+  - Done: the client pays with `xpay`, because `pay` sends the error code 0 if it finds no route. `xpay` code 205 gives `no_route`, also for a low channel balance. Code 218 (already paid) gives `conflict`. `getInvoice` gets the creation date from `decode`. Each invoice gets a random label. The server sorts the nodes by name, because `process.env` puts the `CLN_` keys first. Bootstrap now funds a CLN node at a `p2tr` address: CLN 25.12 signed the coinbase output to its `bech32` address with the wrong key, so `fundchannel` failed. The 2 clients share `server/nodes/http.ts`. The integration test runs the flow in the 2 directions.
 - [ ] **C7.4 CLI `--impl`, CI, docs, and release `1.2.0`.** Add `--impl lnd|cln` (all nodes, default `lnd`).
   - Do: add a CI E2E matrix: `lnd`, `cln`, and a mix (a CI step edits `nodes.json`). Update the docs (CLN commands, the rune, the ports) and `CHANGELOG.md`. Set version `1.2.0`.
   - Read: `packages/create-ln-app/src/cli.ts`, `.github/workflows/ci.yml`.

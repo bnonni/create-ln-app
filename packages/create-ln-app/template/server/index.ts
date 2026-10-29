@@ -6,7 +6,8 @@ import { Hono, type Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { fileURLToPath } from 'node:url';
 import { BitcoindClient, BitcoindError, bitcoindConfigFromEnv } from './bitcoind.ts';
-import { LndClient, lndConfigsFromEnv } from './nodes/lnd.ts';
+import { ClnClient, clnConfigFromEnv } from './nodes/cln.ts';
+import { LndClient, lndConfigFromEnv } from './nodes/lnd.ts';
 import { NodeError, type LightningNode, type NodeErrorCode } from './nodes/types.ts';
 
 const ENV_FILE = fileURLToPath(new URL('../.env', import.meta.url));
@@ -19,6 +20,24 @@ const PAYMENT_TIMEOUT_SECONDS = 60;
 const PAYMENT_FEE_LIMIT_SATS = 1000;
 const PAYMENT_HASH = /^[0-9a-f]{64}$/;
 
+// Each node has a REST URL key in .env, for example LND_ALICE_REST_URL. The key prefix selects the client.
+const CLIENTS: Record<string, (env: NodeJS.ProcessEnv, envName: string) => LightningNode> = {
+  LND: (env, envName) => new LndClient(lndConfigFromEnv(env, envName)),
+  CLN: (env, envName) => new ClnClient(clnConfigFromEnv(env, envName)),
+};
+const REST_URL_KEY = /^(LND|CLN)_([A-Z0-9_]+)_REST_URL$/;
+
+// The process.env keys are in alphabetical order, so CLN_ keys come before LND_ keys. Thus, sort the nodes by name.
+function nodesFromEnv(env: NodeJS.ProcessEnv): LightningNode[] {
+  const nodes: LightningNode[] = [];
+  for (const [key, restUrl] of Object.entries(env)) {
+    const match = REST_URL_KEY.exec(key);
+    if (match && restUrl) nodes.push(CLIENTS[match[1]](env, match[2]));
+  }
+  if (nodes.length === 0) throw new Error('.env has no nodes. Run: npm run network');
+  return nodes.sort((a, b) => a.name.localeCompare(b.name));
+}
+
 function loadClients(): { nodes: LightningNode[]; bitcoind: BitcoindClient } {
   try {
     process.loadEnvFile(ENV_FILE);
@@ -26,7 +45,7 @@ function loadClients(): { nodes: LightningNode[]; bitcoind: BitcoindClient } {
     throw new Error(`Cannot read ${ENV_FILE}. Run: npm run network`);
   }
   return {
-    nodes: lndConfigsFromEnv(process.env).map((config) => new LndClient(config)),
+    nodes: nodesFromEnv(process.env),
     bitcoind: new BitcoindClient(bitcoindConfigFromEnv(process.env)),
   };
 }

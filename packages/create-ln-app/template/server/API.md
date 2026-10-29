@@ -1,13 +1,13 @@
 # API server contract
 
-The API server is the only part of the app that talks to the nodes. The browser sends all requests to this server. The node credentials (for example, the LND macaroons) and the TLS certs stay on the server.
+The API server is the only part of the app that talks to the nodes. The browser sends all requests to this server. The node credentials (the LND macaroons and the CLN runes) and the TLS certs stay on the server.
 
 The API is the same for each node implementation. Each node client in `server/nodes/` maps the data, the errors, and the invoice states of its node to one set. `server/nodes/types.ts` has the set.
 
 - Base URL: `http://localhost:3001/api`. The `API_PORT` variable in `.env` changes the port.
 - Start: `npm run server`, or `npm run dev` for the server and the app.
 - The server reads `.env` one time at start. After `npm run network` or `npm run reset`, restart the server.
-- A node name is the lowercase `<NAME>` of an `LND_<NAME>_REST_URL` key in `.env`. The default nodes are `alice`, `bob`, and `carol`. `network/nodes.json` lists the nodes.
+- A node name is the lowercase `<NAME>` of an `LND_<NAME>_REST_URL` or a `CLN_<NAME>_REST_URL` key in `.env`. The server uses an LND client or a CLN client for the node. The default nodes are `alice`, `bob`, and `carol`. `network/nodes.json` lists the nodes.
 - All amounts are in satoshis and are JSON numbers. A field name with an amount ends in `Sats`.
 - All hashes, preimages, and public keys are lowercase hex strings.
 - A request body must be a JSON object. Send the header `content-type: application/json`.
@@ -60,7 +60,7 @@ Shows each node, its balances, and its channels.
 ]
 ```
 
-- `impl` is the node implementation. This version supports only `lnd`.
+- `impl` is the node implementation: `lnd` or `cln`. The server sends the nodes in name order.
 - `onchainBalanceSats` is the confirmed wallet balance. An unconfirmed output, for example the change of a channel open, is not in it.
 - `channelBalanceSats` is the local balance of all open channels.
 - `status` is `pending`, `active`, or `inactive`. A `pending` channel waits for its funding transaction to confirm.
@@ -138,6 +138,7 @@ Pays an invoice from the node.
 - The server cannot pay an invoice with no amount, because the body has no amount field. The node rejects the request.
 - A failed payment gives 502 with a payment code (see [Errors](#errors)). For example, the code `no_route` gives the error `alice: the payment failed: no_route`.
 - After a new channel becomes `active`, LND can need about 1 second more before it can send a payment over the channel. Before that, the payment fails with the code `insufficient_balance`. If the node has other channels, the code is `no_route`. Send the same payment request again.
+- CLN sends the code `no_route` also if the channels do not have the balance for the payment.
 - If the invoice is already paid, the server sends 409 with the code `conflict`.
 
 ## Errors
@@ -171,3 +172,5 @@ LND sends most errors as HTTP 500. Thus the server cannot tell a bad request fro
 - `bob: self-payments not allowed`
 - `alice: invalid bech32 string length 3`
 - `alice: channel is too small, the minimum channel size is: 20000 SAT`
+
+CLN sends `invalid_request` if a param is bad, for example `bob: Invalid bolt11 invoice: Bad bech32 string`. CLN sends `node_error` for other errors, for example `bob: Unable to connect, no address known for peer`.

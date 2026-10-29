@@ -1,7 +1,8 @@
 // Integration test: the full payment flow against the live regtest network.
 // Start the network before the test: `npm run network`.
 // The test starts its own API server on a free port and talks to it as a client does.
-// Each run opens a new alice-bob channel, so the test also passes if a channel already exists.
+// The flow runs in the 2 directions: alice pays bob, then bob pays alice. Thus each node is a payer and a payee.
+// Each flow opens a new channel from the payer, so the test also passes if a channel already exists.
 
 import assert from 'node:assert/strict';
 import { type ChildProcess, spawn } from 'node:child_process';
@@ -17,6 +18,7 @@ const POLL_INTERVAL_MS = 250;
 const CHANNEL_SATS = 1_000_000;
 const INVOICE_SATS = 1_000;
 const CONFIRMATION_BLOCKS = 6;
+const IMPLS = ['lnd', 'cln'];
 
 type Channel = {
   channelPoint: string;
@@ -88,12 +90,7 @@ async function getNode(name: string): Promise<Node> {
   return node;
 }
 
-describe('payment flow: alice pays bob over a new channel', () => {
-  let alice: Node;
-  let bob: Node;
-  let channelPoint: string;
-  let invoice: Invoice;
-
+describe('payment flow', () => {
   before(async () => {
     const port = await freePort();
     baseUrl = `http://127.0.0.1:${port}/api`;
@@ -119,85 +116,95 @@ describe('payment flow: alice pays bob over a new channel', () => {
     await once(server, 'exit');
   });
 
-  test('GET /nodes shows alice and bob', async () => {
-    alice = await getNode('alice');
-    bob = await getNode('bob');
-    assert.equal(alice.impl, 'lnd');
-    assert.equal(bob.impl, 'lnd');
-    assert.match(alice.pubkey, /^[0-9a-f]{66}$/);
-    assert.match(bob.pubkey, /^[0-9a-f]{66}$/);
-  });
+  for (const [payerName, payeeName] of [['alice', 'bob'], ['bob', 'alice']] as const) {
+    describe(`${payerName} pays ${payeeName} over a new channel`, () => {
+      let payer: Node;
+      let payee: Node;
+      let channelPoint: string;
+      let invoice: Invoice;
 
-  test('alice connects to bob', async () => {
-    const result = await expectStatus(200, 'POST', '/nodes/alice/peers', { peer: 'bob' });
-    assert.deepEqual(result, { peer: 'bob', peerPubkey: bob.pubkey });
-  });
-
-  test('alice opens a channel to bob', async () => {
-    const result = await expectStatus(201, 'POST', '/nodes/alice/channels', {
-      peer: 'bob',
-      amountSats: CHANNEL_SATS,
-    });
-    assert.match(result.channelPoint, /^[0-9a-f]{64}:\d+$/);
-    assert.equal(result.peerPubkey, bob.pubkey);
-    channelPoint = result.channelPoint;
-  });
-
-  test(`mining ${CONFIRMATION_BLOCKS} blocks makes the channel active on both nodes`, async () => {
-    const result = await expectStatus(200, 'POST', '/mine', { blocks: CONFIRMATION_BLOCKS });
-    assert.equal(result.blockHashes.length, CONFIRMATION_BLOCKS);
-
-    // The payment can fail if one side of the channel is not ready. Wait for both sides.
-    for (const [name, peer] of [['alice', bob], ['bob', alice]] as const) {
-      const channel = await waitFor(`${name}: channel ${channelPoint} is active`, CHANNEL_ACTIVE_TIMEOUT_MS, async () => {
-        const node = await getNode(name);
-        return node.channels.find((c) => c.channelPoint === channelPoint && c.status === 'active');
+      test(`GET /nodes shows ${payerName} and ${payeeName}`, async () => {
+        payer = await getNode(payerName);
+        payee = await getNode(payeeName);
+        for (const node of [payer, payee]) {
+          assert.ok(IMPLS.includes(node.impl), `${node.name}: unknown impl ${node.impl}`);
+          assert.match(node.pubkey, /^[0-9a-f]{66}$/);
+        }
       });
-      assert.equal(channel.peerPubkey, peer.pubkey);
-      assert.equal(channel.capacitySats, CHANNEL_SATS);
-    }
-  });
 
-  test('bob makes an invoice', async () => {
-    invoice = await expectStatus(201, 'POST', '/nodes/bob/invoices', {
-      amountSats: INVOICE_SATS,
-      memo: 'flow test',
+      test(`${payerName} connects to ${payeeName}`, async () => {
+        const result = await expectStatus(200, 'POST', `/nodes/${payerName}/peers`, { peer: payeeName });
+        assert.deepEqual(result, { peer: payeeName, peerPubkey: payee.pubkey });
+      });
+
+      test(`${payerName} opens a channel to ${payeeName}`, async () => {
+        const result = await expectStatus(201, 'POST', `/nodes/${payerName}/channels`, {
+          peer: payeeName,
+          amountSats: CHANNEL_SATS,
+        });
+        assert.match(result.channelPoint, /^[0-9a-f]{64}:\d+$/);
+        assert.equal(result.peerPubkey, payee.pubkey);
+        channelPoint = result.channelPoint;
+      });
+
+      test(`mining ${CONFIRMATION_BLOCKS} blocks makes the channel active on both nodes`, async () => {
+        const result = await expectStatus(200, 'POST', '/mine', { blocks: CONFIRMATION_BLOCKS });
+        assert.equal(result.blockHashes.length, CONFIRMATION_BLOCKS);
+
+        // The payment can fail if one side of the channel is not ready. Wait for both sides.
+        for (const [name, peer] of [[payerName, payee], [payeeName, payer]] as const) {
+          const channel = await waitFor(`${name}: channel ${channelPoint} is active`, CHANNEL_ACTIVE_TIMEOUT_MS, async () => {
+            const node = await getNode(name);
+            return node.channels.find((c) => c.channelPoint === channelPoint && c.status === 'active');
+          });
+          assert.equal(channel.peerPubkey, peer.pubkey);
+          assert.equal(channel.capacitySats, CHANNEL_SATS);
+        }
+      });
+
+      test(`${payeeName} makes an invoice`, async () => {
+        invoice = await expectStatus(201, 'POST', `/nodes/${payeeName}/invoices`, {
+          amountSats: INVOICE_SATS,
+          memo: 'flow test',
+        });
+        assert.match(invoice.paymentHash, /^[0-9a-f]{64}$/);
+        assert.match(invoice.paymentRequest, /^lnbcrt/);
+        assert.equal(invoice.memo, 'flow test');
+        assert.equal(invoice.amountSats, INVOICE_SATS);
+        assert.equal(invoice.status, 'open');
+        assert.ok(!Number.isNaN(Date.parse(invoice.createdAt)));
+        assert.equal(invoice.settledAt, null);
+      });
+
+      test(`${payerName} pays the invoice`, async () => {
+        // LND can need about 1 second after "active" before it can send over a new channel.
+        // Before that, the payment fails with the code insufficient_balance. Then try again.
+        const payment = await waitFor(`${payerName} pays the invoice`, CHANNEL_READY_TIMEOUT_MS, async () => {
+          const response = await api('POST', `/nodes/${payerName}/payments`, { paymentRequest: invoice.paymentRequest });
+          if (response.status === 502 && response.body.code === 'insufficient_balance') return undefined;
+          assert.equal(response.status, 201, `POST /nodes/${payerName}/payments: ${JSON.stringify(response.body)}`);
+          return response.body;
+        });
+        assert.equal(payment.paymentHash, invoice.paymentHash);
+        assert.match(payment.preimage, /^[0-9a-f]{64}$/);
+        assert.equal(payment.amountSats, INVOICE_SATS);
+        assert.equal(payment.feeSats, 0);
+      });
+
+      test(`the invoice is settled on ${payeeName}`, async () => {
+        const settled: Invoice = await expectStatus(200, 'GET', `/nodes/${payeeName}/invoices/${invoice.paymentHash}`);
+        assert.equal(settled.status, 'settled');
+        assert.equal(settled.amountPaidSats, INVOICE_SATS);
+        assert.ok(settled.settledAt !== null && !Number.isNaN(Date.parse(settled.settledAt)));
+      });
+
+      test(`${payerName} cannot pay the same invoice again`, async () => {
+        const result = await expectStatus(409, 'POST', `/nodes/${payerName}/payments`, {
+          paymentRequest: invoice.paymentRequest,
+        });
+        assert.equal(typeof result.error, 'string');
+        assert.equal(result.code, 'conflict');
+      });
     });
-    assert.match(invoice.paymentHash, /^[0-9a-f]{64}$/);
-    assert.match(invoice.paymentRequest, /^lnbcrt/);
-    assert.equal(invoice.memo, 'flow test');
-    assert.equal(invoice.amountSats, INVOICE_SATS);
-    assert.equal(invoice.status, 'open');
-    assert.equal(invoice.settledAt, null);
-  });
-
-  test('alice pays the invoice', async () => {
-    // LND can need about 1 second after "active" before it can send over a new channel.
-    // Before that, the payment fails with the code insufficient_balance. Then try again.
-    const payment = await waitFor('alice pays the invoice', CHANNEL_READY_TIMEOUT_MS, async () => {
-      const response = await api('POST', '/nodes/alice/payments', { paymentRequest: invoice.paymentRequest });
-      if (response.status === 502 && response.body.code === 'insufficient_balance') return undefined;
-      assert.equal(response.status, 201, `POST /nodes/alice/payments: ${JSON.stringify(response.body)}`);
-      return response.body;
-    });
-    assert.equal(payment.paymentHash, invoice.paymentHash);
-    assert.match(payment.preimage, /^[0-9a-f]{64}$/);
-    assert.equal(payment.amountSats, INVOICE_SATS);
-    assert.equal(payment.feeSats, 0);
-  });
-
-  test('the invoice is settled on bob', async () => {
-    const settled: Invoice = await expectStatus(200, 'GET', `/nodes/bob/invoices/${invoice.paymentHash}`);
-    assert.equal(settled.status, 'settled');
-    assert.equal(settled.amountPaidSats, INVOICE_SATS);
-    assert.ok(settled.settledAt !== null && !Number.isNaN(Date.parse(settled.settledAt)));
-  });
-
-  test('alice cannot pay the same invoice again', async () => {
-    const result = await expectStatus(409, 'POST', '/nodes/alice/payments', {
-      paymentRequest: invoice.paymentRequest,
-    });
-    assert.equal(typeof result.error, 'string');
-    assert.equal(result.code, 'conflict');
-  });
+  }
 });
