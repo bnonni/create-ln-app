@@ -39,19 +39,30 @@ jobs:
         run: npm run build
 
   # Packs the CLI, makes a project with it, starts the regtest network, and runs the browser steps.
-  # One job uses the default node list, and one job uses 5 nodes.
+  # The jobs use the default node list (3 LND nodes), 5 LND nodes, 3 CLN nodes, and a mix of LND and CLN.
+  # The mix job writes network/nodes.json after the CLI makes the project.
   e2e:
-    name: e2e (${{ matrix.nodes }} nodes)
+    name: e2e (${{ matrix.name }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         include:
-          - nodes: 3
+          - name: lnd
             args: ''
-          - nodes: 5
+          - name: lnd-5-nodes
             args: --nodes 5
+          - name: cln
+            args: --impl cln
+          - name: mix
+            args: ''
+            nodes-json: |
+              [
+                { "name": "alice", "impl": "lnd" },
+                { "name": "bob", "impl": "cln" },
+                { "name": "carol", "impl": "lnd" }
+              ]
     steps:
       - uses: actions/checkout@v7
 
@@ -73,6 +84,15 @@ jobs:
           cd "$RUNNER_TEMP"
           npx --yes --package "$RUNNER_TEMP"/create-ln-app-*.tgz create-ln-app e2e-app ${{ matrix.args }}
 
+      - name: Write the node list
+        if: matrix.nodes-json
+        working-directory: ${{ runner.temp }}/e2e-app
+        env:
+          NODES_JSON: ${{ matrix.nodes-json }}
+        run: |
+          printf '%s' "$NODES_JSON" > network/nodes.json
+          cat network/nodes.json
+
       - name: Start the network
         working-directory: ${{ runner.temp }}/e2e-app
         run: npm run network
@@ -91,5 +111,5 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: e2e-test-results-${{ matrix.nodes }}-nodes
+          name: e2e-test-results-${{ matrix.name }}
           path: e2e/test-results/

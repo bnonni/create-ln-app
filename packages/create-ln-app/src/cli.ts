@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Make a new Lightning app project from the template in ../template.
-// Usage: npx create-ln-app <project-dir> [--nodes <n>] [--skip-install]
+// Usage: npx create-ln-app <project-dir> [--nodes <n>] [--impl <impl>] [--skip-install]
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
@@ -16,10 +16,16 @@ const APP_URL = 'http://localhost:5173';
 const NODE_NAMES = ['alice', 'bob', 'carol', 'dave', 'erin', 'frank', 'grace', 'heidi', 'ivan', 'judy'];
 const MIN_NODES = 2;
 const DEFAULT_NODES = '3';
-const USAGE = `Usage: npx create-ln-app <project-dir> [--nodes <n>] [--skip-install]
+// The impls of scripts/nodes.ts in the template, with the names that the CLI shows.
+const IMPLS = { lnd: 'LND', cln: 'CLN' } as const;
+type Impl = keyof typeof IMPLS;
+const DEFAULT_IMPL: Impl = 'lnd';
+const IMPL_LIST = Object.keys(IMPLS).join(' or ');
+const USAGE = `Usage: npx create-ln-app <project-dir> [--nodes <n>] [--impl <impl>] [--skip-install]
 
 Options:
-  --nodes <n>     Make a network with n LND nodes, from ${MIN_NODES} to ${NODE_NAMES.length}. The default is ${DEFAULT_NODES}.
+  --nodes <n>     Make a network with n nodes, from ${MIN_NODES} to ${NODE_NAMES.length}. The default is ${DEFAULT_NODES}.
+  --impl <impl>   Use this impl for all the nodes: ${IMPL_LIST} (Core Lightning). The default is ${DEFAULT_IMPL}.
   --skip-install  Do not install the npm packages.
   -h, --help      Show this help.`;
 
@@ -59,9 +65,16 @@ function nodeCount(value: string): number {
   return count;
 }
 
+function implName(value: string): Impl {
+  if (!Object.hasOwn(IMPLS, value)) {
+    throw new Error(`--impl ${value} is not valid. Fix: use ${IMPL_LIST}.`);
+  }
+  return value as Impl;
+}
+
 // Write the same format as the template file: one node on each line.
-function writeNodes(file: string, count: number): void {
-  const lines = NODE_NAMES.slice(0, count).map((name) => `  { "name": "${name}", "impl": "lnd" }`);
+function writeNodes(file: string, count: number, impl: Impl): void {
+  const lines = NODE_NAMES.slice(0, count).map((name) => `  { "name": "${name}", "impl": "${impl}" }`);
   writeFileSync(file, `[\n${lines.join(',\n')}\n]\n`);
 }
 
@@ -91,6 +104,7 @@ function main(): void {
     allowPositionals: true,
     options: {
       nodes: { type: 'string', default: DEFAULT_NODES },
+      impl: { type: 'string', default: DEFAULT_IMPL },
       'skip-install': { type: 'boolean' },
       help: { type: 'boolean', short: 'h' },
     },
@@ -106,6 +120,7 @@ function main(): void {
   }
 
   const count = nodeCount(values.nodes);
+  const impl = implName(values.impl);
   const target = resolve(positionals[0]);
   if (existsSync(target) && readdirSync(target).length > 0) {
     throw new Error(`${target} is not empty. Use a new or empty folder.`);
@@ -117,13 +132,13 @@ function main(): void {
   renameSync(join(target, 'gitignore'), join(target, '.gitignore'));
   setName(join(target, 'package.json'), name);
   setName(join(target, 'package-lock.json'), name);
-  writeNodes(join(target, 'network', 'nodes.json'), count);
+  writeNodes(join(target, 'network', 'nodes.json'), count, impl);
   // The compose file gets the node list and a project name from the new package name.
   // The compose script uses only Node built-in modules, so it runs with --skip-install too.
   if (!run('npm', ['run', '--silent', 'compose'], target)) {
     throw new Error(`npm run compose failed. Fix the error, then run npm run compose in ${target}.`);
   }
-  console.log(`Made ${name} in ${target} with ${count} LND nodes.`);
+  console.log(`Made ${name} in ${target} with ${count} ${IMPLS[impl]} nodes.`);
 
   initGit(target);
 
