@@ -8,12 +8,12 @@ import { access, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+import { readNodes } from './nodes.ts';
 
 const run = promisify(execFile);
 
 const COMPOSE_FILE = fileURLToPath(new URL('../network/docker-compose.yml', import.meta.url));
 const ENV_FILE = fileURLToPath(new URL('../.env', import.meta.url));
-const NODES = ['alice', 'bob', 'carol'];
 const LND_DIR = '/home/lnd/.lnd';
 const LND_REST_PORT = 8080;
 const TLS_CERT = 'tls.cert';
@@ -97,7 +97,7 @@ async function keptLines(): Promise<string[]> {
 
 async function main(): Promise<void> {
   const config = await composeConfig();
-  const nodes = await Promise.all(NODES.map((node) => nodeEnv(config, node)));
+  const nodes = await Promise.all((await readNodes()).map((node) => nodeEnv(config, node.name)));
   const lines = [
     HEADER,
     ...(await keptLines()),

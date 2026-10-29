@@ -26,7 +26,7 @@ async function serviceImage(service: string): Promise<string> {
 }
 
 async function main(): Promise<void> {
-  await run('docker', ['compose', '-f', COMPOSE_FILE, 'down']);
+  await run('docker', ['compose', '-f', COMPOSE_FILE, 'down', '--remove-orphans']);
   console.log('Stopped the network.');
 
   const names = (await readdir(DATA_DIR)).filter((name) => name !== KEEP);

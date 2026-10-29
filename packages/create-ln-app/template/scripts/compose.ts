@@ -4,15 +4,13 @@
 // The script uses only Node built-in modules, so it can run before npm install.
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { type Node, readNodes } from './nodes.ts';
 
-const NODES_FILE = fileURLToPath(new URL('../network/nodes.json', import.meta.url));
 const COMPOSE_FILE = fileURLToPath(new URL('../network/docker-compose.yml', import.meta.url));
 const PACKAGE_FILE = fileURLToPath(new URL('../package.json', import.meta.url));
 const REST_PORT = 8081;
 const GRPC_PORT = 10001;
 const P2P_PORT = 9735;
-
-type Node = { name: string; impl: string };
 
 // A compose project name has only lowercase letters, digits, dashes, and underscores.
 // It starts with a letter or a digit. For example, "@me/My.App" gives "me-my-app".
@@ -111,7 +109,7 @@ ${nodes.map((node, i) => `\n${lndService(node, i)}`).join('')}`;
 }
 
 async function main(): Promise<void> {
-  const nodes = JSON.parse(await readFile(NODES_FILE, 'utf8')) as Node[];
+  const nodes = await readNodes();
   const { name } = JSON.parse(await readFile(PACKAGE_FILE, 'utf8')) as { name?: string };
   const project = projectName(name ?? '');
   await writeFile(COMPOSE_FILE, composeFile(project, nodes));
