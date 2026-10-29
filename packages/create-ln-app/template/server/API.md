@@ -5,7 +5,7 @@ The API server is the only part of the app that talks to the nodes. The browser 
 - Base URL: `http://localhost:3001/api`. The `API_PORT` variable in `.env` changes the port.
 - Start: `npm run server`, or `npm run dev` for the server and the app.
 - The server reads `.env` one time at start. After `npm run network` or `npm run reset`, restart the server.
-- A node name is the lowercase `<NAME>` of an `LND_<NAME>_REST_URL` key in `.env`. The default nodes are `alice`, `bob`, and `carol`.
+- A node name is the lowercase `<NAME>` of an `LND_<NAME>_REST_URL` key in `.env`. The default nodes are `alice`, `bob`, and `carol`. `network/nodes.json` lists the nodes.
 - All amounts are in satoshis and are JSON numbers. A field name with an amount ends in `Sats`.
 - All hashes, preimages, and public keys are lowercase hex strings.
 - A request body must be a JSON object. Send the header `content-type: application/json`.

@@ -2,7 +2,7 @@
 
 `create-ln-app` makes a Lightning app (Lapp) project with one command. The project has three parts:
 
-1. A local Bitcoin Lightning Network for development: Bitcoin Core and 3 LND nodes on regtest.
+1. A local Bitcoin Lightning Network for development: Bitcoin Core and 2 to 10 LND nodes on regtest. The default is 3 nodes.
 2. An API server that connects to the nodes.
 3. An example app that uses the API server.
 
@@ -45,7 +45,9 @@ On macOS and Windows, start Docker Desktop before you continue.
 
 The `create-ln-app` command copies the project to `my-lapp`, runs `git init`, and installs the npm packages. Then it runs `npm run doctor`, which checks Docker, Docker Compose, and the ports.
 
-The `dev` command starts 1 bitcoind node and 3 LND nodes, funds the LND nodes, and writes the node values to `.env`. Then it starts the API server at <http://localhost:3001/api> and the example app at <http://localhost:5173>. The first start downloads the Docker images (about 510 MB), so it takes more time.
+To make a network with a different number of LND nodes, add `--nodes <n>` to the `create-ln-app` command. The value is from 2 to 10. Example: `npx create-ln-app my-lapp --nodes 5`.
+
+The `dev` command starts 1 bitcoind node and the LND nodes, funds the LND nodes, and writes the node values to `.env`. Then it starts the API server at <http://localhost:3001/api> and the example app at <http://localhost:5173>. The first start downloads the Docker images (about 510 MB), so it takes more time.
 
 If a step fails, see [Troubleshooting](docs/troubleshooting.md).
 

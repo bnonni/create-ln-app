@@ -51,10 +51,12 @@ Run `npm run dev` again. If the error occurs again, examine your internet connec
 | --- | --- |
 | 5173 | The example app (Vite dev server) |
 | 3001 | The API server |
-| 8081, 8082, 8083 | LND REST (alice, bob, carol) |
-| 10001, 10002, 10003 | LND gRPC (alice, bob, carol) |
-| 9735, 9736, 9737 | LND P2P (alice, bob, carol) |
+| 8081, 8082, 8083, ... | LND REST (alice, bob, carol, ...) |
+| 10001, 10002, 10003, ... | LND gRPC (alice, bob, carol, ...) |
+| 9735, 9736, 9737, ... | LND P2P (alice, bob, carol, ...) |
 | 18443, 19444, 28334, 29335 | bitcoind RPC, P2P, and ZMQ |
+
+Node n in `network/nodes.json` uses the ports `8080+n`, `10000+n`, and `9734+n`. For example, a network with 10 nodes uses the ports 8081 to 8090, 10001 to 10010, and 9735 to 9744.
 
 To find the program that uses a port on macOS or Linux, run (replace `3001` with the port):
 
@@ -66,7 +68,7 @@ lsof -nP -iTCP:3001 -sTCP:LISTEN
 
 The doctor shows a failed "Network ports" check with a list of ports. Stop the program that uses each port.
 
-All create-ln-app projects use the same Docker Compose project name, `create-ln-app`. Thus, only one project network can run at a time. Before you start the network in a project, run `npm run down` in the other project.
+All create-ln-app projects use the same host ports. Thus, only one project network can run at a time. Before you start the network in a project, run `npm run down` in the other project.
 
 ### Port 3001 is in use
 

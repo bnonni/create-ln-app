@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>create-ln-app: make a Lightning app with one command</title>
-  <meta name="description" content="Make a Lightning app with a local regtest network: Bitcoin Core, 3 LND nodes, an API server, and an example app.">
+  <meta name="description" content="Make a Lightning app with a local regtest network: Bitcoin Core, 2 to 10 LND nodes, an API server, and an example app.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
   <style>
     :root { color-scheme: light dark; --accent: #f7931a; --muted: #6b7280; --code-bg: rgb(127 127 127 / 0.12); }
@@ -34,7 +34,7 @@ npm run dev</code></pre>
 
     <h2>What you get</h2>
     <ul>
-      <li>Bitcoin Core and 3 LND nodes on regtest, funded and ready.</li>
+      <li>Bitcoin Core and LND nodes on regtest, funded and ready. The default is 3 nodes. Add <code>--nodes 5</code> to get 5 nodes (2 to 10).</li>
       <li>An API server that holds the macaroons and TLS certs. No secret goes to the browser.</li>
       <li>An example React app: connect a peer, open a channel, make an invoice, and pay it.</li>
     </ul>
