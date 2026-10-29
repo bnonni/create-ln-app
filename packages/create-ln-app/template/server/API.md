@@ -1,6 +1,6 @@
 # API server contract
 
-The API server is the only part of the app that talks to the nodes. The browser sends all requests to this server. The node credentials (the LND macaroons and the CLN runes) and the TLS certs stay on the server.
+The API server is the only part of the app that talks to the nodes. The browser sends all requests to this server. The node credentials (the LND macaroons, the CLN runes, and the Eclair API passwords) and the TLS certs stay on the server.
 
 The API is the same for each node implementation. Each node client in `server/nodes/` maps the data, the errors, and the invoice states of its node to one set. `server/nodes/types.ts` has the set.
 
@@ -60,7 +60,7 @@ Shows each node, its balances, and its channels.
 ]
 ```
 
-- `impl` is the node implementation: `lnd` or `cln`. The server sends the nodes in name order.
+- `impl` is the node implementation: `lnd`, `cln`, or `eclair`. The server sends the nodes in name order.
 - `onchainBalanceSats` is the confirmed wallet balance. An unconfirmed output, for example the change of a channel open, is not in it.
 - `channelBalanceSats` is the local balance of all open channels.
 - `status` is `pending`, `active`, or `inactive`. A `pending` channel waits for its funding transaction to confirm.
@@ -174,3 +174,5 @@ LND sends most errors as HTTP 500. Thus the server cannot tell a bad request fro
 - `alice: channel is too small, the minimum channel size is: 20000 SAT`
 
 CLN sends `invalid_request` if a param is bad, for example `bob: Invalid bolt11 invoice: Bad bech32 string`. CLN sends `node_error` for other errors, for example `bob: Unable to connect, no address known for peer`.
+
+Eclair sends `invalid_request` if a param is bad, for example `carol: The form field 'invoice' was malformed`. Eclair sends `node_error` for other errors, for example `carol: peer aborted the channel funding flow: 'chan size of 0.00001000 BTC is below min chan size of 0.00020000 BTC'`.

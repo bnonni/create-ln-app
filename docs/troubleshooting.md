@@ -31,7 +31,7 @@ Contents:
 
 A node container stops, and `docker compose -f network/docker-compose.yml ps -a` shows `Exited (137)`. Exit code 137 usually tells that Docker stopped the container because of low memory.
 
-The 4 containers use about 250 MB of memory together after a start. The images use about 510 MB of disk.
+The 4 containers use about 250 MB of memory together after a start. The images use about 510 MB of disk. An Eclair node uses about 600 MB of memory, and the Eclair image uses about 590 MB of disk.
 
 1. In Docker Desktop, open Settings > Resources > Advanced, and increase the memory limit.
 2. Click "Apply & restart".
@@ -51,8 +51,8 @@ Run `npm run dev` again. If the error occurs again, examine your internet connec
 | --- | --- |
 | 5173 | The example app (Vite dev server) |
 | 3001 | The API server |
-| 8081, 8082, 8083, ... | LND REST or CLNRest (alice, bob, carol, ...) |
-| 10001, 10002, 10003, ... | LND gRPC or CLN gRPC (alice, bob, carol, ...) |
+| 8081, 8082, 8083, ... | LND REST, CLNRest, or the Eclair API (alice, bob, carol, ...) |
+| 10001, 10002, 10003, ... | LND gRPC or CLN gRPC (alice, bob, carol, ...). An Eclair node has no gRPC port. |
 | 9735, 9736, 9737, ... | Lightning P2P (alice, bob, carol, ...) |
 | 18443, 19444, 28334, 29335 | bitcoind RPC, P2P, and ZMQ |
 
@@ -80,7 +80,7 @@ The doctor shows a failed "API server port" check, or the API server stops with 
    ```
 2. Run `npm run dev`.
 
-The API server, the Vite proxy, and the doctor read the same value. `npm run network` replaces only the `LND_`, `CLN_`, and `BITCOIND_` lines in `.env`, so the value stays.
+The API server, the Vite proxy, and the doctor read the same value. `npm run network` replaces only the `LND_`, `CLN_`, `ECLAIR_`, and `BITCOIND_` lines in `.env`, so the value stays.
 
 ### Port 5173 is in use
 
