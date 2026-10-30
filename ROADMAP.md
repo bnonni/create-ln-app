@@ -301,11 +301,12 @@ The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and 
 
 ### M9: React JavaScript template (branch `m9-react-js`)
 
-- [ ] **C9.1 JavaScript generator.** Add `packages/create-ln-app/scripts/js-template.ts` and the script `npm run js-template -w create-ln-app`.
+- [x] **C9.1 JavaScript generator.** Add `packages/create-ln-app/scripts/js-template.ts` and the script `npm run js-template -w create-ln-app`.
   - Do: copy `template/` to `template-react/` with the CLI copy filter, and add `template-react/` to `.gitignore`. Change each `.ts` file to `.js` and each `.tsx` file to `.jsx` (decision 11). Change the relative `.ts` imports to `.js`. Set the `prettier` options so that most lines stay the same as in the source.
   - Do: remove the `tsconfig*.json` files, the `typescript` dev dependency, and the `typecheck` scripts. Keep the `@types/*` dev dependencies for the editor, as `create-vite` does. Change the file names in the `package.json` scripts, `frontend/index.html`, and the Markdown files. Update the 2 lock files with `npm install --package-lock-only --ignore-scripts`.
   - Read: `packages/create-ln-app/package.json`, the 2 template `package.json` files, `frontend/index.html`.
   - Exit: `template-react/` has no `.ts` or `.tsx` file. `node --check` passes for each `.js` file. In `template-react/`, `npm run install:all`, `npm run lint`, and `npm run build` pass. After `npm run network`, `npm run test:integration` and the E2E test (`LAPP_DIR=packages/create-ln-app/template-react`) pass.
+  - Done: `src/copy-filter.ts` has the copy filter for the CLI and the generator. Prettier uses `singleQuote` and `printWidth: 120`. 1,854 of 2,602 non-blank code lines stay the same. The other lines have types. The generator also removes the comment lines directly above a removed type, and points 6 comments and docs to `server/API.md`. 26 comments above types are not in the JavaScript files. `oxlint` skips the files that the repo `.gitignore` ignores, so lint a copy of `template-react/` outside the repo. In the copy, lint passes. Build, the integration test (16 of 16), and the E2E test pass.
 - [ ] **C9.2 CLI `--template`, CI, docs, and release `1.4.0`.** Add `--template react-ts|react` (default `react-ts`).
   - Do: the CLI copies the folder of the template. Add `template-react` to `files`. `prepack` runs the generator before the build. Add a CI E2E job `react` with `--template react`. Update the docs and `CHANGELOG.md`. Set version `1.4.0`.
   - Read: `packages/create-ln-app/src/cli.ts`, `.github/workflows/ci.yml`.
