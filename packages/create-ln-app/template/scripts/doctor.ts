@@ -3,7 +3,7 @@
 // The script uses only Node built-in modules, so it runs before npm install too.
 // Usage: npm run doctor
 import { execFile } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -12,12 +12,14 @@ const run = promisify(execFile);
 
 const COMPOSE_FILE = fileURLToPath(new URL('../network/docker-compose.yml', import.meta.url));
 const ENV_FILE = fileURLToPath(new URL('../.env', import.meta.url));
-const DEFAULT_API_PORT = 3001;
+const PACKAGE_FILE = fileURLToPath(new URL('../package.json', import.meta.url));
 // docker info can wait for a long time if the daemon does not answer.
 const TIMEOUT_MS = 10_000;
 
 type Result = { name: string; ok: boolean; detail: string; fix?: string };
 type ComposeConfig = { services: Record<string, { ports?: { published?: string }[] }> };
+// Each template sets the API port in the "config" field of package.json: the default port and the variable that changes it.
+type PortConfig = { port: number; portEnv: string };
 
 function failText(error: unknown): string {
   const { stderr, message } = error as { stderr?: string; message?: string };
@@ -115,15 +117,16 @@ async function checkNetworkPorts(composeOk: boolean): Promise<Result> {
 
 async function checkApiPort(): Promise<Result> {
   const name = 'API server port';
-  // The API server reads API_PORT from .env, so the check reads the same value.
+  const config = (JSON.parse(readFileSync(PACKAGE_FILE, 'utf8')) as { config: PortConfig }).config;
+  // The check reads the port variable from the environment and from .env.
   if (existsSync(ENV_FILE)) process.loadEnvFile(ENV_FILE);
-  const port = Number(process.env.API_PORT ?? DEFAULT_API_PORT);
+  const port = Number(process.env[config.portEnv] ?? config.port);
   if (await portFree(port)) return { name, ok: true, detail: `Port ${port} is free.` };
   return {
     name,
     ok: false,
     detail: `Port ${port} is in use.`,
-    fix: `Stop the program that uses port ${port}, or set API_PORT in .env to a free port.`,
+    fix: `Stop the program that uses port ${port}, or set ${config.portEnv} to a free port.`,
   };
 }
 
