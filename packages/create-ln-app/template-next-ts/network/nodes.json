@@ -1,0 +1,5 @@
+[
+  { "name": "alice", "impl": "lnd" },
+  { "name": "bob", "impl": "lnd" },
+  { "name": "carol", "impl": "lnd" }
+]

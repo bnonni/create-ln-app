@@ -3,6 +3,8 @@ node_modules/
 
 # Build output
 frontend/dist/
+.next/
+next-env.d.ts
 
 # Local settings. `npm run env` writes .env.
 .env

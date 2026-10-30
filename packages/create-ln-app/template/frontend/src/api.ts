@@ -1,5 +1,5 @@
 // A typed client for the API server. The contract is in server/API.md.
-// The Vite dev server sends each /api request to the API server (see vite.config.ts).
+// Each request goes to /api on the origin of the page.
 
 export type ChannelStatus = 'pending' | 'active' | 'inactive';
 
@@ -82,7 +82,7 @@ async function request<T>(method: 'GET' | 'POST', path: string, body?: object): 
   });
   const data = await response.json().catch(() => null);
   if (!response.ok) {
-    // If the API server does not run, the Vite proxy sends an error with no JSON body.
+    // If the API does not answer, the dev server sends an error with no JSON body.
     const message = data?.error ?? `The API server sent HTTP ${response.status}. Make sure that it runs: npm run dev.`;
     throw new ApiError(message, response.status, data?.code, data?.node);
   }

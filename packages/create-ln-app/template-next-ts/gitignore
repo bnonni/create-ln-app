@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build output
+frontend/dist/
+.next/
+next-env.d.ts
+
+# Local settings. `npm run env` writes .env.
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+
+# macOS
+.DS_Store
+
+# Local regtest network data (keep the dir, so Docker does not create it as root)
+network/data/*
+!network/data/.gitkeep
