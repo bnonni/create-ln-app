@@ -49,13 +49,15 @@ To make a network with a different number of nodes, add `--nodes <n>` to the `cr
 
 To use Core Lightning (CLN) for all the nodes, add `--impl cln`. To use Eclair for all the nodes, add `--impl eclair`. The default is `lnd`. Example: `npx create-ln-app my-lapp --impl cln`. To use more than one impl in one network, edit `network/nodes.json` in the project. See "Change the nodes" in the project README.
 
+To use JavaScript, not TypeScript, add `--template react`. The default is `react-ts` (React and TypeScript). Example: `npx create-ln-app my-lapp --template react`. In the `react` template, each `.ts` file is a `.js` file and each `.tsx` file is a `.jsx` file.
+
 The `dev` command starts 1 bitcoind node and the Lightning nodes, funds the Lightning nodes, and writes the node values to `.env`. Then it starts the API server at <http://localhost:3001/api> and the example app at <http://localhost:5173>. The first start downloads the Docker images (about 510 MB), so it takes more time.
 
 If a step fails, see [Troubleshooting](docs/troubleshooting.md).
 
 ## Next steps
 
-- Make your own Lapp: each step in `frontend/src/components/Page.tsx` has a comment that starts with "Your feature".
+- Make your own Lapp: each step in `frontend/src/components/Page.tsx` (`Page.jsx` in the `react` template) has a comment that starts with "Your feature".
 - Read the project README for all the commands and the network reference: [template README](packages/create-ln-app/template/README.md).
 - Read how the parts connect: [Architecture](docs/architecture.md).
 - Read the API reference: [`server/API.md`](packages/create-ln-app/template/server/API.md).

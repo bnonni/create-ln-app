@@ -307,10 +307,12 @@ The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and 
   - Read: `packages/create-ln-app/package.json`, the 2 template `package.json` files, `frontend/index.html`.
   - Exit: `template-react/` has no `.ts` or `.tsx` file. `node --check` passes for each `.js` file. In `template-react/`, `npm run install:all`, `npm run lint`, and `npm run build` pass. After `npm run network`, `npm run test:integration` and the E2E test (`LAPP_DIR=packages/create-ln-app/template-react`) pass.
   - Done: `src/copy-filter.ts` has the copy filter for the CLI and the generator. Prettier uses `singleQuote` and `printWidth: 120`. 1,854 of 2,602 non-blank code lines stay the same. The other lines have types. The generator also removes the comment lines directly above a removed type, and points 6 comments and docs to `server/API.md`. 26 comments above types are not in the JavaScript files. `oxlint` skips the files that the repo `.gitignore` ignores, so lint a copy of `template-react/` outside the repo. In the copy, lint passes. Build, the integration test (16 of 16), and the E2E test pass.
-- [ ] **C9.2 CLI `--template`, CI, docs, and release `1.4.0`.** Add `--template react-ts|react` (default `react-ts`).
+- [x] **C9.2 CLI `--template`, CI, docs, and release `1.4.0`.** Add `--template react-ts|react` (default `react-ts`).
   - Do: the CLI copies the folder of the template. Add `template-react` to `files`. `prepack` runs the generator before the build. Add a CI E2E job `react` with `--template react`. Update the docs and `CHANGELOG.md`. Set version `1.4.0`.
   - Read: `packages/create-ln-app/src/cli.ts`, `.github/workflows/ci.yml`.
   - Exit: `--template react` makes a project with no TypeScript file, and the E2E test passes in it. `--template vue` fails and shows one fix. Owner: the E2E matrix passes on the PR. Merge, tag `v1.4.0`, and publish.
+  - Done: the CI E2E jobs are `lnd`, `lnd-5-nodes`, `cln`, `eclair`, `react`, and `mix`. The `react` job makes sure that the project has no TypeScript file and no `tsconfig` file. Then it runs `npm run lint` and `npm run build` in the project.
+  - Done: on Linux, a project from the packed CLI with `--template react` passes the lint, the build, and the E2E test. `--template vue` fails with "Fix: use react-ts or react.". The package has 43 `template/` files and 39 `template-react/` files. The version is `1.4.0`. The E2E matrix on the PR, the merge, the tag, and the publish are for the owner.
 
 ### M10: Next.js template (branch `m10-next`)
 
