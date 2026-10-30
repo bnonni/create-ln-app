@@ -1,6 +1,6 @@
 # Architecture
 
-A create-ln-app project has three parts: the example app, the API server, and the network. All three parts run on your computer. The paths on this page start at the project folder. In this repo, the project folder is [`packages/create-ln-app/template/`](../packages/create-ln-app/template/).
+A create-ln-app project has three parts: the example app, the API server, and the network. All three parts run on your computer. The paths on this page start at the project folder. In this repo, the project folder is [`packages/create-ln-app/template/`](../packages/create-ln-app/template/). The paths are for the default `react-ts` template. In a project from the `react` template, each `.ts` file is a `.js` file and each `.tsx` file is a `.jsx` file.
 
 ```text
 Browser: http://localhost:5173

@@ -29,12 +29,13 @@ The command copies the template to `my-lapp`, runs `git init`, installs the npm 
 
 Options:
 
-| Option           | Effect                                                                                  |
-| ---------------- | --------------------------------------------------------------------------------------- |
-| `--nodes <n>`    | Make a network with n nodes, from 2 to 10. The default is 3.                            |
-| `--impl <impl>`  | Use this impl for all the nodes: `lnd`, `cln` (Core Lightning), or `eclair`. The default is `lnd`. |
-| `--skip-install` | Do not install the npm packages.                                                        |
-| `-h`, `--help`   | Show the help.                                                                          |
+| Option              | Effect                                                                                              |
+| ------------------- | --------------------------------------------------------------------------------------------------- |
+| `--template <name>` | Use this template: `react-ts` (React and TypeScript) or `react` (React and JavaScript). The default is `react-ts`. |
+| `--nodes <n>`       | Make a network with n nodes, from 2 to 10. The default is 3.                                        |
+| `--impl <impl>`     | Use this impl for all the nodes: `lnd`, `cln` (Core Lightning), or `eclair`. The default is `lnd`.  |
+| `--skip-install`    | Do not install the npm packages.                                                                    |
+| `-h`, `--help`      | Show the help.                                                                                      |
 
 The README in the new project has all the commands and the network reference.
 

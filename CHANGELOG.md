@@ -2,6 +2,18 @@
 
 This file records the changes to the `create-ln-app` npm package in each release. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-10-30
+
+### Added
+
+- A React JavaScript template. The CLI option `--template <name>` selects the template: `react-ts` (React and TypeScript) or `react` (React and JavaScript). The default is `react-ts`. Example: `npx create-ln-app my-lapp --template react`.
+- A project from the `react` template has no TypeScript file and no `tsconfig` file. Each `.ts` file is a `.js` file and each `.tsx` file is a `.jsx` file. The API, the network, and the npm scripts are the same, but the project has no `typecheck` script.
+- In the `react` template, the node clients and their comments point to `server/API.md` for the data and the errors of the API.
+
+### Changed
+
+- The CLI shows the template name in the "Made" line, for example `Made my-lapp in /home/me/my-lapp from the react template, with 3 LND nodes.`
+
 ## [1.3.0] - 2026-10-29
 
 ### Added

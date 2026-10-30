@@ -21,8 +21,20 @@
 | Folder | Contents |
 | --- | --- |
 | `packages/create-ln-app/src/` | The CLI (`npx create-ln-app`). |
-| `packages/create-ln-app/template/` | The project that the CLI copies. It is a standalone npm project, not a workspace member. |
+| `packages/create-ln-app/template/` | The project that the CLI copies for `--template react-ts` (the default). It is a standalone npm project, not a workspace member. |
+| `packages/create-ln-app/template-react/` | The project that the CLI copies for `--template react`. The generator makes it from `template/`. Git ignores it. |
+| `packages/create-ln-app/scripts/` | The generator of the JavaScript template. |
 | `e2e/` | The Playwright test of the browser steps. |
+
+### The JavaScript template
+
+Make all changes in `template/`. Do not edit `template-react/`, because the generator deletes it and makes it again. `npm pack` and `npm publish` run the generator before the build. To make the folder yourself, run this command from the repo root:
+
+```sh
+npm run js-template -w create-ln-app
+```
+
+The generator removes the types and formats the result. If the generator cannot find a string that it changes, it stops and shows the file. Then update `scripts/js-template.ts`. To lint the JavaScript template, copy it to a folder outside the repo first, because oxlint skips the files that git ignores.
 
 ## Checks
 
@@ -57,7 +69,7 @@ The E2E test does the browser steps of the example app in Chromium. It starts th
    npm run test:e2e
    ```
 
-To test a project that the CLI made, set `LAPP_DIR` to the project folder, for example `LAPP_DIR=/tmp/test-app npm run test:e2e`. CI packs the CLI, makes a project, and runs the test on it. The E2E jobs test 3 LND nodes, 5 LND nodes, 3 CLN nodes, 3 Eclair nodes, and a mix of the 3 impls. The mix job also runs the integration test for each node pair. If the test fails in CI, the job shows the network logs and uploads the Playwright traces.
+To test a project that the CLI made, set `LAPP_DIR` to the project folder, for example `LAPP_DIR=/tmp/test-app npm run test:e2e`. CI packs the CLI, makes a project, and runs the test on it. The E2E jobs test 3 LND nodes, 5 LND nodes, 3 CLN nodes, 3 Eclair nodes, a mix of the 3 impls, and the `react` template. The mix job also runs the integration test for each node pair. The `react` job also makes sure that the project has no TypeScript file, then lints and builds it. If the test fails in CI, the job shows the network logs and uploads the Playwright traces.
 
 ## Test the CLI
 
@@ -66,6 +78,13 @@ Run the CLI from the build:
 ```sh
 npm run build -w create-ln-app
 node packages/create-ln-app/dist/cli.js /tmp/test-app
+```
+
+To test the JavaScript template, make it first:
+
+```sh
+npm run js-template -w create-ln-app
+node packages/create-ln-app/dist/cli.js /tmp/test-js-app --template react
 ```
 
 Test the package that npm gets. Use a folder outside the repo, because the CLI does not run `git init` in a git repo. Replace `<version>` with the version in `packages/create-ln-app/package.json`.
@@ -93,9 +112,10 @@ You must have publish rights for the `create-ln-app` package on npm.
    npm publish --dry-run -w create-ln-app --tag next
    ```
 5. Check the file list:
-   - The list has `LICENSE`, `README.md`, `dist/cli.js`, and `package.json`. All other files are in `template/`.
+   - The list has `LICENSE`, `README.md`, `dist/cli.js`, `dist/copy-filter.js`, and `package.json`. All other files are in `template/` and `template-react/`.
    - The `template/` files are the same as the output of `git ls-files packages/create-ln-app/template`.
-   - The list has no `.env`, no `node_modules`, and no node data. `template/network/data/.gitkeep` is the only file in `template/network/data/`.
+   - The `template-react/` files have no `.ts` file, no `.tsx` file, and no `tsconfig` file.
+   - The list has no `.env`, no `node_modules`, and no node data. In each template, `network/data/.gitkeep` is the only file in `network/data/`.
 6. Do the packed-tarball test in [Test the CLI](#test-the-cli).
 7. Log in and publish. For a stable release, remove `--tag next`.
    ```sh
