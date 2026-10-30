@@ -5,11 +5,13 @@
   "type": "module",
   "config": {
     "port": 3000,
-    "portEnv": "PORT"
+    "portEnv": "PORT",
+    "appUrl": "http://localhost:3000"
   },
   "scripts": {
     "install:all": "npm install",
-    "dev": "npm run network && next dev",
+    "dev": "npm run network && npm run dev:app",
+    "dev:app": "next dev",
     "start": "next start",
     "network": "npm run compose && docker compose -f network/docker-compose.yml up -d --wait --remove-orphans && npm run bootstrap && npm run env",
     "down": "docker compose -f network/docker-compose.yml down --remove-orphans",
