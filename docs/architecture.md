@@ -1,6 +1,6 @@
 # Architecture
 
-A create-ln-app project has three parts: the example app, the API server, and the network. All three parts run on your computer. The paths on this page start at the project folder. In this repo, the project folder is [`packages/create-ln-app/template/`](../packages/create-ln-app/template/). The paths are for the default `react-ts` template. In a project from the `react` template, each `.ts` file is a `.js` file and each `.tsx` file is a `.jsx` file.
+A create-ln-app project has three parts: the example app, the API server, and the network. All three parts run on your computer. The paths on this page start at the project folder. In this repo, the project folder is [`packages/create-ln-app/template/`](../packages/create-ln-app/template/). The paths are for the default `react-ts` template. In a project from the `react` template, each `.ts` file is a `.js` file and each `.tsx` file is a `.jsx` file. For the `next-ts` template, see [The Next.js template](#the-nextjs-template).
 
 ```text
 Browser: http://localhost:5173
@@ -58,7 +58,7 @@ The browser does not connect to the nodes directly, for three reasons:
 - The chain is regtest. A block comes only when you mine it. The coins have no value.
 - The node data goes to `network/data/`. `npm run down` keeps the data. `npm run reset` deletes the data.
 - An Eclair node has no wallet of its own. It uses a bitcoind wallet with the node name.
-- The project README has the host ports and the `lncli`, `lightning-cli`, and `eclair-cli` commands. See its "Network reference" section.
+- `network/README.md` is the network reference. It has the host ports, the `lncli`, `lightning-cli`, and `eclair-cli` commands, and the steps to change the nodes.
 
 ## What `npm run dev` does
 
@@ -70,13 +70,36 @@ The browser does not connect to the nodes directly, for three reasons:
 
 Steps 1 to 4 are the `npm run network` command.
 
+## The Next.js template
+
+A project from the `next-ts` template has the same network and the same API, but Next.js serves the app and the API on one port.
+
+```text
+Browser: http://localhost:3000
+   |
+   |  the page at /, fetch /api/...
+   v
+Next.js (port 3000)
+   |
+   |  src/app/api/[[...route]]/route.ts sends each /api request to server/app.ts
+   v
+Hono app --> the nodes and bitcoind, as in the diagram above
+```
+
+- Folder: `src/`. The app uses Next.js with the App Router, React, TypeScript, and plain CSS. `src/app/page.tsx` shows the `Page` component from `src/components/Page.tsx`.
+- The app and the API have the same origin, so the app does not need a proxy.
+- The project has no `server/index.ts`. Next.js loads `.env`, and the Hono app makes the node clients at the first request. Thus, `npm run build` works without `.env`.
+- Next.js reads `.env` one time, when it starts. Restart Next.js after the node data changes, for example after `npm run reset`.
+- `npm run dev` runs `npm run network`, then `npm run dev:app` (`next dev`). `npm run start` serves the build of `npm run build`. The network must run.
+- The sync script of this repo copies `network/`, `scripts/`, `server/`, and `frontend/src/` from `template/`. Thus, the 2 templates have the same API and the same `Page` component.
+
 ## Where to make a change
 
 | Change | Files |
 | --- | --- |
 | Change a step in the app | `frontend/src/components/Page.tsx` |
 | Add an API endpoint | `server/app.ts`, `server/nodes/types.ts`, `server/nodes/lnd.ts`, `server/nodes/cln.ts`, and `server/nodes/eclair.ts`, or `server/bitcoind.ts`, `frontend/src/api.ts`, `server/API.md` |
-| Add or remove a node, or change its impl | `network/nodes.json`. See "Change the nodes" in the project README. |
+| Add or remove a node, or change its impl | `network/nodes.json`. See "Change the nodes" in `network/README.md`. |
 
 ## Security
 

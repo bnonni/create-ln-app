@@ -51,6 +51,7 @@ Run `npm run dev` again. If the error occurs again, examine your internet connec
 | --- | --- |
 | 5173 | The example app (Vite dev server) |
 | 3001 | The API server |
+| 3000 | Next.js: the example app and the API (`next-ts` template only) |
 | 8081, 8082, 8083, ... | LND REST, CLNRest, or the Eclair API (alice, bob, carol, ...) |
 | 10001, 10002, 10003, ... | LND gRPC or CLN gRPC (alice, bob, carol, ...). An Eclair node has no gRPC port. |
 | 9735, 9736, 9737, ... | Lightning P2P (alice, bob, carol, ...) |
@@ -85,6 +86,12 @@ The API server, the Vite proxy, and the doctor read the same value. `npm run net
 ### Port 5173 is in use
 
 Vite uses the next free port, for example 5174. Open the URL that the terminal shows on the `Local:` line.
+
+### Port 3000 is in use (`next-ts` template)
+
+The doctor shows a failed "API server port" check for port 3000. `next dev` uses the next free port, for example 3001. Open the URL that the terminal shows on the `Local:` line.
+
+To use a fixed port, set `PORT` in the shell, for example `PORT=3005 npm run dev`. Next.js does not read `PORT` from `.env`.
 
 ## Errors in the app
 

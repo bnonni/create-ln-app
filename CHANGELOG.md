@@ -2,6 +2,27 @@
 
 This file records the changes to the `create-ln-app` npm package in each release. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] - 2026-10-30
+
+### Added
+
+- A Next.js TypeScript template. The CLI value `--template next-ts` selects it. Example: `npx create-ln-app my-lapp --template next-ts`.
+- In the `next-ts` template, Next.js 16 serves the example app and the API at <http://localhost:3000>. The app is in `src/` and uses the App Router. `src/app/api/[[...route]]/route.ts` sends each `/api` request to the Hono app.
+- The `next-ts` template has the same network, the same API, and the same `Page` component as the other templates. `npm run start` serves the production build.
+- The `dev:app` script in each template. It starts the app without the network. In `react-ts` and `react`, it starts the API server and Vite. In `next-ts`, it starts `next dev`.
+- `network/README.md` in each project. It is the network reference: the host ports, the API keys of the nodes, the CLI commands for each impl, and the steps to change the nodes.
+- The `config` field of the project `package.json` has the app port (`port`), the variable for the port (`portEnv`), and the app URL (`appUrl`).
+
+### Changed
+
+- The network reference moved from the project README to `network/README.md`. The README links to it.
+- The Hono app moved from `server/index.ts` to `server/app.ts`. `server/index.ts` loads `.env` and serves the app. The app makes the node clients at the first request. The API does not change.
+- `npm run test:integration` sends its requests to the Hono app directly. It does not start the API server.
+- `npm run dev` runs `npm run network`, then `npm run dev:app`.
+- `npm run doctor` reads the app port from the `config` field of `package.json`.
+- The CLI shows the app URL of the template, for example `Then open http://localhost:3000.`
+- The ids of the node selects on the page are now `node-select` and `peer-select`. In Next.js, the old id `nodeName` broke the page.
+
 ## [1.4.0] - 2026-10-30
 
 ### Added
@@ -78,6 +99,8 @@ The first release.
 - The project commands `network`, `down`, `reset`, `doctor`, `env`, and `test:integration`.
 - The docs: a quick start, an [architecture](docs/architecture.md) page, and a [troubleshooting](docs/troubleshooting.md) page.
 
+[1.5.0]: https://github.com/bnonni/create-ln-app/compare/v1.4.0...v1.5.0
+[1.4.0]: https://github.com/bnonni/create-ln-app/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/bnonni/create-ln-app/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/bnonni/create-ln-app/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/bnonni/create-ln-app/compare/v1.0.0...v1.1.0
