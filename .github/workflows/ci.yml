@@ -38,10 +38,15 @@ jobs:
       - name: Build
         run: npm run build
 
+      # The shared files of the other templates must be the same as the files in template/.
+      - name: Check the template copies
+        run: npm run sync:templates -- --check
+
   # Packs the CLI, makes a project with it, starts the regtest network, and runs the browser steps.
   # The jobs use the default node list (3 LND nodes), 5 LND nodes, 3 CLN nodes, 3 Eclair nodes, and a mix.
   # The mix job writes network/nodes.json with the 3 impls after the CLI makes the project.
   # The react job uses the React JavaScript template. It also checks, lints, and builds the project.
+  # The next-ts job uses the Next.js TypeScript template. It also lints, typechecks, and builds the project.
   # The E2E test uses alice and bob, so the mix job also runs the integration test for each node pair.
   e2e:
     name: e2e (${{ matrix.name }})
@@ -62,6 +67,9 @@ jobs:
           - name: react
             args: --template react
             js: true
+          - name: next-ts
+            args: --template next-ts
+            checks: true
           - name: mix
             args: ''
             nodes-json: |
@@ -104,6 +112,14 @@ jobs:
             exit 1
           fi
           npm run lint
+          npm run build
+
+      - name: Check the project
+        if: matrix.checks
+        working-directory: ${{ runner.temp }}/e2e-app
+        run: |
+          npm run lint
+          npm run typecheck
           npm run build
 
       - name: Write the node list
