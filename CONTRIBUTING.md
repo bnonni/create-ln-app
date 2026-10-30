@@ -93,7 +93,7 @@ The E2E test does the browser steps of the example app in Chromium. It starts th
 
 To test a project that the CLI made, set `LAPP_DIR` to the project folder, for example `LAPP_DIR=/tmp/test-app npm run test:e2e`. CI packs the CLI, makes a project, and runs the test on it. The E2E jobs test 3 LND nodes, 5 LND nodes, 3 CLN nodes, 3 Eclair nodes, a mix of the 3 impls, the `react` template, and the `next-ts` template. The mix job also runs the integration test for each node pair. The `react` job also makes sure that the project has no TypeScript file, then lints and builds it. The `next-ts` job also lints, typechecks, and builds the project. If the test fails in CI, the job shows the network logs and uploads the Playwright traces.
 
-The `cli` jobs run on Linux, macOS, and Windows. Each job packs the CLI and makes a project from each template with `--skip-install`. The jobs do not start the network, because the Windows and macOS runners cannot run the network containers. `DOCKER_HOST` points to a closed port, so the doctor fails. The CLI must show the fixes and exit 0.
+The `cli` jobs run on Linux, macOS, and Windows. Each job packs the CLI and makes a project from each template with `--skip-install`. The jobs do not start the network, because the Windows and macOS runners cannot run the network containers. `DOCKER_HOST` points to a closed port, so the doctor fails. The CLI must show the fixes and exit 0. On Linux, the job runs `shellcheck install.sh`. On Linux and macOS, the job sends `install.sh` to `/bin/bash` through a pipe, as `curl | bash` does. `CREATE_LN_APP_PACKAGE` points the script to the packed CLI. On macOS, `/bin/bash` is Bash 3.2.
 
 ## Test the CLI
 

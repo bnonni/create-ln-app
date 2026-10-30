@@ -45,6 +45,7 @@ jobs:
   # Packs the CLI and makes a project from each template with --skip-install on Linux, macOS, and Windows.
   # The job does not start the network. Windows runners cannot run Linux containers, and macOS runners have no Docker.
   # DOCKER_HOST is a closed port, so the doctor fails on each OS. The CLI must show the fixes and exit 0.
+  # On Linux and macOS, the job also makes a project with install.sh and the packed CLI.
   cli:
     name: cli (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -95,6 +96,25 @@ jobs:
               fi
             done
           done
+
+      # shellcheck gives the same result on each OS, so only Linux runs it.
+      - name: Check the install script
+        if: runner.os == 'Linux'
+        run: shellcheck install.sh
+
+      # The pipe does the same as curl | bash. On macOS, /bin/bash is Bash 3.2.
+      - name: Make a project with the install script
+        if: runner.os != 'Windows'
+        working-directory: ${{ runner.temp }}
+        env:
+          DOCKER_HOST: tcp://127.0.0.1:1
+        run: |
+          tarball=$(ls create-ln-app-*.tgz)
+          cat "$GITHUB_WORKSPACE/install.sh" | CREATE_LN_APP_PACKAGE="$RUNNER_TEMP/$tarball" /bin/bash -s -- install-app --skip-install
+          if [ ! -f install-app/package.json ]; then
+            echo "The install script did not make the project."
+            exit 1
+          fi
 
   # Packs the CLI, makes a project with it, starts the regtest network, and runs the browser steps.
   # The jobs use the default node list (3 LND nodes), 5 LND nodes, 3 CLN nodes, 3 Eclair nodes, and a mix.
