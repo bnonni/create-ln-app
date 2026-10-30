@@ -316,7 +316,7 @@ The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and 
 
 ### M10: Next.js template (branch `m10-next`)
 
-- [ ] **C10.1 Split the server.** Move the Hono app from `server/index.ts` to `server/app.ts`.
+- [x] **C10.1 Split the server.** Move the Hono app from `server/index.ts` to `server/app.ts`.
   - Do: `server/app.ts` exports `app`. It makes the node clients from `process.env` at the first request, so a build with no `.env` does not fail. `server/index.ts` loads `.env`, makes the clients, and serves `app`. The API does not change.
   - Read: `server/index.ts`.
   - Exit: lint, typecheck, and build pass. `npm run test:integration` and the E2E test pass. With no `.env`, `npm run server` still stops with "Run: npm run network". The C9.1 generator makes `server/app.js`.

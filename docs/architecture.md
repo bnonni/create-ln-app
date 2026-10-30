@@ -34,7 +34,7 @@ Docker Compose project "<name in package.json>" (regtest):
 
 ## The API server
 
-- File: `server/index.ts`. The server uses Hono on Node.js 24. Node.js runs the TypeScript files directly, without a build step.
+- Files: `server/app.ts` has the Hono app, and `server/index.ts` serves it. The server uses Hono on Node.js 24. Node.js runs the TypeScript files directly, without a build step.
 - The server reads `.env` one time, when it starts. Restart the server after the node data changes, for example after `npm run reset`.
 - Each `LND_<NAME>_REST_URL` key, `CLN_<NAME>_REST_URL` key, and `ECLAIR_<NAME>_API_URL` key in `.env` adds one node to the server. The server sorts the nodes by name.
 - `server/nodes/lnd.ts` is the LND client, `server/nodes/cln.ts` is the CLN client, and `server/nodes/eclair.ts` is the Eclair client. The 3 clients have the same interface, `server/nodes/types.ts`. Thus, the API is the same for the 3 impls.
@@ -75,7 +75,7 @@ Steps 1 to 4 are the `npm run network` command.
 | Change | Files |
 | --- | --- |
 | Change a step in the app | `frontend/src/components/Page.tsx` |
-| Add an API endpoint | `server/index.ts`, `server/nodes/types.ts`, `server/nodes/lnd.ts`, `server/nodes/cln.ts`, and `server/nodes/eclair.ts`, or `server/bitcoind.ts`, `frontend/src/api.ts`, `server/API.md` |
+| Add an API endpoint | `server/app.ts`, `server/nodes/types.ts`, `server/nodes/lnd.ts`, `server/nodes/cln.ts`, and `server/nodes/eclair.ts`, or `server/bitcoind.ts`, `frontend/src/api.ts`, `server/API.md` |
 | Add or remove a node, or change its impl | `network/nodes.json`. See "Change the nodes" in the project README. |
 
 ## Security
