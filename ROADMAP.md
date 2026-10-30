@@ -371,12 +371,13 @@ The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and 
   - Risk: the Windows job can find a CLI bug (paths, `shell: true`, line ends). If the fix is large, split this chunk.
   - Done: the `cli` job sets `DOCKER_HOST` to a closed port, so the doctor fails on each OS, and checks that the CLI shows the fixes. On Windows, the job keeps the LF line ends of the checkout, as in the npm package. `actionlint` passes, and the job steps pass on Linux. The `cli` job on the 3 OSes and the WSL2 test are for the owner.
   - Fixed after the first CI run: on the Ubuntu runner, `docker info --format '{{.ServerVersion}}'` exits 0 with no version if the daemon does not run, so the doctor showed a pass. Now an empty version is a failed check. On Windows, `scripts/js-template.ts` now starts `npm` through a shell. C11.4 must add the doctor fix to `CHANGELOG.md`.
-- [ ] **C11.2 Install script.** Add `install.sh` at the repo root (decision 15).
+- [x] **C11.2 Install script.** Add `install.sh` at the repo root (decision 15).
   - Do: use `set -euo pipefail` and Bash 3.2 syntax (the macOS Bash). Put the body in a `main` function that the last line calls, so a partial download does nothing. On Git Bash, MSYS, or Cygwin (`uname -s`), stop and link to the Windows section.
   - Do: run `npx` with stdin from `/dev/null`, so no child process reads the rest of the script. The variable `CREATE_LN_APP_PACKAGE` (default `create-ln-app@latest`) lets CI use the packed CLI.
   - Do: in the `cli` job, on Linux and macOS, run `shellcheck install.sh` and `cat install.sh | bash -s -- app --skip-install` with the packed CLI.
   - Read: `index.html` (the install command block).
   - Exit: `shellcheck` passes. `cat install.sh | bash -s -- app --skip-install` with the local tarball makes the project. With no `node` in `PATH`, and with Node 22, the script stops and shows one fix.
+  - Done: `install.sh` stops with one fix if the project name, Node.js 24, or npm is missing. It also stops if Ubuntu in WSL2 uses the Windows Node.js (a path in `/mnt/`). `npx` gets `--package "$CREATE_LN_APP_PACKAGE"`, so the variable takes a version or a tarball path. Bash 3.2 stops on `"$@"` with `set -u` and no arguments, so the last line is `main ${1+"$@"}`. Only the Linux job runs `shellcheck`, because the result is the same on each OS. The pipe step uses `/bin/bash`, so the macOS job tests Bash 3.2.
 - [ ] **C11.3 Homebrew tap.** Write the tap repo in `../homebrew-tap` (decision 16).
   - Do: `Formula/create-ln-app.rb` uses `std_npm_args` and `depends_on "node"`. Its `caveats` show the Docker step. Its `test do` block runs `create-ln-app app --skip-install` and checks `app/package.json`. The version is `1.5.0`.
   - Do: add `README.md`, a test workflow (`brew test-bot` or `brew audit` and `brew test`), and the bump workflow (`workflow_dispatch`, `contents: write`).
