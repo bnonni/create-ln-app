@@ -3,14 +3,13 @@
 // Usage: npx create-ln-app <project-dir> [--nodes <n>] [--impl <impl>] [--skip-install]
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join, relative, resolve } from 'node:path';
+import { basename, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+import { copyFilter } from './copy-filter.js';
 
 const MIN_NODE_MAJOR = 24;
 const TEMPLATE_DIR = fileURLToPath(new URL('../template', import.meta.url));
-const DATA_DIR = join('network', 'data');
-const KEEP = '.gitkeep';
 const APP_URL = 'http://localhost:5173';
 // The template script scripts/nodes.ts accepts 2 to 10 nodes. Node i gets name i of this list.
 const NODE_NAMES = ['alice', 'bob', 'carol', 'dave', 'erin', 'frank', 'grace', 'heidi', 'ivan', 'judy'];
@@ -29,15 +28,6 @@ Options:
   --impl <impl>   Use this impl for all the nodes: ${IMPL_LIST}. cln is Core Lightning. The default is ${DEFAULT_IMPL}.
   --skip-install  Do not install the npm packages.
   -h, --help      Show this help.`;
-
-// A local run of the template makes these paths, so the CLI does not copy them.
-// The "files" field in package.json also keeps them out of the npm package.
-function copyFilter(source: string): boolean {
-  const path = relative(TEMPLATE_DIR, source);
-  if (basename(path) === 'node_modules') return false;
-  if (path === '.env' || path === join('frontend', 'dist')) return false;
-  return dirname(path) !== DATA_DIR || basename(path) === KEEP;
-}
 
 // Make a valid npm package name from the folder name, for example "My App" > "my-app".
 function packageName(dir: string): string {
@@ -128,7 +118,7 @@ function main(): void {
   }
   const name = packageName(target);
 
-  cpSync(TEMPLATE_DIR, target, { recursive: true, filter: copyFilter });
+  cpSync(TEMPLATE_DIR, target, { recursive: true, filter: copyFilter(TEMPLATE_DIR) });
   // npm does not put a .gitignore file in a package, so the template file has no dot.
   renameSync(join(target, 'gitignore'), join(target, '.gitignore'));
   setName(join(target, 'package.json'), name);
