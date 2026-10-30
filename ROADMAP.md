@@ -188,25 +188,30 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
 
 Status: accepted, 2026-10-28. Base: `v1.0.0` and the landing page (`230cc6a`).
 
-The work protocol and the conventions of 1.0 also apply here. Each milestone ends with one minor release: M6 is `1.1.0`, M7 is `1.2.0`, and M8 is `1.3.0`. In this section, all app paths are relative to `packages/create-ln-app/template/`.
+The work protocol and the conventions of 1.0 also apply here. Each milestone ends with one minor release: M6 is `1.1.0`, M7 is `1.2.0`, M8 is `1.3.0`, M9 is `1.4.0`, and M10 is `1.5.0`. In this section, all app paths are relative to `packages/create-ln-app/template/`.
 
 | Item | Milestone | Estimate |
 |---|---|---|
 | A network size option, for example `--nodes 5` | M6 | 2-3 days |
 | Core Lightning (CLN) nodes, for example `--impl cln` | M7 | 4-6 days |
 | Eclair nodes | M8 | 3-4 days |
-| More templates: JavaScript, Next.js | C9.0 plan | after C9.0 |
-| More install options: Homebrew, `curl \| bash`, Windows (WSL2) | C10.0 plan | after C10.0 |
-| Signet support and more examples (LNURL, Lightning Address, WebLN) | C11.0 plan | after C11.0 |
+| A React JavaScript template | M9 | 2-3 days |
+| A Next.js TypeScript template | M10 | 4-6 days |
+| More install options: Homebrew, `curl \| bash`, Windows (WSL2) | C11.0 plan | after C11.0 |
+| Signet support and more examples (LNURL, Lightning Address, WebLN) | C12.0 plan | after C12.0 |
 
 ### Decisions after 1.0
 
-The owner confirmed decisions 6 to 8 (2026-10-28) and decision 9 (2026-10-29).
+The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and decisions 10 to 13 (2026-10-30).
 
 6. **Node list first.** M6 adds one node list file and a compose generator. M7 (CLN) and M8 (Eclair) use them. Reason: in 1.0, the compose file is static, and 2 scripts each hardcode alice, bob, and carol.
 7. **One impl for each node.** Each entry in `network/nodes.json` has a name and an impl (`lnd`, `cln`, or `eclair`). `--impl <impl>` sets all nodes. A developer edits `network/nodes.json` for a mix. The default stays 3 LND nodes.
 8. **Compose project name from the package name.** The generator sets the compose `name` from `package.json`. Then `npm run down` in one app does not stop the network of a second app. In 1.0, all projects use `name: create-ln-app`.
 9. **A neutral API.** The API must not show LND details. Each node client maps its errors and invoice states to one set. The app uses only that set.
+10. **Two new templates.** M9 adds a React JavaScript template. M10 adds a Next.js TypeScript template. The flag `--template <name>` takes `react-ts` (the default), `react`, or `next-ts`. The names use the `create-vite` rule: a name with no `-ts` is JavaScript. Claude selected the names. The owner can change them before C9.2.
+11. **Generated JavaScript.** The JavaScript template has no source in git. The `prepack` step makes it from `template/`. `ts-blank-space` removes the types, then `prettier` formats the result. Reason: one source, so the 2 templates cannot drift.
+12. **Synced shared files.** Each template in git is a full folder that runs in the repo. `template/` is the source of the shared files (network, scripts, node clients, and React components). A sync script copies them to the other template folders. CI fails if a copy is different. Reason: the CLI still copies one folder, and the dev loop stays the same.
+13. **Hono in Next.js.** The Next.js template mounts the shared Hono app in one route file with the `hono/vercel` adapter. Reason: one process and one port. The API, `API.md`, and the integration test stay the same as in the React template.
 
 ### Facts from the 1.0 code
 
@@ -284,13 +289,54 @@ The owner confirmed decisions 6 to 8 (2026-10-28) and decision 9 (2026-10-29).
   - Done: 2 Eclair nodes use dual funding. Thus, `open` returns before the peers sign the funding transaction, and the client gets the channel again until it has the funding transaction. C8.2 did not find this, because it tested Eclair only with LND and CLN peers.
   - Done: on Linux, a project from the packed CLI with `--impl eclair` passes the E2E test and the integration test (16 of 16). The mix passes the E2E test and the integration test for the 3 pairs (16 of 16 each). The version is `1.3.0`. The E2E matrix on the PR, the merge, the tag, and the publish are for the owner.
 
+### Facts for the templates (C9.0, 2026-10-30)
+
+1. The CLI copies one folder (`TEMPLATE_DIR`, `src/cli.ts:11`). Then it renames `gitignore`, writes `nodes.json`, and runs `npm run compose`, `npm run install:all`, and `npm run doctor` in the project.
+2. Node 24 runs the template `.ts` files directly. The template `tsconfig.json` has `erasableSyntaxOnly`, so the removal of the types gives valid JavaScript.
+3. About 2,000 of the 2,950 template code lines are in the network scripts, the node clients, and `server/bitcoind.ts`. These lines do not use the app layer.
+4. `ts-blank-space` 0.9.0 and `prettier` give JavaScript that is near the source: the blank lines and the comments stay. Only a comment inside a removed type is lost (1 comment in `server/nodes/lnd.ts`). `tsc` output has no blank lines. `.tsx` files need the TSX parse mode.
+5. `server/index.ts` makes the node clients and calls `serve()` at module load. It reads `.env` from a path relative to `import.meta.url`. A Next.js bundle moves the module, so this path is not correct there.
+6. `scripts/doctor.ts` checks the API port (`API_PORT`, default 3001). The E2E config starts `npm run server` and `npm --prefix frontend run dev` (`e2e/playwright.config.ts:33-34`). The Next.js template has one dev server on port 3000.
+7. On npm, `next` is `16.4.3` (Node 20.9 or later). Hono `4.13.14` has the `hono/vercel` adapter.
+
+### M9: React JavaScript template (branch `m9-react-js`)
+
+- [ ] **C9.1 JavaScript generator.** Add `packages/create-ln-app/scripts/js-template.ts` and the script `npm run js-template -w create-ln-app`.
+  - Do: copy `template/` to `template-react/` with the CLI copy filter, and add `template-react/` to `.gitignore`. Change each `.ts` file to `.js` and each `.tsx` file to `.jsx` (decision 11). Change the relative `.ts` imports to `.js`. Set the `prettier` options so that most lines stay the same as in the source.
+  - Do: remove the `tsconfig*.json` files, the `typescript` dev dependency, and the `typecheck` scripts. Keep the `@types/*` dev dependencies for the editor, as `create-vite` does. Change the file names in the `package.json` scripts, `frontend/index.html`, and the Markdown files. Update the 2 lock files with `npm install --package-lock-only --ignore-scripts`.
+  - Read: `packages/create-ln-app/package.json`, the 2 template `package.json` files, `frontend/index.html`.
+  - Exit: `template-react/` has no `.ts` or `.tsx` file. `node --check` passes for each `.js` file. In `template-react/`, `npm run install:all`, `npm run lint`, and `npm run build` pass. After `npm run network`, `npm run test:integration` and the E2E test (`LAPP_DIR=packages/create-ln-app/template-react`) pass.
+- [ ] **C9.2 CLI `--template`, CI, docs, and release `1.4.0`.** Add `--template react-ts|react` (default `react-ts`).
+  - Do: the CLI copies the folder of the template. Add `template-react` to `files`. `prepack` runs the generator before the build. Add a CI E2E job `react` with `--template react`. Update the docs and `CHANGELOG.md`. Set version `1.4.0`.
+  - Read: `packages/create-ln-app/src/cli.ts`, `.github/workflows/ci.yml`.
+  - Exit: `--template react` makes a project with no TypeScript file, and the E2E test passes in it. `--template vue` fails and shows one fix. Owner: the E2E matrix passes on the PR. Merge, tag `v1.4.0`, and publish.
+
+### M10: Next.js template (branch `m10-next`)
+
+- [ ] **C10.1 Split the server.** Move the Hono app from `server/index.ts` to `server/app.ts`.
+  - Do: `server/app.ts` exports `app`. It makes the node clients from `process.env` at the first request, so a build with no `.env` does not fail. `server/index.ts` loads `.env`, makes the clients, and serves `app`. The API does not change.
+  - Read: `server/index.ts`.
+  - Exit: lint, typecheck, and build pass. `npm run test:integration` and the E2E test pass. With no `.env`, `npm run server` still stops with "Run: npm run network". The C9.1 generator makes `server/app.js`.
+- [ ] **C10.2 Next.js template and sync script.** Add `packages/create-ln-app/template-next-ts/` and `scripts/sync-templates.ts`.
+  - Do: use Next.js 16 with the App Router in `src/app/`. `src/app/page.tsx` is a client component that shows the shared `Page`. `src/app/api/[[...route]]/route.ts` mounts `app` (decision 13). The template `package.json` has the scripts that the CLI runs: `compose`, `install:all`, and `doctor`. Add the run files of the template to `.gitignore`.
+  - Do: the sync script copies these files from `template/` (decision 12): `network/`, `scripts/`, `server/` except `index.ts`, `.env.example`, `gitignore`, and `frontend/src/` to `src/` except `index.tsx` and `App.tsx`. With `--check`, it shows each different file and one fix. Add `npm run sync:templates` to the root `package.json`.
+  - Do: make `doctor.ts` check the port of the app from one value that each template sets (fact 6). Do not fix the open `API_PORT` bug in this chunk.
+  - Check first: Next.js resolves the `.ts` imports, Next.js bundles `undici`, and `next build` works with TypeScript 7. If `next build` cannot use TypeScript 7, run `tsc` in the `typecheck` script and set `typescript.ignoreBuildErrors`.
+  - Read: `template/package.json`, `frontend/src/App.tsx`, `frontend/src/index.tsx`, `scripts/doctor.ts`.
+  - Exit: in `template-next-ts/`, after `npm run network`, `npm run dev` serves the page and `/api/nodes` on port 3000. `npm run build`, lint, and typecheck pass. `npm run sync:templates -- --check` passes, and fails after a change to a copy.
+- [ ] **C10.3 CLI, CI, docs, and release `1.5.0`.** Add `next-ts` to `--template`.
+  - Do: add `template-next-ts` to `files`. The E2E config gets the dev commands and the app URL from the project (fact 6). Add a CI step `npm run sync:templates -- --check` and an E2E job `next-ts`. Update the docs and `CHANGELOG.md`. Set version `1.5.0`.
+  - Read: `packages/create-ln-app/src/cli.ts`, `.github/workflows/ci.yml`, `e2e/playwright.config.ts`.
+  - Exit: `--template next-ts` makes a project, and the E2E test passes in it. Owner: the E2E matrix passes on the PR. Merge, tag `v1.5.0`, and publish.
+
 ### Later: plan before work
 
 Each item below starts with one planning chunk. That chunk writes the other chunks in this file. Do not plan these items in detail now, because M6 to M8 change the template.
 
-- [ ] **C9.0 More templates: plan.** JavaScript and Next.js. Questions for the plan:
+- [x] **C9.0 More templates: plan.** JavaScript and Next.js. Questions for the plan:
   1. Do the templates share one base (network, scripts) and add one app layer each?
   2. Does the pack step make the JavaScript template from the TypeScript source, or is it a second source?
   3. Does the Next.js template put the API in route handlers, or keep the Hono server?
-- [ ] **C10.0 More install options: plan.** Homebrew, `curl | bash`, and Windows (WSL2). Fact: each option still needs Node 24 and Docker. Homebrew and `curl | bash` only start `npx create-ln-app`. Give the owner the value and the cost of each option before the plan.
-- [ ] **C11.0 Signet and examples: plan.** Fact: on signet, nobody mines a block when the app asks. Funds come from a faucet, so the bootstrap cannot fund the nodes. Plan the examples (LNURL, Lightning Address, WebLN) apart from signet.
+  - Done: the answers are decisions 12, 11, and 13. The chunks are in M9 and M10. The facts are in "Facts for the templates". M10 uses the chunk numbers C10.x, so the install options plan is now C11.0 and the signet plan is now C12.0.
+- [ ] **C11.0 More install options: plan.** Homebrew, `curl | bash`, and Windows (WSL2). Fact: each option still needs Node 24 and Docker. Homebrew and `curl | bash` only start `npx create-ln-app`. Give the owner the value and the cost of each option before the plan.
+- [ ] **C12.0 Signet and examples: plan.** Fact: on signet, nobody mines a block when the app asks. Funds come from a faucet, so the bootstrap cannot fund the nodes. Plan the examples (LNURL, Lightning Address, WebLN) apart from signet.
