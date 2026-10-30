@@ -188,7 +188,7 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
 
 Status: accepted, 2026-10-28. Base: `v1.0.0` and the landing page (`230cc6a`).
 
-The work protocol and the conventions of 1.0 also apply here. Each milestone ends with one minor release: M6 is `1.1.0`, M7 is `1.2.0`, M8 is `1.3.0`, M9 is `1.4.0`, and M10 is `1.5.0`. In this section, all app paths are relative to `packages/create-ln-app/template/`.
+The work protocol and the conventions of 1.0 also apply here. Each milestone ends with one minor release: M6 is `1.1.0`, M7 is `1.2.0`, M8 is `1.3.0`, M9 is `1.4.0`, M10 is `1.5.0`, and M11 is `1.6.0`. In this section, all app paths are relative to `packages/create-ln-app/template/`.
 
 | Item | Milestone | Estimate |
 |---|---|---|
@@ -197,12 +197,12 @@ The work protocol and the conventions of 1.0 also apply here. Each milestone end
 | Eclair nodes | M8 | 3-4 days |
 | A React JavaScript template | M9 | 2-3 days |
 | A Next.js TypeScript template | M10 | 4-6 days |
-| More install options: Homebrew, `curl \| bash`, Windows (WSL2) | C11.0 plan | after C11.0 |
+| More install options: Homebrew, `curl \| bash`, Windows (WSL2) | M11 | 2-3 days |
 | Signet support and more examples (LNURL, Lightning Address, WebLN) | C12.0 plan | after C12.0 |
 
 ### Decisions after 1.0
 
-The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and decisions 10 to 13 (2026-10-30).
+The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and decisions 10 to 13 (2026-10-30). In C11.0 (2026-10-30), the owner selected the 3 install options. Claude proposed decisions 14 to 17. The owner can change each one before the chunk that uses it.
 
 6. **Node list first.** M6 adds one node list file and a compose generator. M7 (CLN) and M8 (Eclair) use them. Reason: in 1.0, the compose file is static, and 2 scripts each hardcode alice, bob, and carol.
 7. **One impl for each node.** Each entry in `network/nodes.json` has a name and an impl (`lnd`, `cln`, or `eclair`). `--impl <impl>` sets all nodes. A developer edits `network/nodes.json` for a mix. The default stays 3 LND nodes.
@@ -212,6 +212,10 @@ The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and 
 11. **Generated JavaScript.** The JavaScript template has no source in git. The `prepack` step makes it from `template/`. `ts-blank-space` removes the types, then `prettier` formats the result. Reason: one source, so the 2 templates cannot drift.
 12. **Synced shared files.** Each template in git is a full folder that runs in the repo. `template/` is the source of the shared files (network, scripts, node clients, and React components). A sync script copies them to the other template folders. CI fails if a copy is different. Reason: the CLI still copies one folder, and the dev loop stays the same.
 13. **Hono in Next.js.** The Next.js template mounts the shared Hono app in one route file with the `hono/vercel` adapter. Reason: one process and one port. The API, `API.md`, and the integration test stay the same as in the React template.
+14. **WSL2 is the Windows path.** The docs tell Windows users to run the CLI in WSL2 (Ubuntu), with Docker Desktop and its WSL2 back end or with Docker Engine in WSL2. Node 24 must be in WSL2, and the project must be in the Linux file system (`~/`), not in `/mnt/c`. Native Windows is not tested. Reason: CI cannot start the network on Windows (fact 3 of the install options). WSL2 is Linux, so the Linux E2E jobs cover it.
+15. **The install script only checks, then starts `npx`.** `install.sh` is at the repo root, so the site serves it. It does not install Node or Docker, and it does not use `sudo`. It stops if Node 24 or npm is missing, and shows one fix. If `docker compose` is missing, it shows the fix and continues, because the CLI can make the project with no Docker. Then it runs `npx --yes create-ln-app@latest` with the arguments of the user. Reason: no root access, and a small script to trust.
+16. **A Homebrew tap, not homebrew-core.** A new repo `bnonni/homebrew-tap` has `Formula/create-ln-app.rb`. The formula installs the npm tarball and depends on `node`. A `workflow_dispatch` workflow in the tap sets `url` and `sha256` from the npm `latest` version. Reason: the repo does not meet the homebrew-core rules (fact 4 of the install options).
+17. **Release `1.6.0`.** The npm README gets the install options, so M11 ends with `1.6.0`. The tap formula starts at `1.5.0`. After the publish of `1.6.0`, the bump workflow moves it to `1.6.0`.
 
 ### Facts from the 1.0 code
 
@@ -347,6 +351,39 @@ The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and 
   - Done: the docs also change "Change the nodes" to `network/README.md`. `docs/architecture.md` has a section for the Next.js template. `docs/troubleshooting.md` has port 3000. `CONTRIBUTING.md` has the sync script, the `next-ts` E2E job, and the `template-next-ts/` file check. `CHANGELOG.md` has the missing `[1.4.0]` link.
   - Done: lint, typecheck, build, and `npm run sync:templates -- --check` pass. The package has 45 `template/` files, 41 `template-react/` files, and 38 `template-next-ts/` files. The version is `1.5.0`. The E2E matrix on the PR, the merge, the tag, and the publish are for the owner.
 
+### Facts for the install options (C11.0, 2026-10-30)
+
+1. The CLI has no prompts. It checks the Node version (`src/cli.ts:116`). It runs `npm run doctor` for Docker and the ports, and a failed check does not stop it (`src/cli.ts:175`).
+2. The template npm scripts use only `node`, `docker compose`, `concurrently`, and `&&`. On `win32`, the CLI starts the npm commands with `shell: true` (`src/cli.ts:101`). Nobody tested the CLI on Windows or macOS.
+3. All CI jobs use `ubuntu-latest`. GitHub-hosted Windows runners cannot run Linux containers, and the macOS runners have no Docker. Only the Linux jobs can start the network.
+4. homebrew-core accepts only a notable project: 75 stars, 30 forks, and 30 watchers. On 2026-10-30, the repo has 0 of each. A formula cannot depend on a cask, so Brew cannot install Docker Desktop.
+5. Homebrew `node` is 26.13.0. `node@24` (24.22.2) is keg-only. The CLI accepts Node 24 or later (`engines`).
+6. GitHub Pages builds the site with Jekyll from the `master` root (`CNAME`, `index.html`). A root file `install.sh` is at `https://create-ln-app.dev/install.sh`.
+7. This machine has no `brew`, `shellcheck`, or `actionlint`. Use their Docker images (`homebrew/brew`, `koalaman/shellcheck`, `rhysd/actionlint`).
+
+### M11: More install options (branch `m11-install`)
+
+- [ ] **C11.1 Windows (WSL2) and a CLI job for 3 OSes.** Add the Windows docs and a CI job `cli`.
+  - Do: the `cli` job has a matrix `ubuntu-latest`, `macos-latest`, and `windows-latest`. It packs the CLI and runs the packed CLI with `--skip-install` for each template. It checks that the CLI exits 0 with no Docker and that the project has `package.json`, `.gitignore`, and `network/docker-compose.yml`.
+  - Do: add a "Windows" section to `README.md`, `packages/create-ln-app/README.md`, and `docs/troubleshooting.md` (decision 14). Add the WSL2 check to the release checks in `CONTRIBUTING.md`.
+  - Read: `.github/workflows/ci.yml` (the E2E job steps), the "Prerequisites" section of `README.md`, `docs/troubleshooting.md`.
+  - Exit: `actionlint` passes. On Linux, the job steps pass. Owner: the `cli` job passes on the 3 OSes on the PR. Owner: in WSL2, `npx create-ln-app my-lapp` and `npm run dev` work, and a payment in the page works.
+  - Risk: the Windows job can find a CLI bug (paths, `shell: true`, line ends). If the fix is large, split this chunk.
+- [ ] **C11.2 Install script.** Add `install.sh` at the repo root (decision 15).
+  - Do: use `set -euo pipefail` and Bash 3.2 syntax (the macOS Bash). Put the body in a `main` function that the last line calls, so a partial download does nothing. On Git Bash, MSYS, or Cygwin (`uname -s`), stop and link to the Windows section.
+  - Do: run `npx` with stdin from `/dev/null`, so no child process reads the rest of the script. The variable `CREATE_LN_APP_PACKAGE` (default `create-ln-app@latest`) lets CI use the packed CLI.
+  - Do: in the `cli` job, on Linux and macOS, run `shellcheck install.sh` and `cat install.sh | bash -s -- app --skip-install` with the packed CLI.
+  - Read: `index.html` (the install command block).
+  - Exit: `shellcheck` passes. `cat install.sh | bash -s -- app --skip-install` with the local tarball makes the project. With no `node` in `PATH`, and with Node 22, the script stops and shows one fix.
+- [ ] **C11.3 Homebrew tap.** Write the tap repo in `../homebrew-tap` (decision 16).
+  - Do: `Formula/create-ln-app.rb` uses `std_npm_args` and `depends_on "node"`. Its `caveats` show the Docker step. Its `test do` block runs `create-ln-app app --skip-install` and checks `app/package.json`. The version is `1.5.0`.
+  - Do: add `README.md`, a test workflow (`brew test-bot` or `brew audit` and `brew test`), and the bump workflow (`workflow_dispatch`, `contents: write`).
+  - Exit: in the `homebrew/brew` image, `brew install`, `brew test`, and `brew audit --strict --new` pass. Owner: create `bnonni/homebrew-tap` and push. The tap CI passes.
+- [ ] **C11.4 Docs and release `1.6.0`.** Show the 4 ways to install in the docs. Set version `1.6.0`.
+  - Do: the quick start of `README.md`, `packages/create-ln-app/README.md`, and `index.html` shows `npx` (the default), `curl | bash`, Homebrew, and Windows (WSL2). Each way still needs Node 24 and Docker. `CONTRIBUTING.md` "Publish": after `npm publish`, run the tap bump workflow. Add `[1.6.0]` to `CHANGELOG.md`.
+  - Read: `README.md`, `packages/create-ln-app/README.md`, `index.html`, `CHANGELOG.md`, the "Publish" section of `CONTRIBUTING.md`.
+  - Exit: lint, typecheck, build, and `npm run sync:templates -- --check` pass. Owner: CI passes on the PR. Merge, tag `v1.6.0`, publish, and run the tap bump workflow.
+
 ### Later: plan before work
 
 Each item below starts with one planning chunk. That chunk writes the other chunks in this file. Do not plan these items in detail now, because M6 to M8 change the template.
@@ -356,5 +393,6 @@ Each item below starts with one planning chunk. That chunk writes the other chun
   2. Does the pack step make the JavaScript template from the TypeScript source, or is it a second source?
   3. Does the Next.js template put the API in route handlers, or keep the Hono server?
   - Done: the answers are decisions 12, 11, and 13. The chunks are in M9 and M10. The facts are in "Facts for the templates". M10 uses the chunk numbers C10.x, so the install options plan is now C11.0 and the signet plan is now C12.0.
-- [ ] **C11.0 More install options: plan.** Homebrew, `curl | bash`, and Windows (WSL2). Fact: each option still needs Node 24 and Docker. Homebrew and `curl | bash` only start `npx create-ln-app`. Give the owner the value and the cost of each option before the plan.
+- [x] **C11.0 More install options: plan.** Homebrew, `curl | bash`, and Windows (WSL2). Fact: each option still needs Node 24 and Docker. Homebrew and `curl | bash` only start `npx create-ln-app`. Give the owner the value and the cost of each option before the plan.
+  - Done: the owner selected Windows (WSL2), `curl | bash`, and Homebrew. The decisions are 14 to 17. The chunks are in M11. The facts are in "Facts for the install options".
 - [ ] **C12.0 Signet and examples: plan.** Fact: on signet, nobody mines a block when the app asks. Funds come from a faucet, so the bootstrap cannot fund the nodes. Plan the examples (LNURL, Lightning Address, WebLN) apart from signet.
