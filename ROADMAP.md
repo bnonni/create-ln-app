@@ -333,10 +333,17 @@ The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and 
   - Done: in Next.js, `id="nodeName"` made `window.nodeName` an element, and the page showed the error "nodeName.toLowerCase is not a function". The select ids are now `node-select` and `peer-select`.
   - Done: `next dev` writes `AGENTS.md` at each start. The repo `.gitignore` ignores it, as it ignores `.next/` and `next-env.d.ts`.
   - Done: in `template-next-ts/`, the integration test (16 of 16) and the E2E test (with the base URL `http://localhost:3000`) pass. In `template/`, they also pass.
-- [ ] **C10.3 CLI, CI, docs, and release `1.5.0`.** Add `next-ts` to `--template`.
-  - Do: add `template-next-ts` to `files`. Keep `.next/`, `AGENTS.md`, `next-env.d.ts`, `.env`, and `network/data/*` out of `files` and out of the copy filter. Add `template-next-ts/README.md`. The E2E config gets the dev commands and the app URL from the project (fact 6). Add a CI step `npm run sync:templates -- --check` and an E2E job `next-ts`. Update the docs and `CHANGELOG.md`. Set version `1.5.0`.
+- [x] **C10.3 CLI, E2E, and CI.** Add `next-ts` to `--template`.
+  - Do: add `template-next-ts` to `files`. Keep `.next/`, `AGENTS.md`, `next-env.d.ts`, `.env`, and `network/data/*` out of `files` and out of the copy filter. Add `template-next-ts/README.md`.
+  - Do: each template `package.json` sets `config.appUrl` and a `dev:app` script that starts the app without the network (fact 6). The E2E config starts `npm run dev:app` and waits for `<appUrl>/api/health`. The CLI shows `config.appUrl` of the project.
+  - Do: add a CI step `npm run sync:templates -- --check` and an E2E job `next-ts` that also runs lint, typecheck, and build.
   - Read: `packages/create-ln-app/src/cli.ts`, `.github/workflows/ci.yml`, `e2e/playwright.config.ts`.
-  - Exit: `--template next-ts` makes a project, and the E2E test passes in it. Owner: the E2E matrix passes on the PR. Merge, tag `v1.5.0`, and publish.
+  - Exit: `--template next-ts` makes a project, and the E2E test passes in it. The E2E test passes in `template/` too.
+  - Done: the network reference of the README is now `network/README.md`, so the sync script shares it. Each template README links to it.
+- [ ] **C10.4 Docs and release `1.5.0`.** Update the docs and `CHANGELOG.md`. Set version `1.5.0`.
+  - Do: `docs/architecture.md` names the "Network reference" section of the project README. Change it to `network/README.md`.
+  - Read: `README.md`, `packages/create-ln-app/README.md`, `CHANGELOG.md`, `index.html`.
+  - Exit: owner: the E2E matrix passes on the PR. Merge, tag `v1.5.0`, and publish.
 
 ### Later: plan before work
 
