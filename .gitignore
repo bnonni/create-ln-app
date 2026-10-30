@@ -18,5 +18,8 @@ packages/create-ln-app/template/frontend/dist/
 packages/create-ln-app/template/network/data/*
 !packages/create-ln-app/template/network/data/.gitkeep
 
+# The generated React JavaScript template (npm run js-template -w create-ln-app)
+packages/create-ln-app/template-react/
+
 # Playwright output
 e2e/test-results/
