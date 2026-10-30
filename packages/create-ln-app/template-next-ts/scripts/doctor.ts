@@ -26,11 +26,30 @@ function failText(error: unknown): string {
   return (stderr || message || String(error)).trim().toLowerCase();
 }
 
+function daemonFailure(name: string, text: string): Result {
+  if (text.toLowerCase().includes('permission denied')) {
+    return {
+      name,
+      ok: false,
+      detail: 'Your user cannot connect to the Docker daemon.',
+      fix: 'Run sudo usermod -aG docker $USER, then log out and log in again.',
+    };
+  }
+  return {
+    name,
+    ok: false,
+    detail: 'The Docker daemon does not run.',
+    fix: 'Start Docker. On macOS and Windows, start Docker Desktop. On Linux, run sudo systemctl start docker.',
+  };
+}
+
 async function checkDocker(): Promise<Result> {
   const name = 'Docker daemon';
   try {
-    const { stdout } = await run('docker', ['info', '--format', '{{.ServerVersion}}'], { timeout: TIMEOUT_MS });
-    return { name, ok: true, detail: `Docker ${stdout.trim()} runs.` };
+    const { stdout, stderr } = await run('docker', ['info', '--format', '{{.ServerVersion}}'], { timeout: TIMEOUT_MS });
+    const version = stdout.trim();
+    // Some docker versions exit 0 with no server version if they cannot connect to the daemon.
+    return version ? { name, ok: true, detail: `Docker ${version} runs.` } : daemonFailure(name, stderr);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return {
@@ -40,20 +59,7 @@ async function checkDocker(): Promise<Result> {
         fix: 'Install Docker: https://docs.docker.com/engine/install/',
       };
     }
-    if (failText(error).includes('permission denied')) {
-      return {
-        name,
-        ok: false,
-        detail: 'Your user cannot connect to the Docker daemon.',
-        fix: 'Run sudo usermod -aG docker $USER, then log out and log in again.',
-      };
-    }
-    return {
-      name,
-      ok: false,
-      detail: 'The Docker daemon does not run.',
-      fix: 'Start Docker. On macOS and Windows, start Docker Desktop. On Linux, run sudo systemctl start docker.',
-    };
+    return daemonFailure(name, failText(error));
   }
 }
 
