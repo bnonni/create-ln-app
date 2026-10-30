@@ -11,12 +11,18 @@ npm-debug.log*
 packages/create-ln-app/dist/
 *.tgz
 
-# Template files that a local run makes. The template ignore file is
-# packages/create-ln-app/template/gitignore, and git does not read it.
+# Template files that a local run makes. The ignore file of each template is
+# packages/create-ln-app/<template>/gitignore, and git does not read it.
 packages/create-ln-app/template/.env
 packages/create-ln-app/template/frontend/dist/
 packages/create-ln-app/template/network/data/*
 !packages/create-ln-app/template/network/data/.gitkeep
+packages/create-ln-app/template-next-ts/.env
+packages/create-ln-app/template-next-ts/.next/
+packages/create-ln-app/template-next-ts/next-env.d.ts
+packages/create-ln-app/template-next-ts/AGENTS.md
+packages/create-ln-app/template-next-ts/network/data/*
+!packages/create-ln-app/template-next-ts/network/data/.gitkeep
 
 # The generated React JavaScript template (npm run js-template -w create-ln-app)
 packages/create-ln-app/template-react/

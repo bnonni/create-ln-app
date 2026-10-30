@@ -320,15 +320,21 @@ The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and 
   - Do: `server/app.ts` exports `app`. It makes the node clients from `process.env` at the first request, so a build with no `.env` does not fail. `server/index.ts` loads `.env`, makes the clients, and serves `app`. The API does not change.
   - Read: `server/index.ts`.
   - Exit: lint, typecheck, and build pass. `npm run test:integration` and the E2E test pass. With no `.env`, `npm run server` still stops with "Run: npm run network". The C9.1 generator makes `server/app.js`.
-- [ ] **C10.2 Next.js template and sync script.** Add `packages/create-ln-app/template-next-ts/` and `scripts/sync-templates.ts`.
+- [x] **C10.2 Next.js template and sync script.** Add `packages/create-ln-app/template-next-ts/` and `scripts/sync-templates.ts`.
   - Do: use Next.js 16 with the App Router in `src/app/`. `src/app/page.tsx` is a client component that shows the shared `Page`. `src/app/api/[[...route]]/route.ts` mounts `app` (decision 13). The template `package.json` has the scripts that the CLI runs: `compose`, `install:all`, and `doctor`. Add the run files of the template to `.gitignore`.
   - Do: the sync script copies these files from `template/` (decision 12): `network/`, `scripts/`, `server/` except `index.ts`, `.env.example`, `gitignore`, and `frontend/src/` to `src/` except `index.tsx` and `App.tsx`. With `--check`, it shows each different file and one fix. Add `npm run sync:templates` to the root `package.json`.
   - Do: make `doctor.ts` check the port of the app from one value that each template sets (fact 6). Do not fix the open `API_PORT` bug in this chunk.
   - Check first: Next.js resolves the `.ts` imports, Next.js bundles `undici`, and `next build` works with TypeScript 7. If `next build` cannot use TypeScript 7, run `tsc` in the `typecheck` script and set `typescript.ignoreBuildErrors`.
   - Read: `template/package.json`, `frontend/src/App.tsx`, `frontend/src/index.tsx`, `scripts/doctor.ts`.
   - Exit: in `template-next-ts/`, after `npm run network`, `npm run dev` serves the page and `/api/nodes` on port 3000. `npm run build`, lint, and typecheck pass. `npm run sync:templates -- --check` passes, and fails after a change to a copy.
+  - Done: Next.js 16.4.3 resolves the `.ts` imports and bundles `undici`. `next build` works with TypeScript 7, so the template does not set `typescript.ignoreBuildErrors`. `tsconfig.json` has the options that `next build` adds, so the build does not change the file.
+  - Done: the "config" field of each template `package.json` sets `port` and `portEnv`. `doctor.ts` checks that port: 3001 and `API_PORT` in `template/`, 3000 and `PORT` in `template-next-ts/`.
+  - Done: `server/flow.test.ts` sends its requests to `app` directly. It does not start `server/index.ts`, so the same test runs in the 2 templates (decision 13).
+  - Done: in Next.js, `id="nodeName"` made `window.nodeName` an element, and the page showed the error "nodeName.toLowerCase is not a function". The select ids are now `node-select` and `peer-select`.
+  - Done: `next dev` writes `AGENTS.md` at each start. The repo `.gitignore` ignores it, as it ignores `.next/` and `next-env.d.ts`.
+  - Done: in `template-next-ts/`, the integration test (16 of 16) and the E2E test (with the base URL `http://localhost:3000`) pass. In `template/`, they also pass.
 - [ ] **C10.3 CLI, CI, docs, and release `1.5.0`.** Add `next-ts` to `--template`.
-  - Do: add `template-next-ts` to `files`. The E2E config gets the dev commands and the app URL from the project (fact 6). Add a CI step `npm run sync:templates -- --check` and an E2E job `next-ts`. Update the docs and `CHANGELOG.md`. Set version `1.5.0`.
+  - Do: add `template-next-ts` to `files`. Keep `.next/`, `AGENTS.md`, `next-env.d.ts`, `.env`, and `network/data/*` out of `files` and out of the copy filter. Add `template-next-ts/README.md`. The E2E config gets the dev commands and the app URL from the project (fact 6). Add a CI step `npm run sync:templates -- --check` and an E2E job `next-ts`. Update the docs and `CHANGELOG.md`. Set version `1.5.0`.
   - Read: `packages/create-ln-app/src/cli.ts`, `.github/workflows/ci.yml`, `e2e/playwright.config.ts`.
   - Exit: `--template next-ts` makes a project, and the E2E test passes in it. Owner: the E2E matrix passes on the PR. Merge, tag `v1.5.0`, and publish.
 
