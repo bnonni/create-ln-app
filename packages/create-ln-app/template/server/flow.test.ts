@@ -1,18 +1,17 @@
 // Integration test: the full payment flow against the live regtest network.
 // Start the network before the test: `npm run network`.
-// The test starts its own API server on a free port and talks to it as a client does.
+// The test sends the requests of a client to the API app in server/app.ts. It does not start a server, so it runs in each template.
 // The flow runs in the 2 directions: alice pays bob, then bob pays alice. Thus each node is a payer and a payee.
 // To use a different node pair, set FLOW_NODES, for example `FLOW_NODES=alice,carol npm run test:integration`.
 // Each flow opens a new channel from the payer, so the test also passes if a channel already exists.
 
 import assert from 'node:assert/strict';
-import { type ChildProcess, spawn } from 'node:child_process';
-import { once } from 'node:events';
-import { createServer } from 'node:net';
-import { after, before, describe, test } from 'node:test';
+import { before, describe, test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { fileURLToPath } from 'node:url';
+import { app, getClients } from './app.ts';
 
-const SERVER_START_TIMEOUT_MS = 10_000;
+const ENV_FILE = fileURLToPath(new URL('../.env', import.meta.url));
 const CHANNEL_ACTIVE_TIMEOUT_MS = 30_000;
 const CHANNEL_READY_TIMEOUT_MS = 10_000;
 const POLL_INTERVAL_MS = 250;
@@ -49,21 +48,8 @@ type Invoice = {
 
 type ApiResponse = { status: number; body: any };
 
-let server: ChildProcess;
-let output = '';
-let baseUrl: string;
-
-async function freePort(): Promise<number> {
-  const probe = createServer().listen(0, '127.0.0.1');
-  await once(probe, 'listening');
-  const address = probe.address();
-  probe.close();
-  if (address === null || typeof address === 'string') throw new Error('cannot get a free port');
-  return address.port;
-}
-
 async function api(method: string, path: string, body?: object): Promise<ApiResponse> {
-  const response = await fetch(`${baseUrl}${path}`, {
+  const response = await app.request(`/api${path}`, {
     method,
     headers: body === undefined ? undefined : { 'content-type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -71,7 +57,7 @@ async function api(method: string, path: string, body?: object): Promise<ApiResp
   return { status: response.status, body: await response.json() };
 }
 
-// Sends the request and makes sure that the server replies with the expected status.
+// Sends the request and makes sure that the app replies with the expected status.
 async function expectStatus(status: number, method: string, path: string, body?: object): Promise<any> {
   const response = await api(method, path, body);
   assert.equal(response.status, status, `${method} ${path}: ${JSON.stringify(response.body)}`);
@@ -96,29 +82,14 @@ async function getNode(name: string): Promise<Node> {
 }
 
 describe('payment flow', () => {
-  before(async () => {
-    const port = await freePort();
-    baseUrl = `http://127.0.0.1:${port}/api`;
-    server = spawn(process.execPath, ['server/index.ts'], {
-      env: { ...process.env, API_PORT: String(port) },
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    server.stdout?.on('data', (chunk) => (output += chunk));
-    server.stderr?.on('data', (chunk) => (output += chunk));
-    server.on('exit', (code) => {
-      if (code !== null) output += `\nserver exited with code ${code}`;
-    });
-    await waitFor('server start', SERVER_START_TIMEOUT_MS, async () => {
-      if (server.exitCode !== null) throw new Error(`the server did not start:\n${output}`);
-      const response = await api('GET', '/health').catch(() => undefined);
-      return response?.status === 200 ? true : undefined;
-    });
-  });
-
-  after(async () => {
-    if (server.exitCode !== null) return;
-    server.kill();
-    await once(server, 'exit');
+  // The app reads the node values from process.env, as the API server does. A missing or empty .env stops the test here.
+  before(() => {
+    try {
+      process.loadEnvFile(ENV_FILE);
+    } catch {
+      throw new Error(`Cannot read ${ENV_FILE}. Run: npm run network`);
+    }
+    getClients();
   });
 
   for (const [payerName, payeeName] of [[NODE_A, NODE_B], [NODE_B, NODE_A]]) {
