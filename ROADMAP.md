@@ -340,10 +340,12 @@ The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and 
   - Read: `packages/create-ln-app/src/cli.ts`, `.github/workflows/ci.yml`, `e2e/playwright.config.ts`.
   - Exit: `--template next-ts` makes a project, and the E2E test passes in it. The E2E test passes in `template/` too.
   - Done: the network reference of the README is now `network/README.md`, so the sync script shares it. Each template README links to it.
-- [ ] **C10.4 Docs and release `1.5.0`.** Update the docs and `CHANGELOG.md`. Set version `1.5.0`.
+- [x] **C10.4 Docs and release `1.5.0`.** Update the docs and `CHANGELOG.md`. Set version `1.5.0`.
   - Do: `docs/architecture.md` names the "Network reference" section of the project README. Change it to `network/README.md`.
   - Read: `README.md`, `packages/create-ln-app/README.md`, `CHANGELOG.md`, `index.html`.
   - Exit: owner: the E2E matrix passes on the PR. Merge, tag `v1.5.0`, and publish.
+  - Done: the docs also change "Change the nodes" to `network/README.md`. `docs/architecture.md` has a section for the Next.js template. `docs/troubleshooting.md` has port 3000. `CONTRIBUTING.md` has the sync script, the `next-ts` E2E job, and the `template-next-ts/` file check. `CHANGELOG.md` has the missing `[1.4.0]` link.
+  - Done: lint, typecheck, build, and `npm run sync:templates -- --check` pass. The package has 45 `template/` files, 41 `template-react/` files, and 38 `template-next-ts/` files. The version is `1.5.0`. The E2E matrix on the PR, the merge, the tag, and the publish are for the owner.
 
 ### Later: plan before work
 

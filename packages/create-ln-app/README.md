@@ -23,7 +23,7 @@ cd my-lapp
 npm run dev
 ```
 
-Then open <http://localhost:5173>.
+Then open <http://localhost:5173>. In a project from the `next-ts` template, open <http://localhost:3000>.
 
 The command copies the template to `my-lapp`, runs `git init`, installs the npm packages, and runs `npm run doctor`. The doctor checks Docker, Docker Compose, and the ports. If a check fails, the doctor shows a fix.
 
@@ -31,13 +31,13 @@ Options:
 
 | Option              | Effect                                                                                              |
 | ------------------- | --------------------------------------------------------------------------------------------------- |
-| `--template <name>` | Use this template: `react-ts` (React and TypeScript) or `react` (React and JavaScript). The default is `react-ts`. |
+| `--template <name>` | Use this template: `react-ts` (React and TypeScript), `react` (React and JavaScript), or `next-ts` (Next.js and TypeScript). The default is `react-ts`. |
 | `--nodes <n>`       | Make a network with n nodes, from 2 to 10. The default is 3.                                        |
 | `--impl <impl>`     | Use this impl for all the nodes: `lnd`, `cln` (Core Lightning), or `eclair`. The default is `lnd`.  |
 | `--skip-install`    | Do not install the npm packages.                                                                    |
 | `-h`, `--help`      | Show the help.                                                                                      |
 
-The README in the new project has all the commands and the network reference.
+The README in the new project has all the commands. `network/README.md` in the new project has the network reference.
 
 ## Links
 

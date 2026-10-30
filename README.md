@@ -47,9 +47,11 @@ The `create-ln-app` command copies the project to `my-lapp`, runs `git init`, an
 
 To make a network with a different number of nodes, add `--nodes <n>` to the `create-ln-app` command. The value is from 2 to 10. Example: `npx create-ln-app my-lapp --nodes 5`.
 
-To use Core Lightning (CLN) for all the nodes, add `--impl cln`. To use Eclair for all the nodes, add `--impl eclair`. The default is `lnd`. Example: `npx create-ln-app my-lapp --impl cln`. To use more than one impl in one network, edit `network/nodes.json` in the project. See "Change the nodes" in the project README.
+To use Core Lightning (CLN) for all the nodes, add `--impl cln`. To use Eclair for all the nodes, add `--impl eclair`. The default is `lnd`. Example: `npx create-ln-app my-lapp --impl cln`. To use more than one impl in one network, edit `network/nodes.json` in the project. See "Change the nodes" in `network/README.md` of the project.
 
 To use JavaScript, not TypeScript, add `--template react`. The default is `react-ts` (React and TypeScript). Example: `npx create-ln-app my-lapp --template react`. In the `react` template, each `.ts` file is a `.js` file and each `.tsx` file is a `.jsx` file.
+
+To use Next.js, add `--template next-ts` (Next.js and TypeScript). Example: `npx create-ln-app my-lapp --template next-ts`. In the `next-ts` template, Next.js serves the example app and the API at <http://localhost:3000>. The app is in `src/`, not in `frontend/src/`.
 
 The `dev` command starts 1 bitcoind node and the Lightning nodes, funds the Lightning nodes, and writes the node values to `.env`. Then it starts the API server at <http://localhost:3001/api> and the example app at <http://localhost:5173>. The first start downloads the Docker images (about 510 MB), so it takes more time.
 
@@ -57,8 +59,9 @@ If a step fails, see [Troubleshooting](docs/troubleshooting.md).
 
 ## Next steps
 
-- Make your own Lapp: each step in `frontend/src/components/Page.tsx` (`Page.jsx` in the `react` template) has a comment that starts with "Your feature".
-- Read the project README for all the commands and the network reference: [template README](packages/create-ln-app/template/README.md).
+- Make your own Lapp: each step in `frontend/src/components/Page.tsx` has a comment that starts with "Your feature". The file is `frontend/src/components/Page.jsx` in the `react` template and `src/components/Page.tsx` in the `next-ts` template.
+- Read the project README for all the commands: [template README](packages/create-ln-app/template/README.md).
+- Read the network reference for the host ports and the CLI commands of the nodes: [`network/README.md`](packages/create-ln-app/template/network/README.md).
 - Read how the parts connect: [Architecture](docs/architecture.md).
 - Read the API reference: [`server/API.md`](packages/create-ln-app/template/server/API.md).
 
