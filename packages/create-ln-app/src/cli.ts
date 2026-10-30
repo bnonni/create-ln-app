@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Make a new Lightning app project from the template in ../template.
-// Usage: npx create-ln-app <project-dir> [--nodes <n>] [--impl <impl>] [--skip-install]
+// Make a new Lightning app project from a template folder of the package.
+// Usage: npx create-ln-app <project-dir> [--template <name>] [--nodes <n>] [--impl <impl>] [--skip-install]
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { basename, join, relative, resolve } from 'node:path';
@@ -9,7 +9,11 @@ import { parseArgs } from 'node:util';
 import { copyFilter } from './copy-filter.js';
 
 const MIN_NODE_MAJOR = 24;
-const TEMPLATE_DIR = fileURLToPath(new URL('../template', import.meta.url));
+// The template names, with the package folder of each template. A name with no "-ts" is JavaScript.
+// scripts/js-template.ts makes template-react/ before npm packs the package.
+const TEMPLATES = { 'react-ts': 'template', react: 'template-react' } as const;
+type Template = keyof typeof TEMPLATES;
+const DEFAULT_TEMPLATE: Template = 'react-ts';
 const APP_URL = 'http://localhost:5173';
 // The template script scripts/nodes.ts accepts 2 to 10 nodes. Node i gets name i of this list.
 const NODE_NAMES = ['alice', 'bob', 'carol', 'dave', 'erin', 'frank', 'grace', 'heidi', 'ivan', 'judy'];
@@ -21,13 +25,16 @@ type Impl = keyof typeof IMPLS;
 const DEFAULT_IMPL: Impl = 'lnd';
 // For example "lnd, cln, or eclair".
 const IMPL_LIST = new Intl.ListFormat('en', { type: 'disjunction' }).format(Object.keys(IMPLS));
-const USAGE = `Usage: npx create-ln-app <project-dir> [--nodes <n>] [--impl <impl>] [--skip-install]
+const TEMPLATE_LIST = new Intl.ListFormat('en', { type: 'disjunction' }).format(Object.keys(TEMPLATES));
+const USAGE = `Usage: npx create-ln-app <project-dir> [--template <name>] [--nodes <n>] [--impl <impl>] [--skip-install]
 
 Options:
-  --nodes <n>     Make a network with n nodes, from ${MIN_NODES} to ${NODE_NAMES.length}. The default is ${DEFAULT_NODES}.
-  --impl <impl>   Use this impl for all the nodes: ${IMPL_LIST}. cln is Core Lightning. The default is ${DEFAULT_IMPL}.
-  --skip-install  Do not install the npm packages.
-  -h, --help      Show this help.`;
+  --template <name>  Use this template: react-ts (React and TypeScript) or react (React and JavaScript).
+                     The default is ${DEFAULT_TEMPLATE}.
+  --nodes <n>        Make a network with n nodes, from ${MIN_NODES} to ${NODE_NAMES.length}. The default is ${DEFAULT_NODES}.
+  --impl <impl>      Use this impl for all the nodes: ${IMPL_LIST}. cln is Core Lightning. The default is ${DEFAULT_IMPL}.
+  --skip-install     Do not install the npm packages.
+  -h, --help         Show this help.`;
 
 // Make a valid npm package name from the folder name, for example "My App" > "my-app".
 function packageName(dir: string): string {
@@ -54,6 +61,22 @@ function nodeCount(value: string): number {
     throw new Error(`--nodes ${value} is not valid. Fix: use a number from ${MIN_NODES} to ${NODE_NAMES.length}.`);
   }
   return count;
+}
+
+function templateName(value: string): Template {
+  if (!Object.hasOwn(TEMPLATES, value)) {
+    throw new Error(`--template ${value} is not valid. Fix: use ${TEMPLATE_LIST}.`);
+  }
+  return value as Template;
+}
+
+// In the repo, template-react/ is there only after npm run js-template.
+function templateDir(template: Template): string {
+  const dir = fileURLToPath(new URL(`../${TEMPLATES[template]}`, import.meta.url));
+  if (!existsSync(dir)) {
+    throw new Error(`The template folder ${dir} is missing. Fix: run npm run js-template -w create-ln-app.`);
+  }
+  return dir;
 }
 
 function implName(value: string): Impl {
@@ -94,6 +117,7 @@ function main(): void {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
     options: {
+      template: { type: 'string', default: DEFAULT_TEMPLATE },
       nodes: { type: 'string', default: DEFAULT_NODES },
       impl: { type: 'string', default: DEFAULT_IMPL },
       'skip-install': { type: 'boolean' },
@@ -110,6 +134,7 @@ function main(): void {
     return;
   }
 
+  const template = templateName(values.template);
   const count = nodeCount(values.nodes);
   const impl = implName(values.impl);
   const target = resolve(positionals[0]);
@@ -117,8 +142,9 @@ function main(): void {
     throw new Error(`${target} is not empty. Use a new or empty folder.`);
   }
   const name = packageName(target);
+  const source = templateDir(template);
 
-  cpSync(TEMPLATE_DIR, target, { recursive: true, filter: copyFilter(TEMPLATE_DIR) });
+  cpSync(source, target, { recursive: true, filter: copyFilter(source) });
   // npm does not put a .gitignore file in a package, so the template file has no dot.
   renameSync(join(target, 'gitignore'), join(target, '.gitignore'));
   setName(join(target, 'package.json'), name);
@@ -129,7 +155,7 @@ function main(): void {
   if (!run('npm', ['run', '--silent', 'compose'], target)) {
     throw new Error(`npm run compose failed. Fix the error, then run npm run compose in ${target}.`);
   }
-  console.log(`Made ${name} in ${target} with ${count} ${IMPLS[impl]} nodes.`);
+  console.log(`Made ${name} in ${target} from the ${template} template, with ${count} ${IMPLS[impl]} nodes.`);
 
   initGit(target);
 

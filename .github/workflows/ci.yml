@@ -41,6 +41,7 @@ jobs:
   # Packs the CLI, makes a project with it, starts the regtest network, and runs the browser steps.
   # The jobs use the default node list (3 LND nodes), 5 LND nodes, 3 CLN nodes, 3 Eclair nodes, and a mix.
   # The mix job writes network/nodes.json with the 3 impls after the CLI makes the project.
+  # The react job uses the React JavaScript template. It also checks, lints, and builds the project.
   # The E2E test uses alice and bob, so the mix job also runs the integration test for each node pair.
   e2e:
     name: e2e (${{ matrix.name }})
@@ -58,6 +59,9 @@ jobs:
             args: --impl cln
           - name: eclair
             args: --impl eclair
+          - name: react
+            args: --template react
+            js: true
           - name: mix
             args: ''
             nodes-json: |
@@ -87,6 +91,20 @@ jobs:
           npm pack -w create-ln-app --pack-destination "$RUNNER_TEMP"
           cd "$RUNNER_TEMP"
           npx --yes --package "$RUNNER_TEMP"/create-ln-app-*.tgz create-ln-app e2e-app ${{ matrix.args }}
+
+      # The JavaScript project must have no TypeScript file and no tsconfig file.
+      - name: Check the JavaScript project
+        if: matrix.js
+        working-directory: ${{ runner.temp }}/e2e-app
+        run: |
+          ts_files=$(find . -name node_modules -prune -o \( -name '*.ts' -o -name '*.tsx' -o -name 'tsconfig*' \) -print)
+          if [ -n "$ts_files" ]; then
+            echo "The JavaScript project has TypeScript files:"
+            echo "$ts_files"
+            exit 1
+          fi
+          npm run lint
+          npm run build
 
       - name: Write the node list
         if: matrix.nodes-json
