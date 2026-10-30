@@ -19,13 +19,19 @@
     "!template/.env",
     "!template/frontend/dist",
     "!template/network/data/*",
-    "template/network/data/.gitkeep"
+    "template/network/data/.gitkeep",
+    "template-react",
+    "!template-react/**/node_modules",
+    "!template-react/.env",
+    "!template-react/frontend/dist",
+    "!template-react/network/data/*",
+    "template-react/network/data/.gitkeep"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p scripts",
     "js-template": "node scripts/js-template.ts",
-    "prepack": "npm run build"
+    "prepack": "npm run js-template && npm run build"
   },
   "engines": {
     "node": ">=24"
