@@ -11,10 +11,9 @@ import { copyFilter } from './copy-filter.js';
 const MIN_NODE_MAJOR = 24;
 // The template names, with the package folder of each template. A name with no "-ts" is JavaScript.
 // scripts/js-template.ts makes template-react/ before npm packs the package.
-const TEMPLATES = { 'react-ts': 'template', react: 'template-react' } as const;
+const TEMPLATES = { 'react-ts': 'template', react: 'template-react', 'next-ts': 'template-next-ts' } as const;
 type Template = keyof typeof TEMPLATES;
 const DEFAULT_TEMPLATE: Template = 'react-ts';
-const APP_URL = 'http://localhost:5173';
 // The template script scripts/nodes.ts accepts 2 to 10 nodes. Node i gets name i of this list.
 const NODE_NAMES = ['alice', 'bob', 'carol', 'dave', 'erin', 'frank', 'grace', 'heidi', 'ivan', 'judy'];
 const MIN_NODES = 2;
@@ -29,8 +28,8 @@ const TEMPLATE_LIST = new Intl.ListFormat('en', { type: 'disjunction' }).format(
 const USAGE = `Usage: npx create-ln-app <project-dir> [--template <name>] [--nodes <n>] [--impl <impl>] [--skip-install]
 
 Options:
-  --template <name>  Use this template: react-ts (React and TypeScript) or react (React and JavaScript).
-                     The default is ${DEFAULT_TEMPLATE}.
+  --template <name>  Use this template: react-ts (React and TypeScript), react (React and JavaScript),
+                     or next-ts (Next.js and TypeScript). The default is ${DEFAULT_TEMPLATE}.
   --nodes <n>        Make a network with n nodes, from ${MIN_NODES} to ${NODE_NAMES.length}. The default is ${DEFAULT_NODES}.
   --impl <impl>      Use this impl for all the nodes: ${IMPL_LIST}. cln is Core Lightning. The default is ${DEFAULT_IMPL}.
   --skip-install     Do not install the npm packages.
@@ -45,6 +44,11 @@ function packageName(dir: string): string {
     .replace(/^[._]+/, '')
     .replace(/[^a-z0-9._~-]+/g, '-');
   return name || 'my-lapp';
+}
+
+// Each template sets the URL of its app in the "config" field of package.json.
+function appUrl(file: string): string {
+  return (JSON.parse(readFileSync(file, 'utf8')) as { config: { appUrl: string } }).config.appUrl;
 }
 
 function setName(file: string, name: string): void {
@@ -184,7 +188,7 @@ function main(): void {
 Next steps${ready ? '' : ' (do the fixes above first)'}:
 ${steps.map((step) => `  ${step}`).join('\n')}
 
-Then open ${APP_URL}. See README.md for all commands.`);
+Then open ${appUrl(join(target, 'package.json'))}. See README.md for all commands.`);
 }
 
 try {

@@ -25,7 +25,15 @@
     "!template-react/.env",
     "!template-react/frontend/dist",
     "!template-react/network/data/*",
-    "template-react/network/data/.gitkeep"
+    "template-react/network/data/.gitkeep",
+    "template-next-ts",
+    "!template-next-ts/**/node_modules",
+    "!template-next-ts/.env",
+    "!template-next-ts/.next",
+    "!template-next-ts/AGENTS.md",
+    "!template-next-ts/next-env.d.ts",
+    "!template-next-ts/network/data/*",
+    "template-next-ts/network/data/.gitkeep"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
