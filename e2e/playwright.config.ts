@@ -1,14 +1,15 @@
 import { defineConfig, devices } from '@playwright/test';
-import { resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 
 // The project folder to test. The default is the template. CI sets LAPP_DIR to a project that the CLI made.
 // A relative path starts at the repository root.
 // The network of the project must run before the test starts: `npm run network` in that folder.
 const appDir = resolve(import.meta.dirname, '..', process.env.LAPP_DIR ?? 'packages/create-ln-app/template');
 
-// The default ports of the API server and Vite.
-const API_URL = 'http://localhost:3001/api/health';
-const APP_URL = 'http://localhost:5173';
+// Each template sets the URL of its app in the "config" field of package.json.
+const pkg = JSON.parse(readFileSync(join(appDir, 'package.json'), 'utf8')) as { config: { appUrl: string } };
+const APP_URL = pkg.config.appUrl;
 
 export default defineConfig({
   testDir: '.',
@@ -28,9 +29,12 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  // Start the API server and Vite. If they already run on a local machine, the test uses them.
-  webServer: [
-    { command: 'npm run server', cwd: appDir, url: API_URL, reuseExistingServer: !process.env.CI },
-    { command: 'npm --prefix frontend run dev', cwd: appDir, url: APP_URL, reuseExistingServer: !process.env.CI },
-  ],
+  // Start the app without the network. If the app already runs on a local machine, the test uses it.
+  // The app sends /api to the API. Thus, the health URL is ready only when the app and the API are ready.
+  webServer: {
+    command: 'npm run dev:app',
+    cwd: appDir,
+    url: `${APP_URL}/api/health`,
+    reuseExistingServer: !process.env.CI,
+  },
 });

@@ -5,11 +5,13 @@
   "type": "module",
   "config": {
     "port": 3001,
-    "portEnv": "API_PORT"
+    "portEnv": "API_PORT",
+    "appUrl": "http://localhost:5173"
   },
   "scripts": {
     "install:all": "npm install && npm --prefix frontend install",
-    "dev": "npm run network && concurrently -k -n server,frontend \"npm run server\" \"npm --prefix frontend run dev\"",
+    "dev": "npm run network && npm run dev:app",
+    "dev:app": "concurrently -k -n server,frontend \"npm run server\" \"npm --prefix frontend run dev\"",
     "server": "node server/index.ts",
     "network": "npm run compose && docker compose -f network/docker-compose.yml up -d --wait --remove-orphans && npm run bootstrap && npm run env",
     "down": "docker compose -f network/docker-compose.yml down --remove-orphans",
