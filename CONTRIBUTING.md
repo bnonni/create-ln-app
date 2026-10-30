@@ -93,6 +93,8 @@ The E2E test does the browser steps of the example app in Chromium. It starts th
 
 To test a project that the CLI made, set `LAPP_DIR` to the project folder, for example `LAPP_DIR=/tmp/test-app npm run test:e2e`. CI packs the CLI, makes a project, and runs the test on it. The E2E jobs test 3 LND nodes, 5 LND nodes, 3 CLN nodes, 3 Eclair nodes, a mix of the 3 impls, the `react` template, and the `next-ts` template. The mix job also runs the integration test for each node pair. The `react` job also makes sure that the project has no TypeScript file, then lints and builds it. The `next-ts` job also lints, typechecks, and builds the project. If the test fails in CI, the job shows the network logs and uploads the Playwright traces.
 
+The `cli` jobs run on Linux, macOS, and Windows. Each job packs the CLI and makes a project from each template with `--skip-install`. The jobs do not start the network, because the Windows and macOS runners cannot run the network containers. `DOCKER_HOST` points to a closed port, so the doctor fails. The CLI must show the fixes and exit 0.
+
 ## Test the CLI
 
 Run the CLI from the build:
@@ -164,6 +166,7 @@ You must have publish rights for the `create-ln-app` package on npm.
    npm view create-ln-app dist-tags
    npx create-ln-app@next my-lapp && cd my-lapp && npm run dev
    ```
+10. On Windows, do the test of step 9 in WSL2 (Ubuntu), in the Linux home folder (`~/`). Open the app in a Windows browser and make a payment. See [Windows](README.md#windows).
 
 ### Tags
 

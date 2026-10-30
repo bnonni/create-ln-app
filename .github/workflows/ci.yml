@@ -42,6 +42,60 @@ jobs:
       - name: Check the template copies
         run: npm run sync:templates -- --check
 
+  # Packs the CLI and makes a project from each template with --skip-install on Linux, macOS, and Windows.
+  # The job does not start the network. Windows runners cannot run Linux containers, and macOS runners have no Docker.
+  # DOCKER_HOST is a closed port, so the doctor fails on each OS. The CLI must show the fixes and exit 0.
+  cli:
+    name: cli (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # The npm package has LF line ends, so the Windows checkout must not change them to CRLF.
+      - name: Keep the LF line ends
+        if: runner.os == 'Windows'
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Pack the CLI
+        run: npm pack -w create-ln-app --pack-destination "$RUNNER_TEMP"
+
+      - name: Make a project from each template
+        working-directory: ${{ runner.temp }}
+        env:
+          DOCKER_HOST: tcp://127.0.0.1:1
+        run: |
+          tarball=$(ls create-ln-app-*.tgz)
+          for template in react-ts react next-ts; do
+            dir="cli-$template"
+            npx --yes --package "./$tarball" create-ln-app "$dir" --template "$template" --skip-install | tee "$dir.log"
+            if ! grep -q 'do the fixes above first' "$dir.log"; then
+              echo "The doctor did not fail for the $template project."
+              exit 1
+            fi
+            for file in package.json .gitignore network/docker-compose.yml; do
+              if [ ! -f "$dir/$file" ]; then
+                echo "The $template project has no $file."
+                exit 1
+              fi
+            done
+          done
+
   # Packs the CLI, makes a project with it, starts the regtest network, and runs the browser steps.
   # The jobs use the default node list (3 LND nodes), 5 LND nodes, 3 CLN nodes, 3 Eclair nodes, and a mix.
   # The mix job writes network/nodes.json with the 3 impls after the CLI makes the project.
