@@ -26,10 +26,10 @@ test('a node pays an invoice from a peer over a new channel', async ({ page, req
   page.on('pageerror', (error) => pageErrors.push(error.message));
 
   await page.goto('/');
-  await page.locator('#nodeName').selectOption(NODE);
+  await page.locator('#node-select').selectOption(NODE);
   await expect(page.locator('.node-info')).toBeVisible();
 
-  await page.locator('#peerName').selectOption(PEER);
+  await page.locator('#peer-select').selectOption(PEER);
   await runStep(page, '1. Connect', 'Connect', new RegExp(`${NODE} is connected to ${PEER}`));
 
   await runStep(page, '2. Open', 'Open channel', new RegExp(`${NODE} opened a 1,000,000 sat channel to ${PEER}`));

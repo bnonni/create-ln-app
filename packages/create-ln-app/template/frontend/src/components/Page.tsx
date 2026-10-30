@@ -171,7 +171,7 @@ const Page = () => {
         <p>Who are you?</p>
         <div className="row">
           <select
-            id="nodeName"
+            id="node-select"
             value={name}
             disabled={nodes.length === 0}
             onChange={(event) => setName(event.target.value)}
@@ -194,7 +194,7 @@ const Page = () => {
         <p>1. Connect to a peer</p>
         <div className="row">
           <select
-            id="peerName"
+            id="peer-select"
             value={peer}
             disabled={!node}
             onChange={(event) => setPeerName(event.target.value)}
