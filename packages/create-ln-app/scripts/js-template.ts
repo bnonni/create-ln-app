@@ -126,9 +126,11 @@ async function main(): Promise<void> {
 
   // Remove the typescript package from the lock files. The other locked versions stay the same.
   for (const dir of [TARGET_DIR, join(TARGET_DIR, 'frontend')]) {
+    // On Windows, npm is a .cmd file, and Node starts a .cmd file only through a shell.
     execFileSync('npm', ['install', '--package-lock-only', '--ignore-scripts', '--no-audit', '--no-fund'], {
       cwd: dir,
       stdio: 'inherit',
+      shell: process.platform === 'win32',
     });
   }
   console.log(`Made ${TARGET_DIR} with ${code.length} JavaScript files.`);
