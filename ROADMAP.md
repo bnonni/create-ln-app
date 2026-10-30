@@ -363,12 +363,13 @@ The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and 
 
 ### M11: More install options (branch `m11-install`)
 
-- [ ] **C11.1 Windows (WSL2) and a CLI job for 3 OSes.** Add the Windows docs and a CI job `cli`.
+- [x] **C11.1 Windows (WSL2) and a CLI job for 3 OSes.** Add the Windows docs and a CI job `cli`.
   - Do: the `cli` job has a matrix `ubuntu-latest`, `macos-latest`, and `windows-latest`. It packs the CLI and runs the packed CLI with `--skip-install` for each template. It checks that the CLI exits 0 with no Docker and that the project has `package.json`, `.gitignore`, and `network/docker-compose.yml`.
   - Do: add a "Windows" section to `README.md`, `packages/create-ln-app/README.md`, and `docs/troubleshooting.md` (decision 14). Add the WSL2 check to the release checks in `CONTRIBUTING.md`.
   - Read: `.github/workflows/ci.yml` (the E2E job steps), the "Prerequisites" section of `README.md`, `docs/troubleshooting.md`.
   - Exit: `actionlint` passes. On Linux, the job steps pass. Owner: the `cli` job passes on the 3 OSes on the PR. Owner: in WSL2, `npx create-ln-app my-lapp` and `npm run dev` work, and a payment in the page works.
   - Risk: the Windows job can find a CLI bug (paths, `shell: true`, line ends). If the fix is large, split this chunk.
+  - Done: the `cli` job sets `DOCKER_HOST` to a closed port, so the doctor fails on each OS, and checks that the CLI shows the fixes. On Windows, the job keeps the LF line ends of the checkout, as in the npm package. `actionlint` passes, and the job steps pass on Linux. The `cli` job on the 3 OSes and the WSL2 test are for the owner.
 - [ ] **C11.2 Install script.** Add `install.sh` at the repo root (decision 15).
   - Do: use `set -euo pipefail` and Bash 3.2 syntax (the macOS Bash). Put the body in a `main` function that the last line calls, so a partial download does nothing. On Git Bash, MSYS, or Cygwin (`uname -s`), stop and link to the Windows section.
   - Do: run `npx` with stdin from `/dev/null`, so no child process reads the rest of the script. The variable `CREATE_LN_APP_PACKAGE` (default `create-ln-app@latest`) lets CI use the packed CLI.

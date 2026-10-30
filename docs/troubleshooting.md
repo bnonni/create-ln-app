@@ -16,6 +16,7 @@ Contents:
 - [Ports](#ports)
 - [Errors in the app](#errors-in-the-app)
 - [Apple Silicon](#apple-silicon)
+- [Windows](#windows)
 - [Start again with new nodes](#start-again-with-new-nodes)
 
 ## Docker
@@ -25,7 +26,7 @@ Contents:
 `npm run dev` stops with `Cannot connect to the Docker daemon`.
 
 - macOS and Windows: start Docker Desktop.
-- Linux: run `sudo systemctl start docker`.
+- Linux, and Docker Engine in WSL2: run `sudo systemctl start docker`.
 
 ### Docker does not have sufficient memory
 
@@ -131,6 +132,37 @@ If `DOCKER_DEFAULT_PLATFORM` is `linux/amd64`, Docker runs the `amd64` images in
 1. Run `unset DOCKER_DEFAULT_PLATFORM`.
 2. Run `docker compose -f network/docker-compose.yml pull`.
 3. Run `npm run dev`.
+
+## Windows
+
+On Windows, use WSL2 with Ubuntu. Run all commands in the Ubuntu terminal. For the setup steps, see [Windows](../README.md#windows) in the README.
+
+### Ubuntu uses the Windows Node.js
+
+In Ubuntu, `which node` or `which npx` shows a path that starts with `/mnt/c`. WSL2 adds the Windows `PATH` to the Ubuntu `PATH`, so Ubuntu finds the Windows Node.js.
+
+1. Install Node.js 24 in Ubuntu.
+2. Open a new Ubuntu terminal.
+3. Run `which node`. The path must not start with `/mnt/c`.
+4. Run `node --version`. The version must be 24 or later.
+
+### Ubuntu does not find Docker
+
+In Ubuntu, `docker` is not found, or the doctor shows a failed Docker check, but Docker Desktop runs.
+
+1. In Docker Desktop, open Settings > Resources > WSL integration.
+2. Turn on Ubuntu, then click "Apply & restart".
+3. Open a new Ubuntu terminal, then run `npm run doctor`.
+
+### The project is in `/mnt/c`
+
+WSL2 is slow with files in `/mnt/c`. The dev server does not see the changes that Windows apps make to these files. Move the project to your Linux home folder (replace `<path>` with the path of the project):
+
+1. Run `npm run down` in the project.
+2. Run `mv /mnt/c/<path>/my-lapp ~/`.
+3. Run `cd ~/my-lapp`, then run `npm run dev`.
+
+To edit the files from Windows, use an editor that opens WSL2 folders, for example VS Code with the WSL extension.
 
 ## Start again with new nodes
 

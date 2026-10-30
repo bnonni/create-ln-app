@@ -21,7 +21,20 @@ A local Lightning setup takes time. You must start nodes, fund wallets, and find
 - [Node.js](https://nodejs.org/) 24 (LTS) and npm.
 - [Docker](https://docs.docker.com/engine/install/) with Docker Compose v2 (the `docker compose` command).
 
-On macOS and Windows, start Docker Desktop before you continue.
+On macOS, start Docker Desktop before you continue. On Windows, see [Windows](#windows).
+
+### Windows
+
+Use WSL2 (Windows Subsystem for Linux) with Ubuntu. Nobody tests the CLI and the network on native Windows.
+
+1. In PowerShell, run `wsl --install`. This command installs WSL2 and Ubuntu. Then restart Windows.
+2. Install Docker. Use one of these:
+   - [Docker Desktop](https://docs.docker.com/desktop/features/wsl/) with the WSL2 back end. In Docker Desktop, open Settings > Resources > WSL integration, and turn on Ubuntu.
+   - [Docker Engine](https://docs.docker.com/engine/install/ubuntu/) in Ubuntu.
+3. Install Node.js 24 in Ubuntu, not only in Windows. Then `which node` in Ubuntu must show a path that does not start with `/mnt/c`.
+4. Do the [Quick start](#quick-start) in the Ubuntu terminal. Make the project in your Linux home folder (`~/`), not in `/mnt/c`. WSL2 is slow with files in `/mnt/c`, and the dev server does not see the changes that Windows apps make to these files.
+
+Open the app in a Windows browser. WSL2 sends the `localhost` connections from Windows to Ubuntu. If a step fails, see [Windows](docs/troubleshooting.md#windows) in Troubleshooting.
 
 ## Quick start
 

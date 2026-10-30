@@ -15,6 +15,10 @@ You change the example app into your own Lapp. You do not configure nodes, macar
 
 On macOS, start Docker Desktop before you continue.
 
+### Windows
+
+Use WSL2 (Windows Subsystem for Linux) with Ubuntu. Install Node.js 24 in Ubuntu. Install Docker in Ubuntu, or connect Docker Desktop to Ubuntu. Then run the commands below in the Ubuntu terminal, in your Linux home folder (`~/`), not in `/mnt/c`. Nobody tests the CLI and the network on native Windows. For the steps, see [Windows](https://github.com/bnonni/create-ln-app#windows).
+
 ## Usage
 
 ```sh
