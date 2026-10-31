@@ -4,12 +4,15 @@
 // The flow runs in the 2 directions: alice pays bob, then bob pays alice. Thus each node is a payer and a payee.
 // To use a different node pair, set FLOW_NODES, for example `FLOW_NODES=alice,carol npm run test:integration`.
 // Each flow opens a new channel from the payer, so the test also passes if a channel already exists.
+// The API has no route that decodes an invoice or makes an invoice with a memo hash. Thus those tests call the node clients.
 
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { before, describe, test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { app, getClients } from './app.ts';
+import type { LightningNode } from './nodes/types.ts';
 
 const ENV_FILE = fileURLToPath(new URL('../.env', import.meta.url));
 const CHANNEL_ACTIVE_TIMEOUT_MS = 30_000;
@@ -17,6 +20,7 @@ const CHANNEL_READY_TIMEOUT_MS = 10_000;
 const POLL_INTERVAL_MS = 250;
 const CHANNEL_SATS = 1_000_000;
 const INVOICE_SATS = 1_000;
+const HASHED_MEMO = 'flow test with a memo hash';
 const CONFIRMATION_BLOCKS = 6;
 const IMPLS = ['lnd', 'cln', 'eclair'];
 const [NODE_A, NODE_B, ...otherNodes] = (process.env.FLOW_NODES ?? 'alice,bob').split(',').map((name) => name.trim());
@@ -81,6 +85,12 @@ async function getNode(name: string): Promise<Node> {
   return node;
 }
 
+function nodeClient(name: string): LightningNode {
+  const client = getClients().nodes.find((candidate) => candidate.name === name);
+  assert.ok(client, `node ${name} is not in .env. Run: npm run env`);
+  return client;
+}
+
 describe('payment flow', () => {
   // The app reads the node values from process.env, as the API server does. A missing or empty .env stops the test here.
   before(() => {
@@ -98,6 +108,7 @@ describe('payment flow', () => {
       let payee: Node;
       let channelPoint: string;
       let invoice: Invoice;
+      let hashedInvoice: Invoice;
 
       test(`GET /nodes shows ${payerName} and ${payeeName}`, async () => {
         payer = await getNode(payerName);
@@ -152,6 +163,15 @@ describe('payment flow', () => {
         assert.equal(invoice.settledAt, null);
       });
 
+      test(`${payerName} decodes the invoice`, async () => {
+        const decoded = await nodeClient(payerName).decodeInvoice(invoice.paymentRequest);
+        assert.equal(decoded.paymentHash, invoice.paymentHash);
+        assert.equal(decoded.amountSats, INVOICE_SATS);
+        assert.equal(decoded.descriptionHash, null);
+        assert.ok(Date.parse(decoded.expiresAt) > Date.parse(invoice.createdAt));
+        await assert.rejects(nodeClient(payerName).decodeInvoice('lnbcrt1xyz'), { code: 'invalid_request' });
+      });
+
       test(`${payerName} pays the invoice`, async () => {
         // LND can need about 1 second after "active" before it can send over a new channel.
         // Before that, the payment fails with the code insufficient_balance. Then try again.
@@ -180,6 +200,25 @@ describe('payment flow', () => {
         });
         assert.equal(typeof result.error, 'string');
         assert.equal(result.code, 'conflict');
+      });
+
+      test(`${payeeName} makes an invoice with a memo hash, and ${payerName} decodes it`, async () => {
+        hashedInvoice = await nodeClient(payeeName).createInvoice(INVOICE_SATS, HASHED_MEMO, { hashMemo: true });
+        assert.equal(hashedInvoice.memo, '');
+        const decoded = await nodeClient(payerName).decodeInvoice(hashedInvoice.paymentRequest);
+        assert.equal(decoded.paymentHash, hashedInvoice.paymentHash);
+        assert.equal(decoded.amountSats, INVOICE_SATS);
+        assert.equal(decoded.descriptionHash, createHash('sha256').update(HASHED_MEMO).digest('hex'));
+      });
+
+      // An LNURL payer pays an invoice that has the hash of the LNURL metadata (LUD-06).
+      test(`${payerName} pays the invoice with the memo hash`, async () => {
+        const payment = await expectStatus(201, 'POST', `/nodes/${payerName}/payments`, {
+          paymentRequest: hashedInvoice.paymentRequest,
+        });
+        assert.equal(payment.paymentHash, hashedInvoice.paymentHash);
+        const settled: Invoice = await expectStatus(200, 'GET', `/nodes/${payeeName}/invoices/${hashedInvoice.paymentHash}`);
+        assert.equal(settled.status, 'settled');
       });
     });
   }

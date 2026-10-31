@@ -39,6 +39,7 @@ export type InvoiceStatus = 'open' | 'accepted' | 'settled' | 'canceled';
 export type Invoice = {
   paymentHash: string;
   paymentRequest: string;
+  // The description in the payment request.
   memo: string;
   amountSats: number;
   amountPaidSats: number;
@@ -46,6 +47,23 @@ export type Invoice = {
   // ISO 8601 dates. settledAt is null if the invoice is not settled.
   createdAt: string;
   settledAt: string | null;
+};
+
+// A payment request that a node decoded. The invoice can be from a different node.
+export type DecodedInvoice = {
+  paymentHash: string;
+  // 0 if the payment request has no amount.
+  amountSats: number;
+  // The hex SHA-256 hash of the description. It is null if the payment request has the description text.
+  descriptionHash: string | null;
+  // ISO 8601 date. After this date, no one can pay the invoice.
+  expiresAt: string;
+};
+
+// hashMemo: the payment request has the SHA-256 hash of the memo, not the memo. Thus the memo of the invoice is empty.
+// An LNURL service uses the hash (LUD-06), because the payer gets the text from the service.
+export type InvoiceOptions = {
+  hashMemo?: boolean;
 };
 
 export type Payment = {
@@ -72,8 +90,10 @@ export interface LightningNode {
   connectPeer(pubkey: string, host: string): Promise<void>;
   // Returns the channel point after the node publishes the funding transaction.
   openChannel(pubkey: string, amountSats: number): Promise<string>;
-  createInvoice(amountSats: number, memo: string): Promise<Invoice>;
+  createInvoice(amountSats: number, memo: string, options?: InvoiceOptions): Promise<Invoice>;
   getInvoice(paymentHash: string): Promise<Invoice>;
+  // A payment request that the node cannot decode gives the code invalid_request.
+  decodeInvoice(paymentRequest: string): Promise<DecodedInvoice>;
   // Returns after the payment succeeds. A failed payment throws a NodeError with a PaymentFailureCode.
   payInvoice(paymentRequest: string, limits: PaymentLimits): Promise<Payment>;
 }
