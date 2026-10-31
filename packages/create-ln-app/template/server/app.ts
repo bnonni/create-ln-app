@@ -7,14 +7,14 @@ import { BitcoindClient, BitcoindError, bitcoindConfigFromEnv } from './bitcoind
 import { ClnClient, clnConfigFromEnv } from './nodes/cln.ts';
 import { EclairClient, eclairConfigFromEnv } from './nodes/eclair.ts';
 import { LndClient, lndConfigFromEnv } from './nodes/lnd.ts';
+import { addressInvoice, LnurlError, lnurlService } from './lnurl.ts';
 import { NodeError, type LightningNode, type NodeErrorCode } from './nodes/types.ts';
 
 // POST /api/mine mines to this address. Its witness program is 32 zero bytes, so no one can spend the coins.
 const BURN_ADDRESS = 'bcrt1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3xueyj';
 const MAX_BLOCKS = 1000;
 const MAX_SATS = 21_000_000 * 100_000_000;
-const PAYMENT_TIMEOUT_SECONDS = 60;
-const PAYMENT_FEE_LIMIT_SATS = 1000;
+const PAYMENT_LIMITS = { timeoutSeconds: 60, feeLimitSats: 1000 };
 const PAYMENT_HASH = /^[0-9a-f]{64}$/;
 
 // Each node has a URL key in .env, for example LND_ALICE_REST_URL or ECLAIR_CAROL_API_URL. The key prefix selects the client.
@@ -104,13 +104,15 @@ function peerField(body: Record<string, unknown>, node: LightningNode): Lightnin
   return peer;
 }
 
-export const app = new Hono().basePath('/api');
+// The app serves the API under /api, and the LNURL service of server/lnurl.ts.
+export const app = new Hono();
+const api = app.basePath('/api');
 
-app.get('/health', (c) => c.json({ status: 'ok' }));
+api.get('/health', (c) => c.json({ status: 'ok' }));
 
-app.get('/nodes', async (c) => c.json(await Promise.all(getClients().nodes.map(nodeSummary))));
+api.get('/nodes', async (c) => c.json(await Promise.all(getClients().nodes.map(nodeSummary))));
 
-app.post('/nodes/:name/peers', async (c) => {
+api.post('/nodes/:name/peers', async (c) => {
   const node = findNode(c.req.param('name'));
   const peer = peerField(await readBody(c), node);
   const [uri] = (await peer.getInfo()).uris;
@@ -122,7 +124,7 @@ app.post('/nodes/:name/peers', async (c) => {
   return c.json({ peer: peer.name, peerPubkey });
 });
 
-app.post('/nodes/:name/channels', async (c) => {
+api.post('/nodes/:name/channels', async (c) => {
   const node = findNode(c.req.param('name'));
   const body = await readBody(c);
   const peer = peerField(body, node);
@@ -132,7 +134,7 @@ app.post('/nodes/:name/channels', async (c) => {
   return c.json({ channelPoint, peer: peer.name, peerPubkey }, 201);
 });
 
-app.post('/nodes/:name/invoices', async (c) => {
+api.post('/nodes/:name/invoices', async (c) => {
   const node = findNode(c.req.param('name'));
   const body = await readBody(c);
   const amountSats = integerField(body, 'amountSats', MAX_SATS);
@@ -140,7 +142,7 @@ app.post('/nodes/:name/invoices', async (c) => {
   return c.json(await node.createInvoice(amountSats, memo), 201);
 });
 
-app.get('/nodes/:name/invoices/:hash', async (c) => {
+api.get('/nodes/:name/invoices/:hash', async (c) => {
   const node = findNode(c.req.param('name'));
   const paymentHash = c.req.param('hash').toLowerCase();
   if (!PAYMENT_HASH.test(paymentHash)) {
@@ -150,22 +152,33 @@ app.get('/nodes/:name/invoices/:hash', async (c) => {
 });
 
 // The reply comes after the payment succeeds or fails. A failed payment gives 502.
-app.post('/nodes/:name/payments', async (c) => {
+api.post('/nodes/:name/payments', async (c) => {
   const node = findNode(c.req.param('name'));
   const paymentRequest = stringField(await readBody(c), 'paymentRequest', true);
-  const limits = { timeoutSeconds: PAYMENT_TIMEOUT_SECONDS, feeLimitSats: PAYMENT_FEE_LIMIT_SATS };
-  return c.json(await node.payInvoice(paymentRequest, limits), 201);
+  return c.json(await node.payInvoice(paymentRequest, PAYMENT_LIMITS), 201);
 });
 
-app.post('/mine', async (c) => {
+// Pays a Lightning Address. server/lnurl.ts gets the invoice from the service and checks the invoice amount.
+api.post('/nodes/:name/address-payments', async (c) => {
+  const node = findNode(c.req.param('name'));
+  const body = await readBody(c);
+  const address = stringField(body, 'address', true);
+  const amountSats = integerField(body, 'amountSats', MAX_SATS);
+  const paymentRequest = await addressInvoice(node, address, amountSats);
+  return c.json({ ...(await node.payInvoice(paymentRequest, PAYMENT_LIMITS)), paymentRequest }, 201);
+});
+
+api.post('/mine', async (c) => {
   const blocks = integerField(await readBody(c), 'blocks', MAX_BLOCKS);
   const { bitcoind } = getClients();
   const blockHashes = await bitcoind.generateToAddress(blocks, BURN_ADDRESS);
   return c.json({ height: await bitcoind.getBlockCount(), blockHashes });
 });
 
+app.route('/', lnurlService(findNode));
+
 // Each error body has a code. server/API.md lists the codes.
-type ErrorBody = { error: string; code: NodeErrorCode | 'internal_error'; node?: string };
+type ErrorBody = { error: string; code: NodeErrorCode | 'lnurl_error' | 'internal_error'; node?: string };
 
 app.notFound((c) => c.json({ error: 'Not found', code: 'not_found' } satisfies ErrorBody, 404));
 
@@ -186,6 +199,10 @@ app.onError((error, c) => {
   if (error instanceof NodeError) {
     const body: ErrorBody = { error: error.message, code: error.code, node: error.node };
     return c.json(body, NODE_ERROR_STATUS[error.code] ?? 502);
+  }
+  // A Lightning Address service did not reply, or sent an error or a bad invoice.
+  if (error instanceof LnurlError) {
+    return c.json({ error: error.message, code: 'lnurl_error' } satisfies ErrorBody, 502);
   }
   if (error instanceof BitcoindError) {
     const code = error.status === 0 ? 'node_unreachable' : 'node_error';
