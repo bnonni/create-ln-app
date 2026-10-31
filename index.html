@@ -45,6 +45,14 @@ npm run dev</code></pre>
       <li><a href="https://docs.docker.com/engine/install/">Docker</a> with Docker Compose v2.</li>
     </ul>
 
+    <h2>Other ways to make a project</h2>
+    <p>Shell script, for macOS, Linux, and WSL2. It checks Node.js, npm, and Docker Compose. Then it runs <code>npx create-ln-app</code>.</p>
+    <pre><code>curl -fsSL https://create-ln-app.dev/install.sh | bash -s -- my-lapp</code></pre>
+    <p>Homebrew, for macOS and Linux. The formula installs Node.js, but not Docker.</p>
+    <pre><code>brew install bnonni/tap/create-ln-app
+create-ln-app my-lapp</code></pre>
+    <p>Windows: use WSL2 with Ubuntu. Do the <a href="https://github.com/bnonni/create-ln-app#windows">Windows steps</a>. Then run the commands in the Ubuntu terminal.</p>
+
     <nav>
       <a href="https://github.com/bnonni/create-ln-app">GitHub</a>
       <a href="https://www.npmjs.com/package/create-ln-app">npm</a>
