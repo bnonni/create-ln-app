@@ -1,5 +1,6 @@
 // A client for the LND REST API. It maps the LND data and errors to the neutral types in types.ts.
 // LND REST sends int64 values as JSON strings. The response types show this.
+import { createHash } from 'node:crypto';
 import type { Agent, Response } from 'undici';
 import { fetchNode, tlsAgent } from './http.ts';
 import {
@@ -8,7 +9,9 @@ import {
   type Balances,
   type Channel,
   type ChannelStatus,
+  type DecodedInvoice,
   type Invoice,
+  type InvoiceOptions,
   type InvoiceStatus,
   type LightningNode,
   type NodeErrorCode,
@@ -78,6 +81,16 @@ type LndInvoice = {
   payment_request: string;
   amt_paid_sat: string;
   state: 'OPEN' | 'SETTLED' | 'CANCELED' | 'ACCEPTED';
+};
+
+// The payment hash and the description hash are hex strings, not base64.
+// The description hash is empty if the payment request has the description text.
+type PayReqResponse = {
+  payment_hash: string;
+  num_satoshis: string;
+  timestamp: string;
+  expiry: string;
+  description_hash: string;
 };
 
 // The payment hash and the preimage are hex strings, not base64.
@@ -209,13 +222,34 @@ export class LndClient implements LightningNode {
   }
 
   // The add reply has no invoice state or dates. Thus, get the invoice after the add.
-  async createInvoice(amountSats: number, memo: string): Promise<Invoice> {
-    const added = await this.#request<AddInvoiceResponse>('POST', '/v1/invoices', { value: String(amountSats), memo });
+  // LND keeps the memo also if the payment request has the hash. Thus, with hashMemo the client does not send the memo.
+  async createInvoice(amountSats: number, memo: string, options: InvoiceOptions = {}): Promise<Invoice> {
+    const description = options.hashMemo
+      ? { description_hash: createHash('sha256').update(memo).digest('base64') }
+      : { memo };
+    const added = await this.#request<AddInvoiceResponse>('POST', '/v1/invoices', { value: String(amountSats), ...description });
     return this.getInvoice(Buffer.from(added.r_hash, 'base64').toString('hex'));
   }
 
   async getInvoice(paymentHash: string): Promise<Invoice> {
     return toInvoice(await this.#request<LndInvoice>('GET', `/v1/invoice/${paymentHash}`));
+  }
+
+  // LND sends HTTP 500 if it cannot decode the payment request. The other clients give invalid_request.
+  async decodeInvoice(paymentRequest: string): Promise<DecodedInvoice> {
+    let decoded: PayReqResponse;
+    try {
+      decoded = await this.#request<PayReqResponse>('GET', `/v1/payreq/${encodeURIComponent(paymentRequest)}`);
+    } catch (error) {
+      if (error instanceof NodeError && error.code === 'node_error') throw new NodeError(this.name, 'invalid_request', error.message);
+      throw error;
+    }
+    return {
+      paymentHash: decoded.payment_hash,
+      amountSats: Number(decoded.num_satoshis),
+      descriptionHash: decoded.description_hash || null,
+      expiresAt: new Date((Number(decoded.timestamp) + Number(decoded.expiry)) * 1000).toISOString(),
+    };
   }
 
   // LND streams one JSON object on each line: { "result": LndPayment } or { "error": { "message": "..." } }.

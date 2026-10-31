@@ -9,7 +9,9 @@ import {
   paymentFailed,
   type Balances,
   type Channel,
+  type DecodedInvoice,
   type Invoice,
+  type InvoiceOptions,
   type InvoiceStatus,
   type LightningNode,
   type NodeErrorCode,
@@ -61,12 +63,24 @@ type FundChannelResponse = {
 type ClnInvoice = {
   payment_hash: string;
   bolt11: string;
-  description?: string;
   // An invoice with no amount has no amount_msat.
   amount_msat?: number;
   amount_received_msat?: number;
   status: 'unpaid' | 'paid' | 'expired';
   paid_at?: number;
+};
+
+// The decode reply of a BOLT11 payment request. It has the description or the description hash.
+// A payment request with an error has valid false. Then the client must not use the other fields.
+type DecodeResponse = {
+  type: string;
+  valid: boolean;
+  payment_hash: string;
+  amount_msat?: number;
+  description?: string;
+  description_hash?: string;
+  created_at: number;
+  expiry: number;
 };
 
 type ListInvoicesResponse = {
@@ -184,30 +198,46 @@ export class ClnClient implements LightningNode {
   }
 
   // CLN needs a unique label for each invoice. The neutral invoice does not show the label.
-  async createInvoice(amountSats: number, memo: string): Promise<Invoice> {
+  // CLN takes the memo text also with deschashonly, and it makes the hash.
+  async createInvoice(amountSats: number, memo: string, options: InvoiceOptions = {}): Promise<Invoice> {
     const added = await this.#call<{ payment_hash: string }>('invoice', {
       amount_msat: `${amountSats}sat`,
       label: randomUUID(),
       description: memo,
+      deschashonly: options.hashMemo ?? false,
     });
     return this.getInvoice(added.payment_hash);
   }
 
   // The CLN invoice has no creation date. Thus, get the date from the decoded payment request.
+  // CLN keeps the memo also if the payment request has the hash. Thus, the memo also comes from the payment request.
   async getInvoice(paymentHash: string): Promise<Invoice> {
     const { invoices } = await this.#call<ListInvoicesResponse>('listinvoices', { payment_hash: paymentHash });
     const [invoice] = invoices;
     if (!invoice) throw new NodeError(this.name, 'not_found', `${this.name}: no invoice has the payment hash ${paymentHash}`);
-    const decoded = await this.#call<{ created_at: number }>('decode', { string: invoice.bolt11 });
+    const decoded = await this.#call<DecodeResponse>('decode', { string: invoice.bolt11 });
     return {
       paymentHash: invoice.payment_hash,
       paymentRequest: invoice.bolt11,
-      memo: invoice.description ?? '',
+      memo: decoded.description ?? '',
       amountSats: toSats(invoice.amount_msat ?? 0),
       amountPaidSats: toSats(invoice.amount_received_msat ?? 0),
       status: INVOICE_STATUS[invoice.status],
       createdAt: toIsoDate(decoded.created_at),
       settledAt: invoice.paid_at === undefined ? null : toIsoDate(invoice.paid_at),
+    };
+  }
+
+  async decodeInvoice(paymentRequest: string): Promise<DecodedInvoice> {
+    const decoded = await this.#call<DecodeResponse>('decode', { string: paymentRequest });
+    if (decoded.type !== 'bolt11 invoice' || !decoded.valid) {
+      throw new NodeError(this.name, 'invalid_request', `${this.name}: the string is not a valid BOLT11 payment request`);
+    }
+    return {
+      paymentHash: decoded.payment_hash,
+      amountSats: toSats(decoded.amount_msat ?? 0),
+      descriptionHash: decoded.description_hash ?? null,
+      expiresAt: toIsoDate(decoded.created_at + decoded.expiry),
     };
   }
 

@@ -411,12 +411,13 @@ The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and 
 
 ### M12: Examples (branch `m12-examples`)
 
-- [ ] **C12.1 Invoice decode and memo hash.** Add the node changes of decision 19 for LND, CLN, and Eclair.
+- [x] **C12.1 Invoice decode and memo hash.** Add the node changes of decision 19 for LND, CLN, and Eclair.
   - Do: add `decodeInvoice` to `LightningNode` in `server/nodes/types.ts`, and the option `hashMemo` to `createInvoice`. LND: `GET /v1/payreq/{pay_req}`, and `description_hash`. CLN: `decode`, and `invoice` with `deschashonly`. Eclair: `parseinvoice`, and `createinvoice` with `descriptionHash`.
   - Do: the integration test decodes an invoice and checks the amount and the description hash.
   - Read: `server/nodes/types.ts`, `server/nodes/lnd.ts`, `server/nodes/cln.ts`, `server/nodes/eclair.ts`, `server/flow.test.ts`.
   - Exit: lint, typecheck, and `npm run sync:templates -- --check` pass. The integration test passes on a mix network (LND, CLN, and Eclair).
   - Risk: LND and Eclair take the hash, but CLN takes the text with `deschashonly`. Thus the option takes the text, and each client makes the hash if its node needs it.
+  - Done: with `hashMemo`, the memo of the invoice is empty on each node. Reason: Eclair does not keep the text, but LND and CLN do. LND sends HTTP 500 for a bad payment request. Thus its client gives `invalid_request`, the same as CLN and Eclair. The integration test also pays an invoice with a memo hash. It passes on the mix network for the 3 node pairs. The default invoice expiry is different on each node: LND 24 hours, CLN 7 days, and Eclair 1 hour.
 - [ ] **C12.2 Lightning Address.** Add the LNURL-pay service and client (decisions 20 and 21).
   - Do: `server/lnurl.ts` serves `GET /.well-known/lnurlp/:name` (LUD-16) and the LUD-06 callback. The invoice has the hash of the metadata. The callback URL comes from the request origin.
   - Do: `POST /api/nodes/:name/address-payments {address, amountSats}` resolves the address, checks the invoice amount with `decodeInvoice`, and pays. Add the routes to `server/API.md`.

@@ -2,6 +2,7 @@
 // Each request is POST /<method> with form-encoded params. The request uses basic auth with no user name and the API password.
 // The API uses plain HTTP, so the client needs no TLS cert. Eclair sends channel and payment amounts as msat numbers.
 // The client rounds them down to sats.
+import { createHash } from 'node:crypto';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fetchNode } from './http.ts';
 import {
@@ -9,7 +10,9 @@ import {
   paymentFailed,
   type Balances,
   type Channel,
+  type DecodedInvoice,
   type Invoice,
+  type InvoiceOptions,
   type InvoiceStatus,
   type LightningNode,
   type NodeErrorCode,
@@ -59,8 +62,11 @@ type ReceivedInfo = {
   status: { type: 'pending' | 'received' | 'expired'; amount?: number; receivedAt?: { unix: number } };
 };
 
+// The invoice has the description or the description hash.
 type ParsedInvoice = {
   paymentHash: string;
+  amount?: number | null;
+  descriptionHash?: string;
   // The creation date in Unix seconds, and the number of seconds after it that a payer can pay the invoice.
   timestamp: number;
   expiry?: number;
@@ -125,6 +131,11 @@ function toSats(msat: number): number {
 
 function toIsoDate(unixSeconds: number): string {
   return new Date(unixSeconds * 1000).toISOString();
+}
+
+// The expiry date in Unix seconds.
+function expiresAt(invoice: ParsedInvoice): number {
+  return invoice.timestamp + (invoice.expiry ?? DEFAULT_INVOICE_EXPIRY_SECONDS);
 }
 
 function toChannel(channel: EclairChannel): Channel[] {
@@ -203,8 +214,12 @@ export class EclairClient implements LightningNode {
     }
   }
 
-  async createInvoice(amountSats: number, memo: string): Promise<Invoice> {
-    const created = await this.#call<{ paymentHash: string }>('createinvoice', { amountMsat: amountSats * 1000, description: memo });
+  // Eclair takes the description or the description hash, but not the two.
+  async createInvoice(amountSats: number, memo: string, options: InvoiceOptions = {}): Promise<Invoice> {
+    const description: Record<string, string> = options.hashMemo
+      ? { descriptionHash: createHash('sha256').update(memo).digest('hex') }
+      : { description: memo };
+    const created = await this.#call<{ paymentHash: string }>('createinvoice', { amountMsat: amountSats * 1000, ...description });
     return this.getInvoice(created.paymentHash);
   }
 
@@ -222,6 +237,16 @@ export class EclairClient implements LightningNode {
     };
   }
 
+  async decodeInvoice(paymentRequest: string): Promise<DecodedInvoice> {
+    const invoice = await this.#call<ParsedInvoice>('parseinvoice', { invoice: paymentRequest });
+    return {
+      paymentHash: invoice.paymentHash,
+      amountSats: toSats(invoice.amount ?? 0),
+      descriptionHash: invoice.descriptionHash ?? null,
+      expiresAt: toIsoDate(expiresAt(invoice)),
+    };
+  }
+
   // payinvoice returns a payment id immediately. Then the client asks getsentinfo until the payment succeeds or fails.
   // Eclair sends a payment again if the invoice is already paid. Thus, the client first looks for an earlier payment.
   async payInvoice(paymentRequest: string, limits: PaymentLimits): Promise<Payment> {
@@ -234,7 +259,7 @@ export class EclairClient implements LightningNode {
       throw new NodeError(this.name, 'conflict', `${this.name}: a payment of the invoice is in progress`);
     }
     // Eclair rejects an expired invoice with HTTP 400. The other clients give payment_rejected, so this client checks the expiry first.
-    if ((invoice.timestamp + (invoice.expiry ?? DEFAULT_INVOICE_EXPIRY_SECONDS)) * 1000 <= Date.now()) {
+    if (expiresAt(invoice) * 1000 <= Date.now()) {
       throw paymentFailed(this.name, 'payment_rejected');
     }
     // The fee limit is the larger of maxFeeFlatSat and maxFeePct of the amount. Thus, maxFeePct is 0.
