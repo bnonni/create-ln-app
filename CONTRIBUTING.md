@@ -167,6 +167,12 @@ You must have publish rights for the `create-ln-app` package on npm.
    npx create-ln-app@next my-lapp && cd my-lapp && npm run dev
    ```
 10. On Windows, do the test of step 9 in WSL2 (Ubuntu), in the Linux home folder (`~/`). Open the app in a Windows browser and make a payment. See [Windows](README.md#windows).
+11. For a stable release, update the Homebrew formula in [bnonni/homebrew-tap](https://github.com/bnonni/homebrew-tap). The `bump` workflow sets the formula to the npm tarball of `<version>`. It installs and tests the formula, then pushes the change to `main`.
+    ```sh
+    gh workflow run bump --repo bnonni/homebrew-tap -f version=<version>
+    gh run watch --repo bnonni/homebrew-tap
+    ```
+    Then test the formula: `brew update && brew upgrade create-ln-app`, or `brew install bnonni/tap/create-ln-app`.
 
 ### Tags
 

@@ -18,7 +18,7 @@ A local Lightning setup takes time. You must start nodes, fund wallets, and find
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) 24 (LTS) and npm.
+- [Node.js](https://nodejs.org/) 24 (LTS) and npm. If you install `create-ln-app` with Homebrew, Homebrew installs Node.js for you.
 - [Docker](https://docs.docker.com/engine/install/) with Docker Compose v2 (the `docker compose` command).
 
 On macOS, start Docker Desktop before you continue. On Windows, see [Windows](#windows).
@@ -38,10 +38,21 @@ Open the app in a Windows browser. WSL2 sends the `localhost` connections from W
 
 ## Quick start
 
-1. Make a project:
-   ```sh
-   npx create-ln-app my-lapp
-   ```
+1. Make a project. Use one of these ways. Each way runs the same `create-ln-app` command, and each way needs Docker.
+   - npm (the default):
+     ```sh
+     npx create-ln-app my-lapp
+     ```
+   - Shell script, for macOS, Linux, and WSL2. The script checks Node.js, npm, and Docker Compose. Then it runs `npx create-ln-app` with your arguments. It does not install Node.js or Docker, and it does not use `sudo`.
+     ```sh
+     curl -fsSL https://create-ln-app.dev/install.sh | bash -s -- my-lapp
+     ```
+   - Homebrew, for macOS and Linux. The formula installs Node.js, but not Docker.
+     ```sh
+     brew install bnonni/tap/create-ln-app
+     create-ln-app my-lapp
+     ```
+   - Windows: do the steps in [Windows](#windows) first. Then use one of the ways above in the Ubuntu terminal.
 2. Start the network, the API server, and the example app:
    ```sh
    cd my-lapp
@@ -58,7 +69,7 @@ Open the app in a Windows browser. WSL2 sends the `localhost` connections from W
 
 The `create-ln-app` command copies the project to `my-lapp`, runs `git init`, and installs the npm packages. Then it runs `npm run doctor`, which checks Docker, Docker Compose, and the ports.
 
-To make a network with a different number of nodes, add `--nodes <n>` to the `create-ln-app` command. The value is from 2 to 10. Example: `npx create-ln-app my-lapp --nodes 5`.
+To make a network with a different number of nodes, add `--nodes <n>` to the `create-ln-app` command. The value is from 2 to 10. Example: `npx create-ln-app my-lapp --nodes 5`. With the shell script, put the options after the project name: `bash -s -- my-lapp --nodes 5`.
 
 To use Core Lightning (CLN) for all the nodes, add `--impl cln`. To use Eclair for all the nodes, add `--impl eclair`. The default is `lnd`. Example: `npx create-ln-app my-lapp --impl cln`. To use more than one impl in one network, edit `network/nodes.json` in the project. See "Change the nodes" in `network/README.md` of the project.
 

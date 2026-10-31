@@ -383,10 +383,11 @@ The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and 
   - Do: add `README.md`, a test workflow (`brew test-bot` or `brew audit` and `brew test`), and the bump workflow (`workflow_dispatch`, `contents: write`).
   - Exit: in the `homebrew/brew` image, `brew install`, `brew test`, and `brew audit --strict --new` pass. Owner: create `bnonni/homebrew-tap` and push. The tap CI passes.
   - Done: the tap has `Formula/create-ln-app.rb`, `README.md`, the `tests` workflow, the `bump` workflow, and `.github/scripts/bump.sh`. In Homebrew 7.0.11, `brew style` of the formula, `brew audit --strict --online --new`, `brew install --build-from-source`, and `brew test` pass. `brew style bnonni/tap` also lints the workflows, but in the image its `shellcheck` bottle needs glibc 2.38 (the image has 2.35). `actionlint` and `shellcheck` pass on their own. The `bump` workflow installs and tests the formula before the push, because a push with `GITHUB_TOKEN` does not start the `tests` workflow. `bump.sh` stops if the version is not valid or if the formula is already at the version.
-- [ ] **C11.4 Docs and release `1.6.0`.** Show the 4 ways to install in the docs. Set version `1.6.0`.
+- [x] **C11.4 Docs and release `1.6.0`.** Show the 4 ways to install in the docs. Set version `1.6.0`.
   - Do: the quick start of `README.md`, `packages/create-ln-app/README.md`, and `index.html` shows `npx` (the default), `curl | bash`, Homebrew, and Windows (WSL2). Each way still needs Node 24 and Docker. `CONTRIBUTING.md` "Publish": after `npm publish`, run the tap bump workflow. Add `[1.6.0]` to `CHANGELOG.md`.
   - Read: `README.md`, `packages/create-ln-app/README.md`, `index.html`, `CHANGELOG.md`, the "Publish" section of `CONTRIBUTING.md`.
   - Exit: lint, typecheck, build, and `npm run sync:templates -- --check` pass. Owner: CI passes on the PR. Merge, tag `v1.6.0`, publish, and run the tap bump workflow.
+  - Done: `README.md`, `packages/create-ln-app/README.md`, and `index.html` show `npx`, the shell script, Homebrew, and Windows (WSL2). `CONTRIBUTING.md` step 11 runs the tap `bump` workflow. `CHANGELOG.md` has `[1.6.0]` with the doctor fix. The version is `1.6.0`. Lint, typecheck, build, and `npm run sync:templates -- --check` pass. CI, the merge, the tag, the publish, and the tap bump are for the owner.
 
 ### Later: plan before work
 

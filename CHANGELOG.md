@@ -2,6 +2,18 @@
 
 This file records the changes to the `create-ln-app` npm package in each release. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] - 2026-10-31
+
+### Added
+
+- A shell script that starts the CLI, for macOS, Linux, and WSL2: `curl -fsSL https://create-ln-app.dev/install.sh | bash -s -- my-lapp`. The script checks Node.js 24, npm, and Docker Compose. Then it runs `npx create-ln-app` with your arguments. It does not install Node.js or Docker, and it does not use `sudo`.
+- A Homebrew formula in the tap [bnonni/homebrew-tap](https://github.com/bnonni/homebrew-tap): `brew install bnonni/tap/create-ln-app`, then `create-ln-app my-lapp`. The formula installs Node.js, but not Docker.
+- The steps for Windows with WSL2 and Ubuntu, in the README and in [troubleshooting](docs/troubleshooting.md#windows).
+
+### Fixed
+
+- `npm run doctor` showed `Docker  runs.` if `docker info` exited with code 0 but showed no server version. Some Docker versions do this if they cannot connect to the daemon. Now the check fails and shows the fix.
+
 ## [1.5.0] - 2026-10-30
 
 ### Added
@@ -99,6 +111,7 @@ The first release.
 - The project commands `network`, `down`, `reset`, `doctor`, `env`, and `test:integration`.
 - The docs: a quick start, an [architecture](docs/architecture.md) page, and a [troubleshooting](docs/troubleshooting.md) page.
 
+[1.6.0]: https://github.com/bnonni/create-ln-app/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/bnonni/create-ln-app/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/bnonni/create-ln-app/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/bnonni/create-ln-app/compare/v1.2.0...v1.3.0

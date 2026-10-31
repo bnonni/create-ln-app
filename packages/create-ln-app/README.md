@@ -10,7 +10,7 @@ You change the example app into your own Lapp. You do not configure nodes, macar
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) 24 (LTS) and npm.
+- [Node.js](https://nodejs.org/) 24 (LTS) and npm. If you install `create-ln-app` with Homebrew, Homebrew installs Node.js for you.
 - [Docker](https://docs.docker.com/engine/install/) with Docker Compose v2 (the `docker compose` command).
 
 On macOS, start Docker Desktop before you continue.
@@ -28,6 +28,18 @@ npm run dev
 ```
 
 Then open <http://localhost:5173>. In a project from the `next-ts` template, open <http://localhost:3000>.
+
+You can also start `create-ln-app` in one of these ways. Each way needs Docker.
+
+- Shell script, for macOS, Linux, and WSL2. The script checks Node.js, npm, and Docker Compose. Then it runs `npx create-ln-app` with your arguments. It does not install Node.js or Docker, and it does not use `sudo`.
+  ```sh
+  curl -fsSL https://create-ln-app.dev/install.sh | bash -s -- my-lapp
+  ```
+- Homebrew, for macOS and Linux. The formula installs Node.js, but not Docker.
+  ```sh
+  brew install bnonni/tap/create-ln-app
+  create-ln-app my-lapp
+  ```
 
 The command copies the template to `my-lapp`, runs `git init`, installs the npm packages, and runs `npm run doctor`. The doctor checks Docker, Docker Compose, and the ports. If a check fails, the doctor shows a fix.
 
