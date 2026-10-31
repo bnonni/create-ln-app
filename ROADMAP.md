@@ -188,7 +188,7 @@ Estimates are for one developer who knows TypeScript and LND. Total: 15 to 22 wo
 
 Status: accepted, 2026-10-28. Base: `v1.0.0` and the landing page (`230cc6a`).
 
-The work protocol and the conventions of 1.0 also apply here. Each milestone ends with one minor release: M6 is `1.1.0`, M7 is `1.2.0`, M8 is `1.3.0`, M9 is `1.4.0`, M10 is `1.5.0`, and M11 is `1.6.0`. In this section, all app paths are relative to `packages/create-ln-app/template/`.
+The work protocol and the conventions of 1.0 also apply here. Each milestone ends with one minor release: M6 is `1.1.0`, M7 is `1.2.0`, M8 is `1.3.0`, M9 is `1.4.0`, M10 is `1.5.0`, M11 is `1.6.0`, M12 is `1.7.0`, and M13 is `1.8.0`. In this section, all app paths are relative to `packages/create-ln-app/template/`.
 
 | Item | Milestone | Estimate |
 |---|---|---|
@@ -198,11 +198,12 @@ The work protocol and the conventions of 1.0 also apply here. Each milestone end
 | A React JavaScript template | M9 | 2-3 days |
 | A Next.js TypeScript template | M10 | 4-6 days |
 | More install options: Homebrew, `curl \| bash`, Windows (WSL2) | M11 | 2-3 days |
-| Signet support and more examples (LNURL, Lightning Address, WebLN) | C12.0 plan | after C12.0 |
+| Examples: Lightning Address (LNURL-pay), LNURL-withdraw, WebLN | M12 | 5-8 days |
+| Signet: Mutinynet nodes, for example `--network mutinynet` | M13 | 6-9 days |
 
 ### Decisions after 1.0
 
-The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and decisions 10 to 13 (2026-10-30). In C11.0 (2026-10-30), the owner selected the 3 install options. Claude proposed decisions 14 to 17. The owner can change each one before the chunk that uses it.
+The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and decisions 10 to 13 (2026-10-30). In C11.0 (2026-10-30), the owner selected the 3 install options. Claude proposed decisions 14 to 17. In C12.0 (2026-10-31), the owner selected Mutinynet in Docker and the 3 examples. Claude proposed decisions 18 to 25. The owner can change each one before the chunk that uses it.
 
 6. **Node list first.** M6 adds one node list file and a compose generator. M7 (CLN) and M8 (Eclair) use them. Reason: in 1.0, the compose file is static, and 2 scripts each hardcode alice, bob, and carol.
 7. **One impl for each node.** Each entry in `network/nodes.json` has a name and an impl (`lnd`, `cln`, or `eclair`). `--impl <impl>` sets all nodes. A developer edits `network/nodes.json` for a mix. The default stays 3 LND nodes.
@@ -216,6 +217,14 @@ The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and 
 15. **The install script only checks, then starts `npx`.** `install.sh` is at the repo root, so the site serves it. It does not install Node or Docker, and it does not use `sudo`. It stops if Node 24 or npm is missing, and shows one fix. If `docker compose` is missing, it shows the fix and continues, because the CLI can make the project with no Docker. Then it runs `npx --yes create-ln-app@latest` with the arguments of the user. Reason: no root access, and a small script to trust.
 16. **A Homebrew tap, not homebrew-core.** A new repo `bnonni/homebrew-tap` has `Formula/create-ln-app.rb`. The formula installs the npm tarball and depends on `node`. A `workflow_dispatch` workflow in the tap sets `url` and `sha256` from the npm `latest` version. Reason: the repo does not meet the homebrew-core rules (fact 4 of the install options).
 17. **Release `1.6.0`.** The npm README gets the install options, so M11 ends with `1.6.0`. The tap formula starts at `1.5.0`. After the publish of `1.6.0`, the bump workflow moves it to `1.6.0`.
+18. **Examples first.** M12 adds the examples and ends with `1.7.0`. M13 adds Mutinynet and ends with `1.8.0`. Reason: the regtest CI jobs test the examples. M13 changes the page steps, so it must start from the final page.
+19. **Two node changes for LNURL.** A new method `decodeInvoice(paymentRequest)` gives the payment hash, the amount, the description hash, and the expiry date. `createInvoice` gets an option `hashMemo`: the invoice then has the SHA-256 of the memo, not the memo. Reason: an LNURL payer must check the invoice amount (fact 7). The node decodes BOLT11, so the app needs no BOLT11 library.
+20. **The app is the LNURL service and the LNURL client.** `server/lnurl.ts` serves a Lightning Address `<node>@<host>` for each node, and LNURL-withdraw links. New API routes let a node pay a Lightning Address and claim a withdraw link. The client accepts `http` only for `localhost` and `127.0.0.1`. Reason: LUD-01 allows only https or onion (fact 7), and a local demo has no certificate.
+21. **The selected node pays.** In each new page step, the selected node sends the funds and its peer gets them. In the Lightning Address step, the selected node pays the address of the peer. In the withdraw step, the selected node makes the link, and the peer claims it. Reason: after the first payments, the peer has almost no funds on its side of the channel.
+22. **A WebLN provider for development.** `frontend/src/webln.ts` implements `enable`, `getInfo`, `makeInvoice`, and `sendPayment` with the API of the selected node. Step 5 pays with `sendPayment` of this provider. A real provider (for example the Alby extension) uses the same calls (fact 8). Reason: the page shows the standard WebLN calls, and the E2E test needs no browser extension.
+23. **Mutinynet with LND and CLN.** The flag `--network regtest|mutinynet` (default `regtest`) sets `config.network` in `package.json`. The CLI and `npm run compose` stop if the network is `mutinynet` and a node is Eclair. CI does not start Mutinynet, because of the sync time and the faucet token. The owner tests it by hand before each release. Reason: the owner selected this option in C12.0. Eclair on Mutinynet is not verified (fact 5).
+24. **The faucet funds the nodes.** On Mutinynet, nothing mines. `npm run faucet:login` gets a faucet token with the GitHub device flow and writes it to `.env`. With the token, the bootstrap asks the faucet API for 200,000 sats for each unfunded node. With no token, it shows each address and the faucet URL. Then it waits for the funds. `npm run reset` keeps the bitcoind chain data. Reason: the faucet gives 1,000,000 sats a day (fact 3), and a new sync takes time.
+25. **The page waits on Mutinynet.** `GET /api/network` gives the network name. On Mutinynet, step 3 waits until the channel is active, and `POST /api/mine` gives an error. The channel is 100,000 sats, not 1,000,000. Reason: a block comes every 30 s (fact 3), and the faucet limit is low.
 
 ### Facts from the 1.0 code
 
@@ -389,6 +398,76 @@ The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and 
   - Exit: lint, typecheck, build, and `npm run sync:templates -- --check` pass. Owner: CI passes on the PR. Merge, tag `v1.6.0`, publish, and run the tap bump workflow.
   - Done: `README.md`, `packages/create-ln-app/README.md`, and `index.html` show `npx`, the shell script, Homebrew, and Windows (WSL2). `CONTRIBUTING.md` step 11 runs the tap `bump` workflow. `CHANGELOG.md` has `[1.6.0]` with the doctor fix. The version is `1.6.0`. Lint, typecheck, build, and `npm run sync:templates -- --check` pass. CI, the merge, the tag, the publish, and the tap bump are for the owner.
 
+### Facts for signet and the examples (C12.0, 2026-10-31)
+
+1. `scripts/bootstrap.ts` funds the nodes with `generatetoaddress` and opens no channel. The user opens the channel and mines 6 blocks in the page (steps 2 and 3). The server has no network setting. 14 template files contain `regtest`.
+2. Default signet: a block every 10 min, 25 GB of blocks, and a first sync of 1-3 hours (unverified). Each faucet needs a captcha in the browser and gives 10,000 sats or less for each request. No faucet has an API that a script can call.
+3. Mutinynet is a custom signet with a block every 30 s. Its faucet (https://faucet.mutinynet.com) has an API, for example `POST /api/onchain` and `POST /api/channel`. The API needs a GitHub token (device flow, valid 31 days). It gives up to 1,000,000 sats in 24 hours for each user and each IP address. The Esplora API is at https://mutinynet.com/api.
+4. Stock Bitcoin Core cannot sync Mutinynet, because Core has no `signetblocktime`. The Mutinynet fork (https://github.com/benthecarman/bitcoin/releases) and Bitcoin Knots 29.x can sync it. The fork has no Docker image. The bitcoind settings: `signetchallenge=512102f7561d208dd9ae99bf497273e16f389bdbd6c4742ddb8e6b216e64fa2928ad8f51ae`, `addnode=45.79.52.207:38333`, `dnsseed=0`, and `signetblocktime=30`.
+5. LND must use `bitcoin.signet` and the bitcoind back end with no `signetchallenge`. With a challenge, the bitcoind back end fails. LND neutrino on Mutinynet is not released. CLN uses `network=signet`. The current Eclair needs Bitcoin Core 31 or later, `txindex=1`, and `signet-check-tx=""` on a custom signet. The template pins Eclair `0.11.0`, and nobody tested it on Mutinynet.
+6. Confirmations before a channel opens: LND 1 to 6 (scaled by the amount), CLN 1 on signet, and Eclair 8 (minimum 6 on each chain).
+7. LUD-01 allows only https with a real certificate, or http on onion. LUD-16 resolves `<user>@<domain>` with `GET https://<domain>/.well-known/lnurlp/<user>`. In LUD-06, the payer must check the invoice amount, and the description hash is no longer required. The research found no maintained JavaScript LNURL server library.
+8. WebLN (https://www.webln.guide) requires `enable`, `getInfo`, `makeInvoice`, and `sendPayment`. The types are in `@webbtc/webln-types`. A page can set its own `window.webln`.
+
+### M12: Examples (branch `m12-examples`)
+
+- [ ] **C12.1 Invoice decode and memo hash.** Add the node changes of decision 19 for LND, CLN, and Eclair.
+  - Do: add `decodeInvoice` to `LightningNode` in `server/nodes/types.ts`, and the option `hashMemo` to `createInvoice`. LND: `GET /v1/payreq/{pay_req}`, and `description_hash`. CLN: `decode`, and `invoice` with `deschashonly`. Eclair: `parseinvoice`, and `createinvoice` with `descriptionHash`.
+  - Do: the integration test decodes an invoice and checks the amount and the description hash.
+  - Read: `server/nodes/types.ts`, `server/nodes/lnd.ts`, `server/nodes/cln.ts`, `server/nodes/eclair.ts`, `server/flow.test.ts`.
+  - Exit: lint, typecheck, and `npm run sync:templates -- --check` pass. The integration test passes on a mix network (LND, CLN, and Eclair).
+  - Risk: LND and Eclair take the hash, but CLN takes the text with `deschashonly`. Thus the option takes the text, and each client makes the hash if its node needs it.
+- [ ] **C12.2 Lightning Address.** Add the LNURL-pay service and client (decisions 20 and 21).
+  - Do: `server/lnurl.ts` serves `GET /.well-known/lnurlp/:name` (LUD-16) and the LUD-06 callback. The invoice has the hash of the metadata. The callback URL comes from the request origin.
+  - Do: `POST /api/nodes/:name/address-payments {address, amountSats}` resolves the address, checks the invoice amount with `decodeInvoice`, and pays. Add the routes to `server/API.md`.
+  - Do: the Vite proxy sends `/.well-known` to the API port. The Next.js template serves `/.well-known/lnurlp/:name` with the Hono app.
+  - Read: `server/app.ts`, `server/index.ts`, `server/API.md`, `frontend/vite.config.ts`, and the route file and `next.config.*` of `template-next-ts/`.
+  - Exit: lint, typecheck, and the sync check pass. In the integration test, alice pays `bob@127.0.0.1:<port>`, and the invoice of bob is settled.
+  - Risk: the Hono app has `basePath('/api')`, so the `.well-known` route needs a mount outside `/api`. The integration test calls the app in process, but the LNURL client sends HTTP requests. Thus the test must start a server on a free port.
+- [ ] **C12.3 LNURL-withdraw.** Add the LUD-03 service and client (decisions 20 and 21).
+  - Do: `POST /api/nodes/:name/withdraw-links {amountSats}` returns an `lnurl` (bech32, LUD-01). `GET /api/lnurlw/:k1` returns the `withdrawRequest`. Its callback pays the invoice with the node. Each `k1` is random, works one time, and expires after 10 min. The server keeps it in memory.
+  - Do: `POST /api/nodes/:name/withdrawals {lnurl}` decodes the link, makes an invoice on the node, and calls the callback. Add the routes to `server/API.md`.
+  - Read: `server/lnurl.ts`, `server/app.ts`, `server/API.md`, `server/flow.test.ts`.
+  - Exit: lint, typecheck, and the sync check pass. In the integration test, alice makes a link, and bob claims it. A second claim fails.
+  - Risk: bech32 needs a small library (for example `@scure/base`) or about 40 lines of code. Select one in this chunk.
+- [ ] **C12.4 WebLN provider and page steps.** Add `frontend/src/webln.ts` (decision 22) and 2 page steps.
+  - Do: step 5 pays with `webln.sendPayment`. Step 6 pays the Lightning Address of the peer. Step 7 makes a withdraw link with the selected node, and the peer claims it. Add `eclair` to `NodeImpl` in `frontend/src/api.ts`.
+  - Do: add the steps to `e2e/flow.spec.ts`. Add `@webbtc/webln-types` as a dev dependency.
+  - Read: `frontend/src/components/Page.tsx`, `frontend/src/api.ts`, `e2e/flow.spec.ts`, `frontend/README.md`.
+  - Exit: lint, typecheck, build, and the sync check pass. `npm run test:e2e` passes on LND and on a mix network.
+  - Risk: the JavaScript template removes the types. Make sure that no import of `@webbtc/webln-types` stays in the JavaScript output.
+- [ ] **C12.5 Docs and release `1.7.0`.** Show the 3 examples in the docs. Set version `1.7.0`.
+  - Do: `README.md`, `packages/create-ln-app/README.md`, `index.html`, and `docs/architecture.md` show the examples. A docs section tells how to use a real wallet: a domain with https for the Lightning Address, and a WebLN extension. Add `[1.7.0]` to `CHANGELOG.md`.
+  - Read: `README.md`, `packages/create-ln-app/README.md`, `index.html`, `docs/architecture.md`, `CHANGELOG.md`.
+  - Exit: lint, typecheck, build, and the sync check pass. Owner: CI passes on the PR. Merge, tag `v1.7.0`, publish, and run the tap bump workflow.
+
+### M13: Mutinynet (branch `m13-mutinynet`)
+
+- [ ] **C13.1 Mutinynet test: bitcoind, sync, and faucet.** Test the parts before a template change. Add the results to "Facts for signet and the examples".
+  - Do: in a scratch folder, make a bitcoind image for Mutinynet. Use a Dockerfile that downloads the fork release and checks a fixed sha256, or a Knots image. Measure the first sync time and the disk size.
+  - Do: start one LND node (`bitcoin.signet`, bitcoind back end) and one CLN node (`network=signet`) on it. Get a faucet token with the device flow, and fund the LND node with `POST /api/onchain`.
+  - Exit: the facts are in this file. If the sync takes more than 1 hour or more than 20 GB, stop and ask the owner.
+  - Risk: the device flow needs the owner to enter a code on GitHub. The Docker Hub and GitHub downloads fail sometimes.
+- [ ] **C13.2 Network option.** Add `--network` (decision 23).
+  - Do: the CLI writes `config.network` to `package.json`. `scripts/compose.ts` makes the Mutinynet services: the bitcoind image of C13.1, and the signet flags for LND and CLN. It stops if a node is Eclair. `scripts/env.ts` uses the `signet` data paths and writes `BITCOIN_NETWORK` to `.env`.
+  - Do: the `cli` job makes a project with `--network mutinynet --skip-install` and checks the compose file.
+  - Read: `src/cli.ts`, `scripts/compose.ts`, `scripts/env.ts`, `scripts/nodes.ts`, and the `cli` job in `.github/workflows/ci.yml`.
+  - Exit: lint, typecheck, build, and the sync check pass. The regtest compose file has no change. With `--network mutinynet`, `npm run network` starts, and the nodes sync.
+- [ ] **C13.3 Faucet and bootstrap.** Fund the nodes on Mutinynet (decision 24).
+  - Do: add `scripts/faucet-login.ts` and `npm run faucet:login`. On Mutinynet, `scripts/bootstrap.ts` does not mine. It waits up to 15 min for confirmed funds. `scripts/reset.ts` keeps the bitcoind data on Mutinynet.
+  - Read: `scripts/bootstrap.ts`, `scripts/reset.ts`, `scripts/doctor.ts`.
+  - Exit: lint, typecheck, and the sync check pass. On Mutinynet, `npm run bootstrap` funds 3 LND nodes. On regtest, the E2E test passes.
+  - Risk: the faucet limit is 1,000,000 sats in 24 hours. With 200,000 sats for each node, 6 or more nodes need a second day.
+- [ ] **C13.4 Server and page on Mutinynet.** Make the API and the page work with no mining (decision 25).
+  - Do: add `GET /api/network`. On Mutinynet, `POST /api/mine` returns an error, and the server does not use the `bcrt1` burn address. Step 3 waits until the channel is active, and the channel is 100,000 sats.
+  - Read: `server/app.ts`, `server/API.md`, `frontend/src/components/Page.tsx`, `frontend/src/api.ts`.
+  - Exit: lint, typecheck, build, and the sync check pass. On regtest, the E2E test passes. On Mutinynet, the page flow works for LND and CLN.
+  - Risk: steps 5 to 7 use the same channel. Make sure that the 100,000-sat channel has sufficient funds for them.
+- [ ] **C13.5 Docs and release `1.8.0`.** Show Mutinynet in the docs. Set version `1.8.0`.
+  - Do: `README.md`, `packages/create-ln-app/README.md`, `index.html`, `docs/troubleshooting.md`, and `network/README.md` show `--network mutinynet`, the faucet login, the first sync time, and the limits (no Eclair, the faucet limit). Add a Mutinynet check to the release checks in `CONTRIBUTING.md`. Add `[1.8.0]` to `CHANGELOG.md`.
+  - Read: the files in "Do" and `CHANGELOG.md`.
+  - Exit: lint, typecheck, build, and the sync check pass. Owner: CI passes on the PR. Owner: the Mutinynet check from a new project. Merge, tag `v1.8.0`, publish, and run the tap bump workflow.
+
 ### Later: plan before work
 
 Each item below starts with one planning chunk. That chunk writes the other chunks in this file. Do not plan these items in detail now, because M6 to M8 change the template.
@@ -400,4 +479,5 @@ Each item below starts with one planning chunk. That chunk writes the other chun
   - Done: the answers are decisions 12, 11, and 13. The chunks are in M9 and M10. The facts are in "Facts for the templates". M10 uses the chunk numbers C10.x, so the install options plan is now C11.0 and the signet plan is now C12.0.
 - [x] **C11.0 More install options: plan.** Homebrew, `curl | bash`, and Windows (WSL2). Fact: each option still needs Node 24 and Docker. Homebrew and `curl | bash` only start `npx create-ln-app`. Give the owner the value and the cost of each option before the plan.
   - Done: the owner selected Windows (WSL2), `curl | bash`, and Homebrew. The decisions are 14 to 17. The chunks are in M11. The facts are in "Facts for the install options".
-- [ ] **C12.0 Signet and examples: plan.** Fact: on signet, nobody mines a block when the app asks. Funds come from a faucet, so the bootstrap cannot fund the nodes. Plan the examples (LNURL, Lightning Address, WebLN) apart from signet.
+- [x] **C12.0 Signet and examples: plan.** Fact: on signet, nobody mines a block when the app asks. Funds come from a faucet, so the bootstrap cannot fund the nodes. Plan the examples (LNURL, Lightning Address, WebLN) apart from signet.
+  - Done: the owner selected Mutinynet in Docker (LND and CLN) and the 3 examples. The decisions are 18 to 25. The chunks are in M12 and M13. The facts are in "Facts for signet and the examples".
