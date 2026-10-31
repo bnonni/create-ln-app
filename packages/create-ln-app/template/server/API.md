@@ -24,6 +24,10 @@ The API is the same for each node implementation. Each node client in `server/no
 | `POST` | `/nodes/:name/invoices` | `{ amountSats, memo? }` | 201 |
 | `GET` | `/nodes/:name/invoices/:hash` | none | 200 |
 | `POST` | `/nodes/:name/payments` | `{ paymentRequest }` | 201 |
+| `POST` | `/nodes/:name/address-payments` | `{ address, amountSats }` | 201 |
+| `GET` | `/lnurlp/:name/callback?amount=<msat>` | none | 200 |
+
+The server also serves `GET /.well-known/lnurlp/:name`, outside the base URL. See [Lightning Addresses](#lightning-addresses).
 
 ### `GET /health`
 
@@ -141,6 +145,53 @@ Pays an invoice from the node.
 - CLN sends the code `no_route` also if the channels do not have the balance for the payment.
 - If the invoice is already paid, the server sends 409 with the code `conflict`.
 
+### `POST /nodes/:name/address-payments`
+
+Pays a Lightning Address (LUD-16) from the node.
+
+- Body: `{ "address": "bob@127.0.0.1:3001", "amountSats": 1000 }`. `amountSats` is an integer from 1 to 2,100,000,000,000,000.
+- Success: 201 `{ "paymentHash": "702e...", "preimage": "0141...", "amountSats": 1000, "feeSats": 0, "paymentRequest": "lnbcrt10u1..." }`. The `paymentRequest` is the invoice from the service.
+- The server gets the payRequest from `/.well-known/lnurlp/<name>` on the host of the address. Then it gets an invoice for the amount from the callback (LUD-06).
+- The server uses `http` only if the host is `localhost` or `127.0.0.1`. For other hosts, it uses `https`, because LUD-01 allows only `https`.
+- The node decodes the invoice. If the invoice amount is not `amountSats`, the server does not pay, and it sends 502 with the code `lnurl_error`.
+- If the address is not `<name>@<host>`, or if the service does not accept the amount, the server sends 400 with the code `invalid_request`.
+- If the service does not reply or sends an error, the server sends 502 with the code `lnurl_error`.
+- The payment has the same limits and errors as `POST /nodes/:name/payments`.
+
+## Lightning Addresses
+
+The server is an LNURL-pay service (LUD-06 and LUD-16) for each node. The Lightning Address of a node is `<name>@<host>`, for example `bob@localhost:3001`. The host is the host of the request. The API server shows the addresses when it starts.
+
+- The Vite proxy sends `/.well-known` to the API server, and the Next.js template serves the same paths. Thus `bob@localhost:5173` (Vite) and `bob@localhost:3000` (Next.js) also work.
+- A wallet app uses `https` (LUD-16), and a local server has no certificate. Thus, on a local server, only `POST /nodes/:name/address-payments` can pay an address.
+- Each reply has the header `Access-Control-Allow-Origin: *` (LUD-01).
+- An error reply is `{ "status": "ERROR", "reason": "Unknown node: nobody" }` (LUD-06). The status codes are the same as in the API, but an LNURL client reads only the body.
+
+### `GET /.well-known/lnurlp/:name`
+
+This path is outside `/api`. It shows the payRequest of the node.
+
+```json
+{
+  "tag": "payRequest",
+  "callback": "http://localhost:3001/api/lnurlp/bob/callback",
+  "minSendable": 1000,
+  "maxSendable": 1000000000,
+  "metadata": "[[\"text/plain\",\"Pay bob\"],[\"text/identifier\",\"bob@localhost:3001\"]]"
+}
+```
+
+- `minSendable` and `maxSendable` are in millisatoshis: from 1 sat to 1,000,000 sats.
+- The callback has the origin of the request.
+
+### `GET /lnurlp/:name/callback?amount=<msat>`
+
+Makes an invoice on the node. `amount` is in millisatoshis.
+
+- Success: 200 `{ "pr": "lnbcrt10u1...", "routes": [] }`.
+- The invoice has the SHA-256 hash of `metadata`, not a memo. Thus the memo of the invoice is `""` in `GET /nodes/:name/invoices/:hash`.
+- The nodes make invoices in whole sats. Thus `amount` must be a multiple of 1000.
+
 ## Errors
 
 An error body has this shape:
@@ -151,7 +202,7 @@ An error body has this shape:
 
 - `error` is a message for a person. Show it to the user.
 - `code` is a code from the table below. Use the code in the app logic, not the `error` text. The codes are the same for each node implementation.
-- `node` is the node that sent the error: a node name or `bitcoind`. If the error comes from the server, the body has no `node`.
+- `node` is the node that sent the error: a node name or `bitcoind`. If the error comes from the server or an LNURL service, the body has no `node`.
 
 | Code | Status | Cause |
 | --- | --- | --- |
@@ -165,6 +216,7 @@ An error body has this shape:
 | `payment_failed` | 502 | The payment failed for a different reason. |
 | `node_error` | 502 | The node or bitcoind sent a different error. |
 | `node_unreachable` | 502 | The node or bitcoind did not reply. |
+| `lnurl_error` | 502 | The LNURL service of a Lightning Address did not reply, or sent an error or a bad invoice. |
 | `internal_error` | 500 | The server has a bug. The server log has the details. |
 
 LND sends most errors as HTTP 500. Thus the server cannot tell a bad request from a node fault, and it sends `node_error` for both. Read `error` to find the cause. Examples of `node_error` errors for a bad request:

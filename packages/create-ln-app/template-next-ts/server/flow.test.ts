@@ -1,6 +1,8 @@
 // Integration test: the full payment flow against the live regtest network.
 // Start the network before the test: `npm run network`.
-// The test sends the requests of a client to the API app in server/app.ts. It does not start a server, so it runs in each template.
+// The test sends the requests of a client to the API app in server/app.ts, in the same process.
+// The LNURL client sends HTTP requests. Thus the test also serves the app on a free port with node:http.
+// The test does not use @hono/node-server, so it runs in each template.
 // The flow runs in the 2 directions: alice pays bob, then bob pays alice. Thus each node is a payer and a payee.
 // To use a different node pair, set FLOW_NODES, for example `FLOW_NODES=alice,carol npm run test:integration`.
 // Each flow opens a new channel from the payer, so the test also passes if a channel already exists.
@@ -8,7 +10,9 @@
 
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { before, describe, test } from 'node:test';
+import { createServer, type Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
+import { after, before, describe, test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { app, getClients } from './app.ts';
@@ -21,6 +25,7 @@ const POLL_INTERVAL_MS = 250;
 const CHANNEL_SATS = 1_000_000;
 const INVOICE_SATS = 1_000;
 const HASHED_MEMO = 'flow test with a memo hash';
+const MSAT_PER_SAT = 1000;
 const CONFIRMATION_BLOCKS = 6;
 const IMPLS = ['lnd', 'cln', 'eclair'];
 const [NODE_A, NODE_B, ...otherNodes] = (process.env.FLOW_NODES ?? 'alice,bob').split(',').map((name) => name.trim());
@@ -85,6 +90,22 @@ async function getNode(name: string): Promise<Node> {
   return node;
 }
 
+function sha256(text: string): string {
+  return createHash('sha256').update(text).digest('hex');
+}
+
+// The LNURL requests are GET requests with no body, so this server sends only the method and the URL to the app.
+async function serveApp(): Promise<Server> {
+  const server = createServer(async (request, response) => {
+    const url = `http://${request.headers.host}${request.url}`;
+    const reply = await app.fetch(new Request(url, { method: request.method }));
+    response.writeHead(reply.status, Object.fromEntries(reply.headers));
+    response.end(Buffer.from(await reply.arrayBuffer()));
+  });
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  return server;
+}
+
 function nodeClient(name: string): LightningNode {
   const client = getClients().nodes.find((candidate) => candidate.name === name);
   assert.ok(client, `node ${name} is not in .env. Run: npm run env`);
@@ -92,15 +113,22 @@ function nodeClient(name: string): LightningNode {
 }
 
 describe('payment flow', () => {
+  let server: Server;
+  let host: string;
+
   // The app reads the node values from process.env, as the API server does. A missing or empty .env stops the test here.
-  before(() => {
+  before(async () => {
     try {
       process.loadEnvFile(ENV_FILE);
     } catch {
       throw new Error(`Cannot read ${ENV_FILE}. Run: npm run network`);
     }
     getClients();
+    server = await serveApp();
+    host = `127.0.0.1:${(server.address() as AddressInfo).port}`;
   });
+
+  after(() => server?.close());
 
   for (const [payerName, payeeName] of [[NODE_A, NODE_B], [NODE_B, NODE_A]]) {
     describe(`${payerName} pays ${payeeName} over a new channel`, () => {
@@ -208,7 +236,7 @@ describe('payment flow', () => {
         const decoded = await nodeClient(payerName).decodeInvoice(hashedInvoice.paymentRequest);
         assert.equal(decoded.paymentHash, hashedInvoice.paymentHash);
         assert.equal(decoded.amountSats, INVOICE_SATS);
-        assert.equal(decoded.descriptionHash, createHash('sha256').update(HASHED_MEMO).digest('hex'));
+        assert.equal(decoded.descriptionHash, sha256(HASHED_MEMO));
       });
 
       // An LNURL payer pays an invoice that has the hash of the LNURL metadata (LUD-06).
@@ -219,6 +247,52 @@ describe('payment flow', () => {
         assert.equal(payment.paymentHash, hashedInvoice.paymentHash);
         const settled: Invoice = await expectStatus(200, 'GET', `/nodes/${payeeName}/invoices/${hashedInvoice.paymentHash}`);
         assert.equal(settled.status, 'settled');
+      });
+
+      test(`the LNURL service gives the payRequest and an invoice of ${payeeName}`, async () => {
+        const response = await fetch(`http://${host}/.well-known/lnurlp/${payeeName}`);
+        assert.equal(response.headers.get('access-control-allow-origin'), '*');
+        const payRequest = await response.json();
+        assert.equal(payRequest.tag, 'payRequest');
+        assert.equal(payRequest.callback, `http://${host}/api/lnurlp/${payeeName}/callback`);
+        assert.deepEqual(JSON.parse(payRequest.metadata), [
+          ['text/plain', `Pay ${payeeName}`],
+          ['text/identifier', `${payeeName}@${host}`],
+        ]);
+
+        const callback = await (await fetch(`${payRequest.callback}?amount=${INVOICE_SATS * MSAT_PER_SAT}`)).json();
+        const decoded = await nodeClient(payerName).decodeInvoice(callback.pr);
+        assert.equal(decoded.amountSats, INVOICE_SATS);
+        assert.equal(decoded.descriptionHash, sha256(payRequest.metadata));
+
+        const partialSat = await (await fetch(`${payRequest.callback}?amount=1500`)).json();
+        assert.equal(partialSat.status, 'ERROR');
+        const unknown = await (await fetch(`http://${host}/.well-known/lnurlp/nobody`)).json();
+        assert.deepEqual(unknown, { status: 'ERROR', reason: 'Unknown node: nobody' });
+      });
+
+      test(`${payerName} pays the Lightning Address of ${payeeName}`, async () => {
+        const address = `${payeeName}@${host}`;
+        const payment = await expectStatus(201, 'POST', `/nodes/${payerName}/address-payments`, {
+          address,
+          amountSats: INVOICE_SATS,
+        });
+        assert.match(payment.paymentRequest, /^lnbcrt/);
+        assert.equal(payment.amountSats, INVOICE_SATS);
+        const settled: Invoice = await expectStatus(200, 'GET', `/nodes/${payeeName}/invoices/${payment.paymentHash}`);
+        assert.equal(settled.status, 'settled');
+        assert.equal(settled.amountPaidSats, INVOICE_SATS);
+      });
+
+      test(`${payerName} cannot pay a bad Lightning Address`, async () => {
+        const path = `/nodes/${payerName}/address-payments`;
+        const badAddress = await expectStatus(400, 'POST', path, { address: payeeName, amountSats: INVOICE_SATS });
+        assert.equal(badAddress.code, 'invalid_request');
+        const address = `${payeeName}@${host}`;
+        const tooLarge = await expectStatus(400, 'POST', path, { address, amountSats: CHANNEL_SATS + 1 });
+        assert.equal(tooLarge.code, 'invalid_request');
+        const unknown = await expectStatus(502, 'POST', path, { address: `nobody@${host}`, amountSats: INVOICE_SATS });
+        assert.equal(unknown.code, 'lnurl_error');
       });
     });
   }

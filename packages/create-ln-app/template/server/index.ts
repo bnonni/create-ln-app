@@ -29,4 +29,5 @@ const port = Number(process.env.API_PORT ?? DEFAULT_PORT);
 
 serve({ fetch: app.fetch, port }, (info) => {
   console.log(`API server on http://localhost:${info.port}/api (nodes: ${nodes.map((node) => node.name).join(', ')})`);
+  console.log(`Lightning Addresses: ${nodes.map((node) => `${node.name}@localhost:${info.port}`).join(', ')}`);
 });
