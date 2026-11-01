@@ -18,6 +18,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { app, getClients } from './app.ts';
 import { bech32Decode, bech32Encode } from './bech32.ts';
+import { publicUrl } from './lnurl.ts';
 import type { LightningNode } from './nodes/types.ts';
 
 const ENV_FILE = fileURLToPath(new URL('../.env', import.meta.url));
@@ -126,6 +127,17 @@ test('bech32 decodes and encodes the LNURL example of LUD-01', () => {
   assert.equal(bech32Encode('lnurl', LUD01_URL), LUD01_LNURL.toLowerCase());
   assert.throws(() => bech32Decode(LUD01_LNURL.replace('LNURL1', 'lnurl1')), /mixed case/);
   assert.throws(() => bech32Decode(`${LUD01_LNURL.slice(0, -1)}T`), /bad checksum/);
+});
+
+test('the LNURL service URLs have the scheme of X-Forwarded-Proto and the Host header', () => {
+  const origin = (headers: Record<string, string>) =>
+    publicUrl(new Request('http://localhost:3000/api/x', { headers })).origin;
+  assert.equal(origin({}), 'http://localhost:3000');
+  assert.equal(origin({ host: 'lapp.example' }), 'http://lapp.example');
+  assert.equal(origin({ host: 'lapp.example', 'x-forwarded-proto': 'https' }), 'https://lapp.example');
+  assert.equal(origin({ host: 'lapp.example:443', 'x-forwarded-proto': 'HTTPS, http' }), 'https://lapp.example');
+  assert.equal(origin({ host: 'lapp.example', 'x-forwarded-proto': 'ftp' }), 'http://lapp.example');
+  assert.equal(origin({ host: 'bad host' }), 'http://localhost:3000');
 });
 
 describe('payment flow', () => {

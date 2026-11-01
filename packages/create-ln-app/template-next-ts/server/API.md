@@ -188,8 +188,10 @@ Claims a withdraw link (LUD-03) with an invoice of the node.
 
 The server is an LNURL-pay service (LUD-06 and LUD-16) for each node. The Lightning Address of a node is `<name>@<host>`, for example `bob@localhost:3001`. The host is the host of the request. The API server shows the addresses when it starts.
 
+The service URLs (the callbacks, and the `url` of a withdraw link) have the scheme and the host that the client used. The host comes from the `Host` header. The scheme comes from the `X-Forwarded-Proto` header, if the value is `https` or `http`. Thus a proxy that ends TLS must keep the `Host` header and set `X-Forwarded-Proto: https`. See [Use a real wallet](https://github.com/bnonni/create-ln-app/blob/master/docs/real-wallet.md).
+
 - The Vite proxy sends `/.well-known` to the API server, and the Next.js template serves the same paths. Thus `bob@localhost:5173` (Vite) and `bob@localhost:3000` (Next.js) also work.
-- A wallet app uses `https` (LUD-16), and a local server has no certificate. Thus, on a local server, only `POST /nodes/:name/address-payments` can pay an address.
+- A wallet app uses `https` (LUD-16), and a local server has no certificate. Thus, on a local server, only `POST /nodes/:name/address-payments` can pay an address. A wallet app can pay an address on a domain with https.
 - Each reply has the header `Access-Control-Allow-Origin: *` (LUD-01).
 - An error reply is `{ "status": "ERROR", "reason": "Unknown node: nobody" }` (LUD-06). The status codes are the same as in the API, but an LNURL client reads only the body.
 
