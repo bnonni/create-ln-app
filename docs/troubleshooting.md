@@ -121,7 +121,7 @@ The channel is not active yet. A new channel becomes active after 6 blocks.
 
 1. Do step 3: "Mine 6 blocks to confirm the channel".
 2. Click Refresh until the channel status is `active`. A node needs some seconds to see the new blocks.
-3. Do step 5 again.
+3. Do the payment step (5 or 6) again.
 
 ## Apple Silicon
 

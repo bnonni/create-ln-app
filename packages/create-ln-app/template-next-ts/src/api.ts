@@ -13,7 +13,7 @@ export type Channel = {
 };
 
 // The node implementation.
-export type NodeImpl = 'lnd' | 'cln';
+export type NodeImpl = 'lnd' | 'cln' | 'eclair';
 
 export type LightningNode = {
   name: string;
@@ -42,6 +42,10 @@ export type ConnectedPeer = { peer: string; peerPubkey: string };
 export type OpenedChannel = { channelPoint: string; peer: string; peerPubkey: string };
 export type MinedBlocks = { height: number; blockHashes: string[] };
 export type Payment = { paymentHash: string; preimage: string; amountSats: number; feeSats: number };
+// `paymentRequest` is the invoice from the LNURL service of the address.
+export type AddressPayment = Payment & { paymentRequest: string };
+// `lnurl` is the bech32 encoding of `url`. The link works one time, until `expiresAt`.
+export type WithdrawLink = { lnurl: string; url: string; amountSats: number; expiresAt: string };
 
 // The error codes in server/API.md. The codes are the same for each node implementation.
 export type ErrorCode =
@@ -55,6 +59,7 @@ export type ErrorCode =
   | 'payment_failed'
   | 'node_error'
   | 'node_unreachable'
+  | 'lnurl_error'
   | 'internal_error';
 
 // The API server sent an error. Show `message` to the user. Use `code` in the app logic.
@@ -111,3 +116,13 @@ export const getInvoice = (name: string, paymentHash: string) =>
 
 export const payInvoice = (name: string, paymentRequest: string) =>
   request<Payment>('POST', `${node(name)}/payments`, { paymentRequest });
+
+export const payAddress = (name: string, address: string, amountSats: number) =>
+  request<AddressPayment>('POST', `${node(name)}/address-payments`, { address, amountSats });
+
+export const createWithdrawLink = (name: string, amountSats: number) =>
+  request<WithdrawLink>('POST', `${node(name)}/withdraw-links`, { amountSats });
+
+// The server replies after the service pays the invoice. The reply is the settled invoice.
+export const claimWithdrawLink = (name: string, lnurl: string) =>
+  request<Invoice>('POST', `${node(name)}/withdrawals`, { lnurl });

@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react';
 import {
   ApiError,
+  claimWithdrawLink,
   connectPeer,
   createInvoice,
+  createWithdrawLink,
   getInvoice,
   getNodes,
   mineBlocks,
   openChannel,
-  payInvoice,
+  payAddress,
   type ErrorCode,
   type Invoice,
   type LightningNode,
+  type WithdrawLink,
 } from '../api';
+import { nodeProvider } from '../webln';
 import NodeInfo from './NodeInfo';
 import './Page.css';
 
@@ -26,9 +30,13 @@ const INVOICE_SATS = 1000;
 const INVOICE_MEMO = 'create-ln-app example';
 // Step 4 loads the invoice status again at this interval until the invoice is settled or canceled.
 const INVOICE_POLL_MS = 1000;
-// If the node is not ready, step 5 sends the payment again (see payWithRetry).
+// If the node is not ready, steps 5 and 6 send the payment again (see payWithRetry).
 const PAY_ATTEMPTS = 5;
 const PAY_RETRY_MS = 1000;
+// The amount that step 6 pays to the Lightning Address.
+const ADDRESS_SATS = 1000;
+// The amount of the withdraw link that step 7 makes.
+const WITHDRAW_SATS = 1000;
 
 // An API error message starts with the node that sent the error (see server/API.md).
 const errorMessage = (err: unknown) => (err instanceof Error ? err.message : String(err));
@@ -39,12 +47,12 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 // If the node has other channels, the code is no_route.
 const NOT_READY_CODES: (ErrorCode | undefined)[] = ['insufficient_balance', 'no_route'];
 
-// After the node is ready, the same payment request works. Thus, send it again.
+// After the node is ready, the same payment works. Thus, `pay` sends it again.
 // If no channel can send the payment, the error shows after the last attempt.
-const payWithRetry = async (name: string, paymentRequest: string) => {
+const payWithRetry = async <T,>(pay: () => Promise<T>): Promise<T> => {
   for (let attempt = 1; ; attempt++) {
     try {
-      return await payInvoice(name, paymentRequest);
+      return await pay();
     } catch (err) {
       const notReady = err instanceof ApiError && NOT_READY_CODES.includes(err.code);
       if (!notReady || attempt === PAY_ATTEMPTS) throw err;
@@ -55,6 +63,9 @@ const payWithRetry = async (name: string, paymentRequest: string) => {
 
 // An invoice from step 4. `payee` is the node that made the invoice.
 type PeerInvoice = Invoice & { payee: string };
+
+// A withdraw link from step 7. `payer` is the node that made the link.
+type NodeWithdrawLink = WithdrawLink & { payer: string };
 
 type Step = {
   busy: boolean;
@@ -103,6 +114,7 @@ const Page = () => {
   const [version, setVersion] = useState(0);
   const [invoice, setInvoice] = useState<PeerInvoice | null>(null);
   const [invoiceError, setInvoiceError] = useState('');
+  const [link, setLink] = useState<NodeWithdrawLink | null>(null);
   const node = nodes.find((n) => n.name === name);
   const peers = nodes.filter((n) => n.name !== name);
   // If the user selects the peer as their own node, no peer is selected.
@@ -118,6 +130,8 @@ const Page = () => {
   const mineStep = useStep(refresh);
   const invoiceStep = useStep(refresh);
   const payStep = useStep(refresh);
+  const addressStep = useStep(refresh);
+  const withdrawStep = useStep(refresh);
 
   useEffect(() => {
     // If a newer refresh starts first, ignore this reply.
@@ -285,21 +299,85 @@ const Page = () => {
 
       <div className="step">
         {/* Your feature: when the invoice status is settled, show the content that the user paid for. */}
-        <p>5. Pay the invoice</p>
+        <p>5. Pay the invoice with WebLN</p>
         <button
           disabled={!node || !invoiceOpen || payStep.busy}
           onClick={() =>
             invoice &&
             payStep.run(async () => {
-              const payment = await payWithRetry(name, invoice.paymentRequest);
-              return `${name} paid ${payment.amountSats.toLocaleString()} sats to ${invoice.payee}. ` +
-                `The fee is ${payment.feeSats} sats. Preimage: ${payment.preimage}`;
+              // The selected node is the wallet. src/webln.ts tells how to use a wallet extension.
+              const webln = nodeProvider(name);
+              await webln.enable();
+              const { preimage } = await payWithRetry(() => webln.sendPayment(invoice.paymentRequest));
+              return `${name} paid ${invoice.amountSats.toLocaleString()} sats to ${invoice.payee} ` +
+                `with webln.sendPayment. Preimage: ${preimage}`;
             })
           }
         >
           Pay invoice
         </button>
         <StepStatus step={payStep} />
+      </div>
+
+      <div className="step">
+        {/* Your feature: let the user type a Lightning Address. A wallet app needs an address on a domain with https. */}
+        <p>6. Pay the Lightning Address of {peer || 'the peer'}</p>
+        <button
+          disabled={!node || !peer || addressStep.busy}
+          onClick={() =>
+            addressStep.run(async () => {
+              // The API server is the LNURL service of each node. The page origin sends /.well-known to it.
+              const address = `${peer}@${window.location.host}`;
+              const payment = await payWithRetry(() => payAddress(name, address, ADDRESS_SATS));
+              return `${name} paid ${payment.amountSats.toLocaleString()} sats to ${address}. ` +
+                `The fee is ${payment.feeSats} sats.`;
+            })
+          }
+        >
+          Pay address
+        </button>
+        <StepStatus step={addressStep} />
+      </div>
+
+      <div className="step">
+        {/* Your feature: show the withdraw link as a QR code. A wallet app needs a link on a domain with https. */}
+        <p>7. Send sats to {peer || 'the peer'} with a withdraw link</p>
+        <div className="row">
+          <button
+            disabled={!node || withdrawStep.busy}
+            onClick={() =>
+              withdrawStep.run(async () => {
+                const created = await createWithdrawLink(name, WITHDRAW_SATS);
+                setLink({ ...created, payer: name });
+                return `${name} made a withdraw link for ${created.amountSats.toLocaleString()} sats. ` +
+                  `The link works one time, until ${new Date(created.expiresAt).toLocaleTimeString()}.`;
+              })
+            }
+          >
+            Make link
+          </button>
+          <button
+            disabled={!peer || !link || withdrawStep.busy}
+            onClick={() =>
+              link &&
+              withdrawStep.run(async () => {
+                const invoice = await claimWithdrawLink(peer, link.lnurl);
+                return `${peer} claimed the link. ${link.payer} paid ${invoice.amountPaidSats.toLocaleString()} sats ` +
+                  `to the invoice of ${peer}.`;
+              })
+            }
+          >
+            Claim link
+          </button>
+        </div>
+        <StepStatus step={withdrawStep} />
+        <input
+          aria-label="Withdraw link"
+          readOnly
+          type="text"
+          placeholder="LNURL1..."
+          value={link?.lnurl ?? ''}
+        />
       </div>
     </div>
   );
