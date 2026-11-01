@@ -5,11 +5,11 @@ A create-ln-app project has three parts: the example app, the API server, and th
 ```text
 Browser: http://localhost:5173
    |
-   |  fetch /api/...
+   |  fetch /api/... and /.well-known/...
    v
 Vite dev server (port 5173)
    |
-   |  proxy /api/... to the same path
+   |  proxy /api/... and /.well-known/... to the same path
    v
 API server: Hono on Node.js (port 3001)
    |
@@ -30,7 +30,9 @@ Docker Compose project "<name in package.json>" (regtest):
 - The app sends all requests to `/api` on its own origin. The Vite dev server sends these requests to the API server. Thus, the browser does not need CORS.
 - The proxy is a part of the Vite dev server only. `npm run build` makes static files, and these files do not have a proxy.
 - `frontend/src/api.ts` is the typed client for the API server. If the API server sends an error, the client throws an `ApiError`. The error has the message, the HTTP status, and the node name.
-- `frontend/src/components/Page.tsx` has the 5 steps of a payment. Each step has a comment that starts with "Your feature".
+- `frontend/src/components/Page.tsx` has 7 steps: the 5 steps of a payment, a payment to a Lightning Address, and a withdraw link. Each step has a comment that starts with "Your feature".
+- `frontend/src/webln.ts` is a WebLN provider for development: the selected node is the wallet. Step 5 pays with it. To pay with a WebLN extension, see [Use a real wallet](real-wallet.md).
+- The Vite proxy also sends `/.well-known` to the API server, because the API server serves the Lightning Addresses.
 
 ## The API server
 
@@ -48,6 +50,18 @@ The browser does not connect to the nodes directly, for three reasons:
 1. An LND admin macaroon, a CLN rune with no restrictions, or an Eclair API password gives full control of a node. The server keeps these values, so the browser never gets them.
 2. The browser does not trust the self-signed TLS certs of the nodes.
 3. By default, LND REST, CLNRest, and the Eclair API do not accept CORS requests from a browser.
+
+## LNURL
+
+`server/lnurl.ts` is the LNURL service and the LNURL client. The app mounts the service at the root, because the Lightning Address route is outside `/api`.
+
+- Each node has the Lightning Address `<node>@<host>`. `GET /.well-known/lnurlp/:name` (LUD-16) gives the payRequest. Its callback (LUD-06) makes an invoice that has the hash of the metadata.
+- `POST /api/nodes/:name/withdraw-links` makes an LNURL-withdraw link (LUD-03). Each link works one time and expires after 10 minutes. The server keeps the links in memory, so a restart deletes them.
+- `POST /api/nodes/:name/address-payments` pays a Lightning Address. The node decodes the invoice, and the server pays only if the amount is correct.
+- `POST /api/nodes/:name/withdrawals` claims a withdraw link with an invoice of the node.
+- The client accepts `http` only for `localhost` and `127.0.0.1`. Each other host must use `https` (LUD-01).
+- The LNURL URLs have the host of the `Host` header and the scheme of the `X-Forwarded-Proto` header. Thus the URLs are correct behind a proxy that ends TLS. See [Use a real wallet](real-wallet.md).
+- `server/bech32.ts` encodes and decodes the `lnurl` of a withdraw link (LUD-01).
 
 ## The network
 
@@ -88,6 +102,7 @@ Hono app --> the nodes and bitcoind, as in the diagram above
 
 - Folder: `src/`. The app uses Next.js with the App Router, React, TypeScript, and plain CSS. `src/app/page.tsx` shows the `Page` component from `src/components/Page.tsx`.
 - The app and the API have the same origin, so the app does not need a proxy.
+- `src/app/.well-known/lnurlp/[name]/route.ts` sends the Lightning Address requests to the Hono app.
 - The project has no `server/index.ts`. Next.js loads `.env`, and the Hono app makes the node clients at the first request. Thus, `npm run build` works without `.env`.
 - Next.js reads `.env` one time, when it starts. Restart Next.js after the node data changes, for example after `npm run reset`.
 - `npm run dev` runs `npm run network`, then `npm run dev:app` (`next dev`). `npm run start` serves the build of `npm run build`. The network must run.
@@ -99,6 +114,7 @@ Hono app --> the nodes and bitcoind, as in the diagram above
 | --- | --- |
 | Change a step in the app | `frontend/src/components/Page.tsx` |
 | Add an API endpoint | `server/app.ts`, `server/nodes/types.ts`, `server/nodes/lnd.ts`, `server/nodes/cln.ts`, and `server/nodes/eclair.ts`, or `server/bitcoind.ts`, `frontend/src/api.ts`, `server/API.md` |
+| Change the Lightning Addresses or the withdraw links | `server/lnurl.ts`, `server/API.md` |
 | Add or remove a node, or change its impl | `network/nodes.json`. See "Change the nodes" in `network/README.md`. |
 
 ## Security
@@ -107,4 +123,5 @@ The network is for development only. Do not use these settings on mainnet.
 
 - `.env` has the admin macaroons, the runes, and the Eclair API passwords. Git ignores `.env`.
 - The bitcoind RPC password and the Eclair API password are in the compose file, so they are not secrets.
+- A withdraw link is a bearer token. Each person who has the link can claim it one time.
 - Docker publishes the node ports on all host addresses. Thus, other computers on your local network can connect to the nodes. Use the network only on a network that you trust.

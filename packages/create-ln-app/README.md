@@ -4,7 +4,7 @@ Make a Lightning app (Lapp) with a local regtest network. The new project has th
 
 1. A local Bitcoin Lightning Network for development: Bitcoin Core and 2 to 10 Lightning nodes on regtest. Each node is LND, Core Lightning (CLN), or Eclair. The default is 3 LND nodes.
 2. An API server that connects to the nodes.
-3. An example app that uses the API server.
+3. An example app that uses the API server. It shows a payment with WebLN, a payment to a Lightning Address, and an LNURL-withdraw link.
 
 You change the example app into your own Lapp. You do not configure nodes, macaroons, or TLS by hand.
 
@@ -61,6 +61,7 @@ The README in the new project has all the commands. `network/README.md` in the n
 - Source: <https://github.com/bnonni/create-ln-app>
 - [Troubleshooting](https://github.com/bnonni/create-ln-app/blob/master/docs/troubleshooting.md)
 - [Architecture](https://github.com/bnonni/create-ln-app/blob/master/docs/architecture.md)
+- [Use a real wallet](https://github.com/bnonni/create-ln-app/blob/master/docs/real-wallet.md)
 - [Changelog](https://github.com/bnonni/create-ln-app/blob/master/CHANGELOG.md)
 
 ## License

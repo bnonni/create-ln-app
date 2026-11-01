@@ -4,7 +4,7 @@
 
 1. A local Bitcoin Lightning Network for development: Bitcoin Core and 2 to 10 Lightning nodes on regtest. Each node is LND, Core Lightning (CLN), or Eclair. The default is 3 LND nodes.
 2. An API server that connects to the nodes.
-3. An example app that uses the API server.
+3. An example app that uses the API server. It shows a payment with WebLN, a payment to a Lightning Address, and an LNURL-withdraw link.
 
 You change the example app into your own Lapp. You do not configure nodes, macaroons, or TLS by hand.
 
@@ -59,13 +59,15 @@ Open the app in a Windows browser. WSL2 sends the `localhost` connections from W
    npm run dev
    ```
 3. Open <http://localhost:5173>.
-4. Make a payment. Do the steps on the page in this sequence:
+4. Make the payments. Do the steps on the page in this sequence:
    1. "Who are you?": select `alice`.
    2. "1. Connect to a peer": select `bob`, then click "Connect".
    3. "2. Open a channel": click "Open channel".
    4. "3. Mine 6 blocks": click "Mine blocks". Then click "Refresh" until the channel status is `active`.
    5. "4. Request an invoice": click "Request invoice".
-   6. "5. Pay the invoice": click "Pay invoice". The page shows `Invoice status: settled`.
+   6. "5. Pay the invoice with WebLN": click "Pay invoice". The page shows `Invoice status: settled`.
+   7. "6. Pay the Lightning Address of bob": click "Pay address". `alice` pays the address `bob@localhost:5173`.
+   8. "7. Send sats to bob with a withdraw link": click "Make link", then click "Claim link". `alice` makes an LNURL-withdraw link, and `bob` claims it.
 
 The `create-ln-app` command copies the project to `my-lapp`, runs `git init`, and installs the npm packages. Then it runs `npm run doctor`, which checks Docker, Docker Compose, and the ports.
 
@@ -87,6 +89,7 @@ If a step fails, see [Troubleshooting](docs/troubleshooting.md).
 - Read the project README for all the commands: [template README](packages/create-ln-app/template/README.md).
 - Read the network reference for the host ports and the CLI commands of the nodes: [`network/README.md`](packages/create-ln-app/template/network/README.md).
 - Read how the parts connect: [Architecture](docs/architecture.md).
+- Pay with a WebLN extension or a wallet app: [Use a real wallet](docs/real-wallet.md).
 - Read the API reference: [`server/API.md`](packages/create-ln-app/template/server/API.md).
 
 ## Development

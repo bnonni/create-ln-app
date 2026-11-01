@@ -2,6 +2,22 @@
 
 This file records the changes to the `create-ln-app` npm package in each release. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.7.0] - 2026-11-01
+
+### Added
+
+- Step 5 of the example app pays with WebLN. `frontend/src/webln.ts` is a WebLN provider for development: the selected node is the wallet. It has `enable`, `getInfo`, `makeInvoice`, and `sendPayment`. The TypeScript templates get the types from `@webbtc/webln-types`.
+- Step 6 pays the Lightning Address of the peer, for example `bob@localhost:5173`. The API server is an LNURL-pay service (LUD-06 and LUD-16) for each node. `POST /api/nodes/:name/address-payments` pays an address, and the server checks the invoice amount before the payment. In the `next-ts` template, `src/app/.well-known/lnurlp/[name]/route.ts` serves the addresses.
+- Step 7 sends sats with an LNURL-withdraw link (LUD-03). `POST /api/nodes/:name/withdraw-links` makes a link, and `POST /api/nodes/:name/withdrawals` claims it. A link works one time and expires after 10 minutes.
+- The node clients decode invoices (`decodeInvoice`), and `createInvoice` can put the SHA-256 hash of the memo in the invoice (`hashMemo`).
+- The API error code `lnurl_error` (HTTP 502): an LNURL service did not reply, or sent an error or a bad reply.
+- [Use a real wallet](docs/real-wallet.md): how to pay with a WebLN extension, and how to use a Lightning Address or a withdraw link on a domain with https.
+
+### Changed
+
+- The Hono app in `server/app.ts` is now the root app. The API routes are under `/api`, and the Lightning Address routes are under `/.well-known`. The Vite proxy also sends `/.well-known` to the API server, and keeps the `Host` header of the page.
+- The LNURL URLs have the host of the `Host` header and the scheme of the `X-Forwarded-Proto` header. Thus the URLs are correct behind a proxy that ends TLS.
+
 ## [1.6.0] - 2026-10-31
 
 ### Added
@@ -111,6 +127,7 @@ The first release.
 - The project commands `network`, `down`, `reset`, `doctor`, `env`, and `test:integration`.
 - The docs: a quick start, an [architecture](docs/architecture.md) page, and a [troubleshooting](docs/troubleshooting.md) page.
 
+[1.7.0]: https://github.com/bnonni/create-ln-app/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/bnonni/create-ln-app/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/bnonni/create-ln-app/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/bnonni/create-ln-app/compare/v1.3.0...v1.4.0
