@@ -14,6 +14,7 @@ import {
   LnurlError,
   lnurlService,
   MAX_LNURL_SATS,
+  publicUrl,
 } from './lnurl.ts';
 import { NodeError, type LightningNode, type NodeErrorCode } from './nodes/types.ts';
 
@@ -180,7 +181,7 @@ api.post('/nodes/:name/address-payments', async (c) => {
 api.post('/nodes/:name/withdraw-links', async (c) => {
   const node = findNode(c.req.param('name'));
   const amountSats = integerField(await readBody(c), 'amountSats', MAX_LNURL_SATS);
-  return c.json(createWithdrawLink(node, amountSats, new URL(c.req.url).origin), 201);
+  return c.json(createWithdrawLink(node, amountSats, publicUrl(c.req.raw).origin), 201);
 });
 
 // Claims a withdraw link with an invoice of the node. The reply comes after the service pays the invoice.

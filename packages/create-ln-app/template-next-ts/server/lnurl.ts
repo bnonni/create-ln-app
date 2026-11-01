@@ -1,6 +1,7 @@
 // LNURL-pay (LUD-06), Lightning Addresses (LUD-16), and LNURL-withdraw (LUD-03).
 // The app is the LNURL service and the LNURL client (decision 20 in ROADMAP.md).
 // The service gives each node the address <node>@<host>. The host is the host of the request, for example 127.0.0.1:3001.
+// The service URLs have the scheme and the host that the client used. See publicUrl.
 // The service also makes withdraw links. The node of a link pays the invoice of the wallet that claims the link.
 // The client gets an invoice from the service of an address, and it claims withdraw links. The API routes in server/app.ts use it.
 // Specs: https://github.com/lnurl/luds
@@ -53,6 +54,18 @@ type WithdrawLink = { node: LightningNode; amountSats: number; expiresAt: number
 // The open withdraw links by k1. The links are in memory, so a server restart deletes them.
 const withdrawLinks = new Map<string, WithdrawLink>();
 
+// The URL that the client used, with no path. A proxy that ends TLS sends the request to the server with http.
+// LUD-01 allows only https, so the scheme comes from the X-Forwarded-Proto header of the proxy.
+// The header can have a list, for example "https,http". The first value is the scheme of the client.
+// The host comes from the Host header, because Next.js gives a route handler the URL of its own server.
+export function publicUrl(request: Request): URL {
+  const url = new URL(request.url);
+  const scheme = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim().toLowerCase();
+  const protocol = scheme === 'https' || scheme === 'http' ? `${scheme}:` : url.protocol;
+  const origin = `${protocol}//${request.headers.get('host') ?? url.host}`;
+  return new URL(URL.canParse(origin) ? origin : `${protocol}//${url.host}`);
+}
+
 // LUD-03: makes a withdraw link of the node for the amount. The origin is the origin of the API request.
 // The lnurl is in uppercase, because LUD-01 recommends uppercase for QR codes.
 export function createWithdrawLink(node: LightningNode, amountSats: number, origin: string) {
@@ -87,7 +100,7 @@ export function lnurlService(findNode: (name: string) => LightningNode, limits: 
   // LUD-16: the payRequest of the Lightning Address <name>@<host>. The callback has the origin of this request.
   service.get('/.well-known/lnurlp/:name', (c) => {
     const node = findNode(c.req.param('name'));
-    const url = new URL(c.req.url);
+    const url = publicUrl(c.req.raw);
     return c.json({
       tag: 'payRequest',
       callback: `${url.origin}/api/lnurlp/${node.name}/callback`,
@@ -101,7 +114,7 @@ export function lnurlService(findNode: (name: string) => LightningNode, limits: 
   service.get('/api/lnurlp/:name/callback', async (c) => {
     const node = findNode(c.req.param('name'));
     const amountMsat = amountField(c.req.query('amount'));
-    const memo = metadata(node.name, new URL(c.req.url).host);
+    const memo = metadata(node.name, publicUrl(c.req.raw).host);
     const invoice = await node.createInvoice(amountMsat / MSAT_PER_SAT, memo, { hashMemo: true });
     return c.json({ pr: invoice.paymentRequest, routes: [] });
   });
@@ -112,7 +125,7 @@ export function lnurlService(findNode: (name: string) => LightningNode, limits: 
     const link = openLink(k1);
     return c.json({
       tag: 'withdrawRequest',
-      callback: `${new URL(c.req.url).origin}/api/lnurlw/callback`,
+      callback: `${publicUrl(c.req.raw).origin}/api/lnurlw/callback`,
       k1,
       defaultDescription: `Withdraw from ${link.node.name}`,
       minWithdrawable: link.amountSats * MSAT_PER_SAT,
