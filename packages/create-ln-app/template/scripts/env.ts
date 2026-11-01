@@ -1,13 +1,14 @@
-// Write the connection values for the local regtest network to the root .env file.
+// Write the connection values for the local network to the root .env file.
 // Start and fund the network first: docker compose -f network/docker-compose.yml up -d --wait && npm run bootstrap
 // The values stay valid until you delete the node data in network/data/.
-// The script owns the LND_, CLN_, ECLAIR_, and BITCOIND_ keys. It keeps all other lines, for example API_PORT.
+// The script owns the LND_, CLN_, ECLAIR_, and BITCOIND_ keys and BITCOIN_NETWORK. It keeps all other lines, for example API_PORT.
 import { execFile } from 'node:child_process';
 import { constants } from 'node:fs';
 import { access, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+import { type Network, NETWORK_SPECS, readNetwork } from './network.ts';
 import { type Impl, type Node, readNodes } from './nodes.ts';
 
 const run = promisify(execFile);
@@ -17,18 +18,17 @@ const ENV_FILE = fileURLToPath(new URL('../.env', import.meta.url));
 const LND_DIR = '/home/lnd/.lnd';
 const LND_REST_PORT = 8080;
 const LND_TLS_CERT = 'tls.cert';
-const ADMIN_MACAROON = 'data/chain/bitcoin/regtest/admin.macaroon';
 const CLN_DIR = '/home/clightning/.lightning';
 const CLN_REST_PORT = 3010;
-// CLNRest signs its TLS cert with this CA cert. The TLS cert names only the hosts cln and localhost,
+// CLNRest signs its TLS cert with the CA cert ca.pem in the chain folder. The TLS cert names only the hosts cln and localhost,
 // so the REST URL uses localhost and not 127.0.0.1.
-const CLN_TLS_CERT = 'regtest/ca.pem';
+const CLN_TLS_CERT = 'ca.pem';
 // The Eclair API uses plain HTTP and a password. The compose file sets this password.
 const ECLAIR_API_PORT = 8080;
 const ECLAIR_API_PASSWORD = 'eclairpw';
-const HEADER = '# Written by `npm run env`. The next run replaces the LND_, CLN_, ECLAIR_, and BITCOIND_ values and keeps the other lines.';
-const OWNED_LINE = /^(# Written by `npm run env`|LND_|CLN_|ECLAIR_|BITCOIND_)/;
-const BITCOIND_RPC_PORT = 18443;
+const HEADER =
+  '# Written by `npm run env`. The next run replaces the LND_, CLN_, ECLAIR_, and BITCOIND_ values and BITCOIN_NETWORK, and keeps the other lines.';
+const OWNED_LINE = /^(# Written by `npm run env`|LND_|CLN_|ECLAIR_|BITCOIND_|BITCOIN_NETWORK=)/;
 // The -rpcauth value in the compose file is the hash of this password.
 const BITCOIND_RPC_USER = 'polaruser';
 const BITCOIND_RPC_PASS = 'polarpass';
@@ -88,11 +88,12 @@ async function hostFile(config: ComposeConfig, node: string, dataDir: string, fi
   return copy;
 }
 
-async function lndEnv(config: ComposeConfig, node: string): Promise<string[]> {
-  const macaroonPath = join(hostDir(config, node, LND_DIR), ADMIN_MACAROON);
+async function lndEnv(config: ComposeConfig, node: string, chain: string): Promise<string[]> {
+  const adminMacaroon = `data/chain/bitcoin/${chain}/admin.macaroon`;
+  const macaroonPath = join(hostDir(config, node, LND_DIR), adminMacaroon);
   const macaroon = (await canRead(macaroonPath))
     ? await readFile(macaroonPath)
-    : await readFromContainer(node, `${LND_DIR}/${ADMIN_MACAROON}`);
+    : await readFromContainer(node, `${LND_DIR}/${adminMacaroon}`);
   const prefix = `LND_${node.toUpperCase()}`;
   return [
     `${prefix}_REST_URL=https://127.0.0.1:${hostPort(config, node, LND_REST_PORT)}`,
@@ -101,25 +102,25 @@ async function lndEnv(config: ComposeConfig, node: string): Promise<string[]> {
   ];
 }
 
-async function lightningCli<T>(node: string, ...args: string[]): Promise<T> {
-  const stdout = await exec(`run lightning-cli ${args[0]} on ${node}`, ['-u', 'clightning', node, 'lightning-cli', '--network=regtest', ...args]);
+async function lightningCli<T>(node: string, chain: string, ...args: string[]): Promise<T> {
+  const stdout = await exec(`run lightning-cli ${args[0]} on ${node}`, ['-u', 'clightning', node, 'lightning-cli', `--network=${chain}`, ...args]);
   return JSON.parse(stdout.toString()) as T;
 }
 
 // A rune with no restrictions gives full control of the node, like the LND admin macaroon.
 // The script uses the first rune of this type, so the value stays the same on each run.
-async function adminRune(node: string): Promise<string> {
-  const { runes } = await lightningCli<{ runes: Rune[] }>(node, 'showrunes');
+async function adminRune(node: string, chain: string): Promise<string> {
+  const { runes } = await lightningCli<{ runes: Rune[] }>(node, chain, 'showrunes');
   const rune = runes.find((r) => r.restrictions.length === 0 && !r.blacklisted);
-  return rune?.rune ?? (await lightningCli<Rune>(node, 'createrune')).rune;
+  return rune?.rune ?? (await lightningCli<Rune>(node, chain, 'createrune')).rune;
 }
 
-async function clnEnv(config: ComposeConfig, node: string): Promise<string[]> {
+async function clnEnv(config: ComposeConfig, node: string, chain: string): Promise<string[]> {
   const prefix = `CLN_${node.toUpperCase()}`;
   return [
     `${prefix}_REST_URL=https://localhost:${hostPort(config, node, CLN_REST_PORT)}`,
-    `${prefix}_RUNE=${await adminRune(node)}`,
-    `${prefix}_TLS_CERT_PATH=${await hostFile(config, node, CLN_DIR, CLN_TLS_CERT)}`,
+    `${prefix}_RUNE=${await adminRune(node, chain)}`,
+    `${prefix}_TLS_CERT_PATH=${await hostFile(config, node, CLN_DIR, `${chain}/${CLN_TLS_CERT}`)}`,
   ];
 }
 
@@ -131,10 +132,15 @@ function eclairEnv(config: ComposeConfig, node: string): Promise<string[]> {
   ]);
 }
 
-const NODE_ENVS: Record<Impl, (config: ComposeConfig, node: string) => Promise<string[]>> = { lnd: lndEnv, cln: clnEnv, eclair: eclairEnv };
+// The chain is the name of the chain folder in the node data, for example "regtest" or "signet".
+const NODE_ENVS: Record<Impl, (config: ComposeConfig, node: string, chain: string) => Promise<string[]>> = {
+  lnd: lndEnv,
+  cln: clnEnv,
+  eclair: eclairEnv,
+};
 
-function nodeEnv(config: ComposeConfig, node: Node): Promise<string[]> {
-  return NODE_ENVS[node.impl](config, node.name);
+function nodeEnv(config: ComposeConfig, node: Node, network: Network): Promise<string[]> {
+  return NODE_ENVS[node.impl](config, node.name, NETWORK_SPECS[network].chain);
 }
 
 // The lines of the old .env file that this script does not write.
@@ -150,12 +156,14 @@ async function keptLines(): Promise<string[]> {
 
 async function main(): Promise<void> {
   const config = await composeConfig();
-  const nodes = await Promise.all((await readNodes()).map((node) => nodeEnv(config, node)));
+  const network = await readNetwork();
+  const nodes = await Promise.all((await readNodes()).map((node) => nodeEnv(config, node, network)));
   const lines = [
     HEADER,
     ...(await keptLines()),
+    `BITCOIN_NETWORK=${network}`,
     ...nodes.flat(),
-    `BITCOIND_RPC_URL=http://127.0.0.1:${hostPort(config, 'bitcoind', BITCOIND_RPC_PORT)}`,
+    `BITCOIND_RPC_URL=http://127.0.0.1:${hostPort(config, 'bitcoind', NETWORK_SPECS[network].rpcPort)}`,
     `BITCOIND_RPC_USER=${BITCOIND_RPC_USER}`,
     `BITCOIND_RPC_PASS=${BITCOIND_RPC_PASS}`,
   ];

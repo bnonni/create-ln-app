@@ -472,12 +472,16 @@ The C13.1 test (2026-11-01) found facts 9 to 15.
   - Exit: the facts are in this file. If the sync takes more than 1 hour or more than 20 GB, stop and ask the owner.
   - Risk: the device flow needs the owner to enter a code on GitHub. The Docker Hub and GitHub downloads fail sometimes.
   - Done: facts 9 to 15. The sync took 37.6 min and 10.8 GB, so it is in the limits. LND and CLN work on Mutinynet, but only if they start after the sync. The owner used the faucet web page, so the device flow and the token expiry are not tested.
-- [ ] **C13.2 Network option.** Add `--network` (decision 23).
+- [x] **C13.2 Network option.** Add `--network` (decision 23).
   - Do: the CLI writes `config.network` to `package.json`. `scripts/compose.ts` makes the Mutinynet services: the bitcoind image of C13.1, and the signet flags for LND and CLN. It stops if a node is Eclair. `scripts/env.ts` uses the `signet` data paths and writes `BITCOIN_NETWORK` to `.env`.
   - Do: use facts 9 to 12. Put the Dockerfile of fact 9 in `network/`. Add `-nodebuglogfile` to bitcoind, `--nobootstrap` to LND, and a size limit to the Docker logs. `npm run network` starts bitcoind first and shows the sync progress. It starts the nodes only after `initialblockdownload` is `false`.
   - Do: the `cli` job makes a project with `--network mutinynet --skip-install` and checks the compose file.
   - Read: `src/cli.ts`, `scripts/compose.ts`, `scripts/env.ts`, `scripts/nodes.ts`, and the `cli` job in `.github/workflows/ci.yml`.
   - Exit: lint, typecheck, build, and the sync check pass. The regtest compose file has no change. With `--network mutinynet`, `npm run network` starts, and the nodes sync.
+  - Done: `scripts/network.ts` reads `config.network` (default `regtest`). The CLI and `npm run compose` stop for Eclair on Mutinynet. The compose file tags the image of `network/mutinynet/Dockerfile` as `create-ln-app/mutinynet-bitcoind:2fda7bfc027e`, so all projects share one image.
+  - Done: inside the network, bitcoind uses the default RPC port of the chain: 18443 on regtest and 38332 on Mutinynet. LND needs this port on signet. CLN gets no dev options on Mutinynet (fact 11). The bitcoind health check has a 5 min start period, because the RPC calls fail for 15 s after a restart.
+  - Done: the new `npm run sync` runs in `npm run network` before the nodes start. It starts bitcoind and shows the progress until `initialblockdownload` is `false`. On a custom signet, `verificationprogress` is always 1, so the percent uses the block count. On Mutinynet, `bootstrap.ts` shows the faucet URL and funds nothing (C13.3). `env.ts` writes `BITCOIN_NETWORK`.
+  - Done: with the C13.1 chain, `npm run network` took 22 s, and LND and CLN synced to the tip in 30 s. A new chain synced 600,000 blocks in 4 min, and the progress lines were correct. The regtest compose file has no change. The integration test passes on the mix network.
 - [ ] **C13.3 Faucet and bootstrap.** Fund the nodes on Mutinynet (decision 24).
   - Do: add `scripts/faucet-login.ts` and `npm run faucet:login`. On Mutinynet, `scripts/bootstrap.ts` does not mine. It waits up to 15 min for confirmed funds. `scripts/reset.ts` keeps the bitcoind data on Mutinynet.
   - Read: `scripts/bootstrap.ts`, `scripts/reset.ts`, `scripts/doctor.ts`.

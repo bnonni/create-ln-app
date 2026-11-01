@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Make a new Lightning app project from a template folder of the package.
-// Usage: npx create-ln-app <project-dir> [--template <name>] [--nodes <n>] [--impl <impl>] [--skip-install]
+// Usage: npx create-ln-app <project-dir> [--template <name>] [--nodes <n>] [--impl <impl>] [--network <name>] [--skip-install]
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { basename, join, relative, resolve } from 'node:path';
@@ -25,13 +25,21 @@ const DEFAULT_IMPL: Impl = 'lnd';
 // For example "lnd, cln, or eclair".
 const IMPL_LIST = new Intl.ListFormat('en', { type: 'disjunction' }).format(Object.keys(IMPLS));
 const TEMPLATE_LIST = new Intl.ListFormat('en', { type: 'disjunction' }).format(Object.keys(TEMPLATES));
-const USAGE = `Usage: npx create-ln-app <project-dir> [--template <name>] [--nodes <n>] [--impl <impl>] [--skip-install]
+// The networks of scripts/network.ts in the template, with the names that the CLI shows.
+// On Mutinynet, the template can use only LND and CLN nodes (decision 23 in ROADMAP.md).
+const NETWORKS = { regtest: 'regtest', mutinynet: 'Mutinynet' } as const;
+type Network = keyof typeof NETWORKS;
+const DEFAULT_NETWORK: Network = 'regtest';
+const NETWORK_LIST = new Intl.ListFormat('en', { type: 'disjunction' }).format(Object.keys(NETWORKS));
+const USAGE = `Usage: npx create-ln-app <project-dir> [--template <name>] [--nodes <n>] [--impl <impl>] [--network <name>] [--skip-install]
 
 Options:
   --template <name>  Use this template: react-ts (React and TypeScript), react (React and JavaScript),
                      or next-ts (Next.js and TypeScript). The default is ${DEFAULT_TEMPLATE}.
   --nodes <n>        Make a network with n nodes, from ${MIN_NODES} to ${NODE_NAMES.length}. The default is ${DEFAULT_NODES}.
   --impl <impl>      Use this impl for all the nodes: ${IMPL_LIST}. cln is Core Lightning. The default is ${DEFAULT_IMPL}.
+  --network <name>   Use this Bitcoin network: regtest (a local chain) or mutinynet (a public signet with a block every 30 s).
+                     Mutinynet works only with lnd and cln. The default is ${DEFAULT_NETWORK}.
   --skip-install     Do not install the npm packages.
   -h, --help         Show this help.`;
 
@@ -56,6 +64,13 @@ function setName(file: string, name: string): void {
   json.name = name;
   // In package-lock.json, packages[""] is the root package.
   if (json.packages?.['']) json.packages[''].name = name;
+  writeFileSync(file, `${JSON.stringify(json, null, 2)}\n`);
+}
+
+// The template scripts read the network from the "config" field of package.json.
+function setNetwork(file: string, network: Network): void {
+  const json = JSON.parse(readFileSync(file, 'utf8'));
+  json.config.network = network;
   writeFileSync(file, `${JSON.stringify(json, null, 2)}\n`);
 }
 
@@ -88,6 +103,16 @@ function implName(value: string): Impl {
     throw new Error(`--impl ${value} is not valid. Fix: use ${IMPL_LIST}.`);
   }
   return value as Impl;
+}
+
+function networkName(value: string, impl: Impl): Network {
+  if (!Object.hasOwn(NETWORKS, value)) {
+    throw new Error(`--network ${value} is not valid. Fix: use ${NETWORK_LIST}.`);
+  }
+  if (value === 'mutinynet' && impl === 'eclair') {
+    throw new Error('On Mutinynet, the nodes can be only LND or CLN. Fix: use --impl lnd or --impl cln.');
+  }
+  return value as Network;
 }
 
 // Write the same format as the template file: one node on each line.
@@ -124,6 +149,7 @@ function main(): void {
       template: { type: 'string', default: DEFAULT_TEMPLATE },
       nodes: { type: 'string', default: DEFAULT_NODES },
       impl: { type: 'string', default: DEFAULT_IMPL },
+      network: { type: 'string', default: DEFAULT_NETWORK },
       'skip-install': { type: 'boolean' },
       help: { type: 'boolean', short: 'h' },
     },
@@ -141,6 +167,7 @@ function main(): void {
   const template = templateName(values.template);
   const count = nodeCount(values.nodes);
   const impl = implName(values.impl);
+  const network = networkName(values.network, impl);
   const target = resolve(positionals[0]);
   if (existsSync(target) && readdirSync(target).length > 0) {
     throw new Error(`${target} is not empty. Use a new or empty folder.`);
@@ -153,13 +180,14 @@ function main(): void {
   renameSync(join(target, 'gitignore'), join(target, '.gitignore'));
   setName(join(target, 'package.json'), name);
   setName(join(target, 'package-lock.json'), name);
+  setNetwork(join(target, 'package.json'), network);
   writeNodes(join(target, 'network', 'nodes.json'), count, impl);
   // The compose file gets the node list and a project name from the new package name.
   // The compose script uses only Node built-in modules, so it runs with --skip-install too.
   if (!run('npm', ['run', '--silent', 'compose'], target)) {
     throw new Error(`npm run compose failed. Fix the error, then run npm run compose in ${target}.`);
   }
-  console.log(`Made ${name} in ${target} from the ${template} template, with ${count} ${IMPLS[impl]} nodes.`);
+  console.log(`Made ${name} in ${target} from the ${template} template, with ${count} ${IMPLS[impl]} nodes on ${NETWORKS[network]}.`);
 
   initGit(target);
 
@@ -189,6 +217,10 @@ Next steps${ready ? '' : ' (do the fixes above first)'}:
 ${steps.map((step) => `  ${step}`).join('\n')}
 
 Then open ${appUrl(join(target, 'package.json'))}. See README.md for all commands.`);
+  if (network === 'mutinynet') {
+    console.log(`
+On Mutinynet, the first npm run dev downloads the chain: about 11 GB of disk and 40 min or more.`);
+  }
 }
 
 try {

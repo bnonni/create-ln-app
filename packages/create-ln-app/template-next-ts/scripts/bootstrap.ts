@@ -5,6 +5,7 @@ import { execFile } from 'node:child_process';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+import { readNetwork } from './network.ts';
 import { type Impl, type Node, readNodes } from './nodes.ts';
 
 const run = promisify(execFile);
@@ -127,6 +128,10 @@ async function mine(blocks: number, address: string): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  if ((await readNetwork()) === 'mutinynet') {
+    console.log('On Mutinynet, nothing mines blocks, so the bootstrap does not fund the nodes. Get test funds at https://faucet.mutinynet.com.');
+    return;
+  }
   const nodes = await readNodes();
   console.log('Wait for healthy containers.');
   await waitForHealthy(nodes.map((node) => node.name));
