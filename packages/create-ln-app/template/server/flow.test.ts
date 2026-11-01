@@ -2,6 +2,7 @@
 // Start the network before the test: `npm run network`.
 // The test sends the requests of a client to the API app in server/app.ts, in the same process.
 // The LNURL client sends HTTP requests. Thus the test also serves the app on a free port with node:http.
+// The API requests have the origin of this server. Thus a withdraw link from the API has the port of this server.
 // The test does not use @hono/node-server, so it runs in each template.
 // The flow runs in the 2 directions: alice pays bob, then bob pays alice. Thus each node is a payer and a payee.
 // To use a different node pair, set FLOW_NODES, for example `FLOW_NODES=alice,carol npm run test:integration`.
@@ -16,6 +17,7 @@ import { after, before, describe, test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { app, getClients } from './app.ts';
+import { bech32Decode, bech32Encode } from './bech32.ts';
 import type { LightningNode } from './nodes/types.ts';
 
 const ENV_FILE = fileURLToPath(new URL('../.env', import.meta.url));
@@ -28,6 +30,10 @@ const HASHED_MEMO = 'flow test with a memo hash';
 const MSAT_PER_SAT = 1000;
 const CONFIRMATION_BLOCKS = 6;
 const IMPLS = ['lnd', 'cln', 'eclair'];
+// The example LNURL of LUD-01 and its URL.
+const LUD01_LNURL =
+  'LNURL1DP68GURN8GHJ7UM9WFMXJCM99E3K7MF0V9CXJ0M385EKVCENXC6R2C35XVUKXEFCV5MKVV34X5EKZD3EV56NYD3HXQURZEPEXEJXXEPNXSCRVWFNV9NXZCN9XQ6XYEFHVGCXXCMYXYMNSERXFQ5FNS';
+const LUD01_URL = 'https://service.com/api?q=3fc3645b439ce8e7f2553a69e5267081d96dcd340693afabe04be7b0ccd178df';
 const [NODE_A, NODE_B, ...otherNodes] = (process.env.FLOW_NODES ?? 'alice,bob').split(',').map((name) => name.trim());
 if (!NODE_A || !NODE_B || NODE_A === NODE_B || otherNodes.length > 0) {
   throw new Error(`FLOW_NODES must be 2 different node names, for example alice,bob. It is: ${process.env.FLOW_NODES}`);
@@ -57,8 +63,11 @@ type Invoice = {
 
 type ApiResponse = { status: number; body: any };
 
+// The origin of the served app. The before hook sets it.
+let origin = 'http://localhost';
+
 async function api(method: string, path: string, body?: object): Promise<ApiResponse> {
-  const response = await app.request(`/api${path}`, {
+  const response = await app.request(`${origin}/api${path}`, {
     method,
     headers: body === undefined ? undefined : { 'content-type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -112,6 +121,13 @@ function nodeClient(name: string): LightningNode {
   return client;
 }
 
+test('bech32 decodes and encodes the LNURL example of LUD-01', () => {
+  assert.deepEqual(bech32Decode(LUD01_LNURL), { prefix: 'lnurl', text: LUD01_URL });
+  assert.equal(bech32Encode('lnurl', LUD01_URL), LUD01_LNURL.toLowerCase());
+  assert.throws(() => bech32Decode(LUD01_LNURL.replace('LNURL1', 'lnurl1')), /mixed case/);
+  assert.throws(() => bech32Decode(`${LUD01_LNURL.slice(0, -1)}T`), /bad checksum/);
+});
+
 describe('payment flow', () => {
   let server: Server;
   let host: string;
@@ -126,6 +142,7 @@ describe('payment flow', () => {
     getClients();
     server = await serveApp();
     host = `127.0.0.1:${(server.address() as AddressInfo).port}`;
+    origin = `http://${host}`;
   });
 
   after(() => server?.close());
@@ -293,6 +310,42 @@ describe('payment flow', () => {
         assert.equal(tooLarge.code, 'invalid_request');
         const unknown = await expectStatus(502, 'POST', path, { address: `nobody@${host}`, amountSats: INVOICE_SATS });
         assert.equal(unknown.code, 'lnurl_error');
+      });
+
+      // Decision 21: the payer makes the link, and the payee claims it.
+      test(`${payerName} makes a withdraw link, and ${payeeName} claims it one time`, async () => {
+        const link = await expectStatus(201, 'POST', `/nodes/${payerName}/withdraw-links`, { amountSats: INVOICE_SATS });
+        assert.match(link.lnurl, /^LNURL1[0-9A-Z]+$/);
+        assert.match(link.url, new RegExp(`^http://${host}/api/lnurlw/[0-9a-f]{64}$`));
+        assert.deepEqual(bech32Decode(link.lnurl), { prefix: 'lnurl', text: link.url });
+        assert.equal(link.amountSats, INVOICE_SATS);
+        assert.ok(Date.parse(link.expiresAt) > Date.now());
+
+        const withdrawRequest = await (await fetch(link.url)).json();
+        assert.equal(withdrawRequest.tag, 'withdrawRequest');
+        assert.equal(withdrawRequest.callback, `http://${host}/api/lnurlw/callback`);
+        assert.equal(withdrawRequest.maxWithdrawable, INVOICE_SATS * MSAT_PER_SAT);
+
+        const path = `/nodes/${payeeName}/withdrawals`;
+        const invoice: Invoice = await expectStatus(201, 'POST', path, { lnurl: link.lnurl });
+        assert.equal(invoice.status, 'settled');
+        assert.equal(invoice.amountPaidSats, INVOICE_SATS);
+        assert.equal(invoice.memo, `Withdraw from ${payerName}`);
+        const second = await expectStatus(502, 'POST', path, { lnurl: link.lnurl });
+        assert.equal(second.code, 'lnurl_error');
+        assert.match(second.error, /unknown, used, or expired/);
+      });
+
+      test(`${payeeName} cannot claim a bad withdraw link`, async () => {
+        const path = `/nodes/${payeeName}/withdrawals`;
+        const badLnurl = await expectStatus(400, 'POST', path, { lnurl: 'lnurl1xyz' });
+        assert.equal(badLnurl.code, 'invalid_request');
+        const notLnurl = await expectStatus(400, 'POST', path, { lnurl: bech32Encode('lnbc', 'http://localhost/') });
+        assert.equal(notLnurl.code, 'invalid_request');
+        const tooLarge = await expectStatus(400, 'POST', `/nodes/${payerName}/withdraw-links`, {
+          amountSats: CHANNEL_SATS + 1,
+        });
+        assert.equal(tooLarge.code, 'invalid_request');
       });
     });
   }

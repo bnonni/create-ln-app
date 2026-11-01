@@ -7,7 +7,14 @@ import { BitcoindClient, BitcoindError, bitcoindConfigFromEnv } from './bitcoind
 import { ClnClient, clnConfigFromEnv } from './nodes/cln.ts';
 import { EclairClient, eclairConfigFromEnv } from './nodes/eclair.ts';
 import { LndClient, lndConfigFromEnv } from './nodes/lnd.ts';
-import { addressInvoice, LnurlError, lnurlService } from './lnurl.ts';
+import {
+  addressInvoice,
+  claimWithdrawLink,
+  createWithdrawLink,
+  LnurlError,
+  lnurlService,
+  MAX_LNURL_SATS,
+} from './lnurl.ts';
 import { NodeError, type LightningNode, type NodeErrorCode } from './nodes/types.ts';
 
 // POST /api/mine mines to this address. Its witness program is 32 zero bytes, so no one can spend the coins.
@@ -168,6 +175,21 @@ api.post('/nodes/:name/address-payments', async (c) => {
   return c.json({ ...(await node.payInvoice(paymentRequest, PAYMENT_LIMITS)), paymentRequest }, 201);
 });
 
+// Makes a withdraw link (LUD-03). The node pays the invoice of the wallet that claims the link.
+// The link has the origin of this request, so a link from the Vite dev server also goes through the Vite proxy.
+api.post('/nodes/:name/withdraw-links', async (c) => {
+  const node = findNode(c.req.param('name'));
+  const amountSats = integerField(await readBody(c), 'amountSats', MAX_LNURL_SATS);
+  return c.json(createWithdrawLink(node, amountSats, new URL(c.req.url).origin), 201);
+});
+
+// Claims a withdraw link with an invoice of the node. The reply comes after the service pays the invoice.
+api.post('/nodes/:name/withdrawals', async (c) => {
+  const node = findNode(c.req.param('name'));
+  const lnurl = stringField(await readBody(c), 'lnurl', true);
+  return c.json(await claimWithdrawLink(node, lnurl), 201);
+});
+
 api.post('/mine', async (c) => {
   const blocks = integerField(await readBody(c), 'blocks', MAX_BLOCKS);
   const { bitcoind } = getClients();
@@ -175,7 +197,7 @@ api.post('/mine', async (c) => {
   return c.json({ height: await bitcoind.getBlockCount(), blockHashes });
 });
 
-app.route('/', lnurlService(findNode));
+app.route('/', lnurlService(findNode, PAYMENT_LIMITS));
 
 // Each error body has a code. server/API.md lists the codes.
 type ErrorBody = { error: string; code: NodeErrorCode | 'lnurl_error' | 'internal_error'; node?: string };
@@ -200,7 +222,7 @@ app.onError((error, c) => {
     const body: ErrorBody = { error: error.message, code: error.code, node: error.node };
     return c.json(body, NODE_ERROR_STATUS[error.code] ?? 502);
   }
-  // A Lightning Address service did not reply, or sent an error or a bad invoice.
+  // An LNURL service did not reply, or sent an error or a bad reply.
   if (error instanceof LnurlError) {
     return c.json({ error: error.message, code: 'lnurl_error' } satisfies ErrorBody, 502);
   }

@@ -26,6 +26,10 @@ The API is the same for each node implementation. Each node client in `server/no
 | `POST` | `/nodes/:name/payments` | `{ paymentRequest }` | 201 |
 | `POST` | `/nodes/:name/address-payments` | `{ address, amountSats }` | 201 |
 | `GET` | `/lnurlp/:name/callback?amount=<msat>` | none | 200 |
+| `POST` | `/nodes/:name/withdraw-links` | `{ amountSats }` | 201 |
+| `POST` | `/nodes/:name/withdrawals` | `{ lnurl }` | 201 |
+| `GET` | `/lnurlw/:k1` | none | 200 |
+| `GET` | `/lnurlw/callback?k1=<k1>&pr=<invoice>` | none | 200 |
 
 The server also serves `GET /.well-known/lnurlp/:name`, outside the base URL. See [Lightning Addresses](#lightning-addresses).
 
@@ -158,6 +162,28 @@ Pays a Lightning Address (LUD-16) from the node.
 - If the service does not reply or sends an error, the server sends 502 with the code `lnurl_error`.
 - The payment has the same limits and errors as `POST /nodes/:name/payments`.
 
+### `POST /nodes/:name/withdraw-links`
+
+Makes a withdraw link (LUD-03). The node pays the invoice of the wallet that claims the link.
+
+- Body: `{ "amountSats": 1000 }`. `amountSats` is an integer from 1 to 1,000,000.
+- Success: 201 `{ "lnurl": "LNURL1DP68...", "url": "http://localhost:3001/api/lnurlw/9f2c...", "amountSats": 1000, "expiresAt": "2026-10-31T18:40:00.000Z" }`.
+- `lnurl` is the bech32 encoding of `url` (LUD-01), in uppercase for a QR code. `url` has the origin of the request.
+- A link works one time, for 10 minutes. The server keeps the links in memory, so a restart deletes them.
+- The server does not check the balance of the node. If the payment fails, the server log has the error, and the link does not work again.
+
+### `POST /nodes/:name/withdrawals`
+
+Claims a withdraw link (LUD-03) with an invoice of the node.
+
+- Body: `{ "lnurl": "LNURL1DP68..." }`. The `lnurl` can start with `lightning:`.
+- Success: 201 with the settled invoice. The invoice has the same fields as in `GET /nodes/:name/invoices/:hash`.
+- The server gets the withdrawRequest from the URL in `lnurl`. The node makes an invoice for `maxWithdrawable`, in whole sats, with the memo `defaultDescription`. Then the server sends the invoice to the callback.
+- The service can reply before it pays (LUD-03). Thus the server waits until the invoice is settled, for a maximum of 60 seconds.
+- The server uses `http` only if the host is `localhost` or `127.0.0.1`, as in `POST /nodes/:name/address-payments`.
+- If `lnurl` is not a bech32 LNURL, the server sends 400 with the code `invalid_request`.
+- If the service does not reply, sends an error, or does not pay in 60 seconds, the server sends 502 with the code `lnurl_error`. A used link gives this error.
+
 ## Lightning Addresses
 
 The server is an LNURL-pay service (LUD-06 and LUD-16) for each node. The Lightning Address of a node is `<name>@<host>`, for example `bob@localhost:3001`. The host is the host of the request. The API server shows the addresses when it starts.
@@ -192,6 +218,39 @@ Makes an invoice on the node. `amount` is in millisatoshis.
 - The invoice has the SHA-256 hash of `metadata`, not a memo. Thus the memo of the invoice is `""` in `GET /nodes/:name/invoices/:hash`.
 - The nodes make invoices in whole sats. Thus `amount` must be a multiple of 1000.
 
+## Withdraw links
+
+The server is an LNURL-withdraw service (LUD-03). `POST /nodes/:name/withdraw-links` makes a link. A wallet claims the link with these 2 requests. `POST /nodes/:name/withdrawals` also sends them.
+
+- The replies have the same CORS header and the same error body as the Lightning Address replies.
+- A link that is unknown, used, or expired gives 404 `{ "status": "ERROR", "reason": "The withdraw link is unknown, used, or expired" }`.
+
+### `GET /lnurlw/:k1`
+
+Shows the withdrawRequest of the link. `k1` is 64 hex characters.
+
+```json
+{
+  "tag": "withdrawRequest",
+  "callback": "http://localhost:3001/api/lnurlw/callback",
+  "k1": "9f2c...",
+  "defaultDescription": "Withdraw from alice",
+  "minWithdrawable": 1000000,
+  "maxWithdrawable": 1000000
+}
+```
+
+- `minWithdrawable` and `maxWithdrawable` are in millisatoshis. They are the same, because the amount of a link is fixed.
+- The callback has the origin of the request.
+
+### `GET /lnurlw/callback?k1=<k1>&pr=<invoice>`
+
+The node of the link pays the invoice `pr`.
+
+- Success: 200 `{ "status": "OK" }`. The server replies before the payment ends (LUD-03).
+- The node decodes the invoice. If the invoice amount is not the link amount, the server sends 400, and the link works again.
+- After the success reply, the link does not work again.
+
 ## Errors
 
 An error body has this shape:
@@ -216,7 +275,7 @@ An error body has this shape:
 | `payment_failed` | 502 | The payment failed for a different reason. |
 | `node_error` | 502 | The node or bitcoind sent a different error. |
 | `node_unreachable` | 502 | The node or bitcoind did not reply. |
-| `lnurl_error` | 502 | The LNURL service of a Lightning Address did not reply, or sent an error or a bad invoice. |
+| `lnurl_error` | 502 | The LNURL service of a Lightning Address or a withdraw link did not reply, or sent an error or a bad reply. |
 | `internal_error` | 500 | The server has a bug. The server log has the details. |
 
 LND sends most errors as HTTP 500. Thus the server cannot tell a bad request from a node fault, and it sends `node_error` for both. Read `error` to find the cause. Examples of `node_error` errors for a bad request:
