@@ -97,6 +97,34 @@ jobs:
             done
           done
 
+      # The CI does not start Mutinynet (decision 23 in ROADMAP.md). The step checks the compose file and the Eclair stop.
+      - name: Make a Mutinynet project
+        working-directory: ${{ runner.temp }}
+        env:
+          DOCKER_HOST: tcp://127.0.0.1:1
+        run: |
+          tarball=$(ls create-ln-app-*.tgz)
+          npx --yes --package "./$tarball" create-ln-app cli-mutinynet --network mutinynet --skip-install
+          compose=cli-mutinynet/network/docker-compose.yml
+          for text in 'build: ./mutinynet' '-signet=1' '-nodebuglogfile' '--bitcoin.signet' '--nobootstrap' 'max-size: 10m'; do
+            if ! grep -q -- "$text" "$compose"; then
+              echo "The Mutinynet compose file has no $text."
+              exit 1
+            fi
+          done
+          if grep -q regtest "$compose"; then
+            echo "The Mutinynet compose file has regtest settings."
+            exit 1
+          fi
+          if [ ! -f cli-mutinynet/network/mutinynet/Dockerfile ]; then
+            echo "The Mutinynet project has no network/mutinynet/Dockerfile."
+            exit 1
+          fi
+          if npx --yes --package "./$tarball" create-ln-app cli-eclair --network mutinynet --impl eclair --skip-install; then
+            echo "The CLI made a Mutinynet project with Eclair nodes."
+            exit 1
+          fi
+
       # shellcheck gives the same result on each OS, so only Linux runs it.
       - name: Check the install script
         if: runner.os == 'Linux'
