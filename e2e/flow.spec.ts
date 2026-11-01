@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 // The test does the browser steps of the example app: select a node, connect a peer, open a channel,
-// mine blocks, request an invoice, and pay it.
+// mine blocks, request an invoice, pay it with WebLN, pay a Lightning Address, and send sats with a withdraw link.
 // Each run opens a new channel, so the test also passes if a channel already exists.
 const NODE = 'alice';
 const PEER = 'bob';
@@ -17,7 +17,7 @@ const runStep = async (page: Page, title: string, button: string, result: RegExp
   await expect(box.locator('.result, .error')).toHaveText(result);
 };
 
-test('a node pays an invoice from a peer over a new channel', async ({ page, request }) => {
+test('a node pays a peer over a new channel', async ({ page, request }) => {
   // If the network does not run, stop now. The failure message shows the API error.
   const nodes = await request.get('/api/nodes');
   expect(nodes, await nodes.text()).toBeOK();
@@ -47,9 +47,15 @@ test('a node pays an invoice from a peer over a new channel', async ({ page, req
   await expect(page.getByLabel('Payment request')).toHaveValue(/^lnbcrt/);
   await expect(page.getByText('Invoice status: open')).toBeVisible();
 
-  await runStep(page, '5. Pay', 'Pay invoice', new RegExp(`${NODE} paid 1,000 sats to ${PEER}`));
+  await runStep(page, '5. Pay', 'Pay invoice', new RegExp(`${NODE} paid 1,000 sats to ${PEER} with webln`));
   // Step 4 loads the invoice status each second.
   await expect(page.getByText('Invoice status: settled')).toBeVisible();
+
+  await runStep(page, '6. Pay', 'Pay address', new RegExp(`${NODE} paid 1,000 sats to ${PEER}@`));
+
+  await runStep(page, '7. Send', 'Make link', new RegExp(`${NODE} made a withdraw link for 1,000 sats`));
+  await expect(page.getByLabel('Withdraw link')).toHaveValue(/^LNURL1/);
+  await runStep(page, '7. Send', 'Claim link', new RegExp(`${PEER} claimed the link. ${NODE} paid 1,000 sats`));
 
   expect(pageErrors).toEqual([]);
 });

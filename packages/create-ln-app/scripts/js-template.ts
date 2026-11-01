@@ -75,13 +75,15 @@ function edit(file: string, from: string, to: string): void {
   writeFileSync(join(TARGET_DIR, file), text.replace(from, to));
 }
 
+type Package = { scripts: Record<string, string>; devDependencies: Record<string, string> };
+
 // Remove the TypeScript package and the type check script. Keep the @types packages for the editor, as create-vite does.
-function editPackage(file: string, change: (scripts: Record<string, string>) => void): void {
+function editPackage(file: string, change: (pkg: Package) => void): void {
   const path = join(TARGET_DIR, file);
-  const pkg = JSON.parse(readFileSync(path, 'utf8'));
+  const pkg: Package = JSON.parse(readFileSync(path, 'utf8'));
   delete pkg.devDependencies.typescript;
   delete pkg.scripts.typecheck;
-  change(pkg.scripts);
+  change(pkg);
   writeFileSync(path, `${JSON.stringify(pkg, null, 2)}\n`);
 }
 
@@ -103,8 +105,10 @@ async function main(): Promise<void> {
   }
 
   editPackage('package.json', () => {});
-  editPackage('frontend/package.json', (scripts) => {
-    scripts.build = scripts.build.replace('tsc -b && ', '');
+  editPackage('frontend/package.json', (pkg) => {
+    pkg.scripts.build = pkg.scripts.build.replace('tsc -b && ', '');
+    // Only the type import of src/webln.ts uses this package, and ts-blank-space removes that import.
+    delete pkg.devDependencies['@webbtc/webln-types'];
   });
   // The JavaScript template has no types, so these comments and docs point to server/API.md.
   edit(
