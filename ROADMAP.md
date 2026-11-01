@@ -402,12 +402,30 @@ The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and 
 
 1. `scripts/bootstrap.ts` funds the nodes with `generatetoaddress` and opens no channel. The user opens the channel and mines 6 blocks in the page (steps 2 and 3). The server has no network setting. 14 template files contain `regtest`.
 2. Default signet: a block every 10 min, 25 GB of blocks, and a first sync of 1-3 hours (unverified). Each faucet needs a captcha in the browser and gives 10,000 sats or less for each request. No faucet has an API that a script can call.
-3. Mutinynet is a custom signet with a block every 30 s. Its faucet (https://faucet.mutinynet.com) has an API, for example `POST /api/onchain` and `POST /api/channel`. The API needs a GitHub token (device flow, valid 31 days). It gives up to 1,000,000 sats in 24 hours for each user and each IP address. The Esplora API is at https://mutinynet.com/api.
+3. Mutinynet is a custom signet with a block every 30 s. Its faucet (https://faucet.mutinynet.com) has an API, for example `POST /api/onchain` and `POST /api/channel`. The API needs a token from the GitHub device flow (fact 14). It gives up to 1,000,000 sats in 24 hours for each user and each IP address. The Esplora API is at https://mutinynet.com/api.
 4. Stock Bitcoin Core cannot sync Mutinynet, because Core has no `signetblocktime`. The Mutinynet fork (https://github.com/benthecarman/bitcoin/releases) and Bitcoin Knots 29.x can sync it. The fork has no Docker image. The bitcoind settings: `signetchallenge=512102f7561d208dd9ae99bf497273e16f389bdbd6c4742ddb8e6b216e64fa2928ad8f51ae`, `addnode=45.79.52.207:38333`, `dnsseed=0`, and `signetblocktime=30`.
 5. LND must use `bitcoin.signet` and the bitcoind back end with no `signetchallenge`. With a challenge, the bitcoind back end fails. LND neutrino on Mutinynet is not released. CLN uses `network=signet`. The current Eclair needs Bitcoin Core 31 or later, `txindex=1`, and `signet-check-tx=""` on a custom signet. The template pins Eclair `0.11.0`, and nobody tested it on Mutinynet.
 6. Confirmations before a channel opens: LND 1 to 6 (scaled by the amount), CLN 1 on signet, and Eclair 8 (minimum 6 on each chain).
 7. LUD-01 allows only https with a real certificate, or http on onion. LUD-16 resolves `<user>@<domain>` with `GET https://<domain>/.well-known/lnurlp/<user>`. In LUD-06, the payer must check the invoice amount, and the description hash is no longer required. The research found no maintained JavaScript LNURL server library.
 8. WebLN (https://www.webln.guide) requires `enable`, `getInfo`, `makeInvoice`, and `sendPayment`. The types are in `@webbtc/webln-types`. A page can set its own `window.webln`.
+
+The C13.1 test (2026-11-01) found facts 9 to 15.
+
+9. **The bitcoind image.** A Dockerfile with 2 stages works. Stage 1 downloads the fork release `mutinynet-inq-template-hash` (`2fda7bfc027e`, Bitcoin Inquisition 29.2.0) and checks a fixed sha256 for amd64 and arm64. Stage 2 is `polarlightning/bitcoind:30.0` with the fork binaries first in `PATH`. So the entrypoint, the `USERID` and `GROUPID` settings, and the data path do not change. The build takes 10 s, and the image is 286 MB (19 MB more than the base). On arm64, the base image, the sha256, and the binary type are correct, but nobody ran the image on arm64 (unverified).
+10. **The first sync.** The flags are `-signet`, `-signetchallenge` (fact 4), `-signetblocktime=30`, `-addnode=45.79.52.207:38333`, `-dnsseed=0`, and `-rpcport=38332`, plus the regtest flags for RPC, ZMQ, and `-txindex=1`. On a machine with 16 CPU cores and an SSD, the sync to height 3,553,878 took 37.6 min. The data dir was 10.8 GB: blocks 9.0 GB, `debug.log` 823 MB, indexes 689 MB, and chainstate 139 MB. At the end, bitcoind used 2.6 GB of memory. The data dir is `signet/`, the same as for the default signet. A slower machine takes more time (unverified).
+11. **The node start.** LND 0.20.0 with `--bitcoin.signet --bitcoin.node=bitcoind --bitcoind.rpchost=bitcoind:38332` and no `signetchallenge` works. CLN 25.12 with `--network=signet --bitcoin-rpcport=38332` works. A node that starts during the bitcoind sync has problems:
+    - LND waits until the end of the sync. Then its RPC did not reply, and its shutdown stopped at "HTLC Switch shutting down" (seen once). A restart fixed it.
+    - CLN scans each block from the bitcoind height at its first start. It scans about 4,000 blocks a minute, so the full chain takes about 13 h.
+    - A new LND or CLN node that starts after the sync is ready in less than 30 s.
+12. **Logs.** LND tries the signet DNS seeds and logs "Unable to retrieve initial bootstrap peers" every few seconds. `--nobootstrap` stops it. bitcoind writes each new block to `debug.log`, and the Docker log gets the same lines. The template sets no size limit for the Docker log.
+13. **Fees and reserves.** After the sync, the fee estimates work: bitcoind `estimatesmartfee 6` gives 1.07 sat/vB, and LND and CLN give 268 sat/kw. CLN keeps `min-emergency-msat` (default 25,000 sats) in its wallet for anchor channels. LND keeps 10,000 sats for each anchor channel (not tested). So a node that opens the 100,000-sat channel of decision 25 needs at least 110,177 sats (LND) or 125,166 sats (CLN).
+14. **The faucet API** (source `MutinyWallet/mutinynet-faucet-rs`, read on 2026-11-01). The login has 3 steps:
+    1. `GET /auth/github/client_id` gives `{"client_id":"Ov23liIa6qfR9KtYHwUF"}`.
+    2. The GitHub device flow with this client ID and the scope `user:email` gives a GitHub token. The code is valid for 899 s, and the poll interval is 5 s.
+    3. `POST /auth/github/device` with `{"code":"<GitHub token>"}` gives `{"token":"<JWT>"}`.
+
+    Then `POST /api/onchain` with `{"address","sats"}` and `Authorization: Bearer <JWT>` gives `{"txid","address"}`. With no token, it gives HTTP 401. The source sets a JWT expiry of 24 hours, but the faucet page `/auth.md` says 31 days. Nobody completed the login, so the real expiry is not known. The faucet also accepts L402 (a mainnet Lightning payment) in place of a token.
+15. **The funds.** The owner requested 1,000,000 sats on the faucet web page for the test LND node (txid `71647ae6c24e34b5ad75da7041cca8718ebc5cfe3ab920ef8c3276e8f3324a89`). LND showed the confirmed balance after 1 block. The funds stay in this test wallet for all M13 tests. Before a test deletes a node wallet, the test sends its funds back to this wallet. The M13 tests need 602,178 sats: 3 nodes with 200,000 sats each, plus 2,178 sats of fees.
 
 ### M12: Examples (branch `m12-examples`)
 
@@ -448,13 +466,15 @@ The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and 
 
 ### M13: Mutinynet (branch `m13-mutinynet`)
 
-- [ ] **C13.1 Mutinynet test: bitcoind, sync, and faucet.** Test the parts before a template change. Add the results to "Facts for signet and the examples".
+- [x] **C13.1 Mutinynet test: bitcoind, sync, and faucet.** Test the parts before a template change. Add the results to "Facts for signet and the examples".
   - Do: in a scratch folder, make a bitcoind image for Mutinynet. Use a Dockerfile that downloads the fork release and checks a fixed sha256, or a Knots image. Measure the first sync time and the disk size.
   - Do: start one LND node (`bitcoin.signet`, bitcoind back end) and one CLN node (`network=signet`) on it. Get a faucet token with the device flow, and fund the LND node with `POST /api/onchain`.
   - Exit: the facts are in this file. If the sync takes more than 1 hour or more than 20 GB, stop and ask the owner.
   - Risk: the device flow needs the owner to enter a code on GitHub. The Docker Hub and GitHub downloads fail sometimes.
+  - Done: facts 9 to 15. The sync took 37.6 min and 10.8 GB, so it is in the limits. LND and CLN work on Mutinynet, but only if they start after the sync. The owner used the faucet web page, so the device flow and the token expiry are not tested.
 - [ ] **C13.2 Network option.** Add `--network` (decision 23).
   - Do: the CLI writes `config.network` to `package.json`. `scripts/compose.ts` makes the Mutinynet services: the bitcoind image of C13.1, and the signet flags for LND and CLN. It stops if a node is Eclair. `scripts/env.ts` uses the `signet` data paths and writes `BITCOIN_NETWORK` to `.env`.
+  - Do: use facts 9 to 12. Put the Dockerfile of fact 9 in `network/`. Add `-nodebuglogfile` to bitcoind, `--nobootstrap` to LND, and a size limit to the Docker logs. `npm run network` starts bitcoind first and shows the sync progress. It starts the nodes only after `initialblockdownload` is `false`.
   - Do: the `cli` job makes a project with `--network mutinynet --skip-install` and checks the compose file.
   - Read: `src/cli.ts`, `scripts/compose.ts`, `scripts/env.ts`, `scripts/nodes.ts`, and the `cli` job in `.github/workflows/ci.yml`.
   - Exit: lint, typecheck, build, and the sync check pass. The regtest compose file has no change. With `--network mutinynet`, `npm run network` starts, and the nodes sync.
@@ -462,7 +482,9 @@ The owner confirmed decisions 6 to 8 (2026-10-28), decision 9 (2026-10-29), and 
   - Do: add `scripts/faucet-login.ts` and `npm run faucet:login`. On Mutinynet, `scripts/bootstrap.ts` does not mine. It waits up to 15 min for confirmed funds. `scripts/reset.ts` keeps the bitcoind data on Mutinynet.
   - Read: `scripts/bootstrap.ts`, `scripts/reset.ts`, `scripts/doctor.ts`.
   - Exit: lint, typecheck, and the sync check pass. On Mutinynet, `npm run bootstrap` funds 3 LND nodes. On regtest, the E2E test passes.
+  - Do: test `npm run faucet:login` with `GET /api/limits`. This call needs the token but sends no funds. Find the real token expiry (fact 14). Fund the test nodes from the test wallet of fact 15, not from a new faucet request.
   - Risk: the faucet limit is 1,000,000 sats in 24 hours. With 200,000 sats for each node, 6 or more nodes need a second day.
+  - Risk: `npm run reset` deletes the node wallets and their faucet funds. Ask the owner what reset must do with funds on Mutinynet.
 - [ ] **C13.4 Server and page on Mutinynet.** Make the API and the page work with no mining (decision 25).
   - Do: add `GET /api/network`. On Mutinynet, `POST /api/mine` returns an error, and the server does not use the `bcrt1` burn address. Step 3 waits until the channel is active, and the channel is 100,000 sats.
   - Read: `server/app.ts`, `server/API.md`, `frontend/src/components/Page.tsx`, `frontend/src/api.ts`.
