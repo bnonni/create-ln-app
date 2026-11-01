@@ -53,7 +53,7 @@ The `dev` command starts 1 bitcoind node and the Lightning nodes in `network/nod
 
 ## Make your own Lapp
 
-The example app shows the steps of a Lightning payment: connect to a peer, open a channel, mine blocks, request an invoice, and pay it with WebLN. Then the selected node pays a Lightning Address and sends sats with a withdraw link (LNURL). The steps are in `src/components/Page.tsx`. Each step has a comment that starts with "Your feature". The comment gives an idea for a change. `src/webln.ts` tells how to use a WebLN wallet extension.
+The example app shows the steps of a Lightning payment: connect to a peer, open a channel, mine blocks, request an invoice, and pay it with WebLN. Then the selected node pays a Lightning Address and sends sats with a withdraw link (LNURL). The steps are in `src/components/Page.tsx`. Each step has a comment that starts with "Your feature". The comment gives an idea for a change. `src/webln.ts` tells how to use a WebLN wallet extension. To pay with a WebLN extension or a wallet app, see [Use a real wallet](https://github.com/bnonni/create-ln-app/blob/master/docs/real-wallet.md).
 
 ## Help
 

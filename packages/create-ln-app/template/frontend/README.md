@@ -22,4 +22,4 @@ To start the regtest network, the API server, and the app together, run `npm run
 
 Step 5 pays the invoice with WebLN (https://www.webln.guide). `src/webln.ts` is a WebLN provider for development: the selected node is the wallet. It has the 4 calls that each WebLN provider has: `enable`, `getInfo`, `makeInvoice`, and `sendPayment`.
 
-A wallet extension, for example Alby, sets `window.webln`. To pay with the wallet of the user, call `window.webln.enable()`, then use `window.webln` in place of `nodeProvider(name)`. The wallet must be on the same network as the invoice.
+A wallet extension, for example Alby, sets `window.webln`. To pay with the wallet of the user, call `window.webln.enable()`, then use `window.webln` in place of `nodeProvider(name)`. The wallet must be on the same network as the invoice. See [Use a real wallet](https://github.com/bnonni/create-ln-app/blob/master/docs/real-wallet.md).
