@@ -17,6 +17,7 @@ The API is the same for each node implementation. Each node client in `server/no
 | Method | Path | Body | Success |
 | --- | --- | --- | --- |
 | `GET` | `/health` | none | 200 |
+| `GET` | `/network` | none | 200 |
 | `GET` | `/nodes` | none | 200 |
 | `POST` | `/nodes/:name/peers` | `{ peer }` | 200 |
 | `POST` | `/nodes/:name/channels` | `{ peer, amountSats }` | 201 |
@@ -40,6 +41,17 @@ Shows that the server runs. The server does not call the nodes for this endpoint
 ```json
 { "status": "ok" }
 ```
+
+### `GET /network`
+
+Shows the Bitcoin network of the nodes. The server reads `BITCOIN_NETWORK` in `.env`, and `npm run env` writes it.
+
+```json
+{ "network": "regtest" }
+```
+
+- `network` is `regtest` or `mutinynet`. If `.env` has no `BITCOIN_NETWORK`, the network is `regtest`.
+- On `mutinynet`, `POST /mine` gives an error. Poll `GET /nodes` until a channel is `active`.
 
 ### `GET /nodes`
 
@@ -91,13 +103,14 @@ Opens a channel from the node to a peer. The node funds the channel from its on-
 - Success: 201 `{ "channelPoint": "<txid>:<index>", "peer": "bob", "peerPubkey": "03cd..." }`.
 - Connect the nodes with `POST /nodes/:name/peers` before you open the channel. If the nodes are not connected, the node rejects the request.
 - LND rejects a channel of less than 20,000 sats.
-- The channel is `pending` until its funding transaction confirms. Mine 6 blocks to make it `active`.
+- The channel is `pending` until its funding transaction confirms. On regtest, mine 6 blocks to make it `active`. On Mutinynet, a block comes about every 30 s, and the channel is `active` after 1 to 6 blocks.
 
 ### `POST /mine`
 
 Mines blocks on the regtest chain.
 
 - Body: `{ "blocks": 6 }`. `blocks` is an integer from 1 to 1000.
+- On Mutinynet, the server sends 409 with the code `conflict`, and it mines no blocks.
 - Success: 200 `{ "height": 109, "blockHashes": ["..."] }`.
 - The block rewards go to a burn address. No node gets them.
 - The server does not wait for the nodes to sync. To see a change, poll `GET /nodes`. A channel is `active` about 1 second after the blocks.
@@ -269,7 +282,7 @@ An error body has this shape:
 | --- | --- | --- |
 | `invalid_request` | 400 | The server or the node rejected a value in the body or the path. |
 | `not_found` | 404 | The node, the path, or the object (for example, an invoice) does not exist. |
-| `conflict` | 409 | The request conflicts with the node state, for example the invoice is already paid. |
+| `conflict` | 409 | The request conflicts with the node state, for example the invoice is already paid, or `POST /mine` on Mutinynet. |
 | `no_route` | 502 | The payment found no route to the payee. |
 | `insufficient_balance` | 502 | The channels do not have the balance for the payment. |
 | `payment_timeout` | 502 | The payment did not succeed in 60 seconds. |

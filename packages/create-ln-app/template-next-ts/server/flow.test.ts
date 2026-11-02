@@ -1,4 +1,4 @@
-// Integration test: the full payment flow against the live regtest network.
+// Integration test: the full payment flow against the live regtest network. On Mutinynet, the test stops before the flow.
 // Start the network before the test: `npm run network`.
 // The test sends the requests of a client to the API app in server/app.ts, in the same process.
 // The LNURL client sends HTTP requests. Thus the test also serves the app on a free port with node:http.
@@ -140,6 +140,19 @@ test('the LNURL service URLs have the scheme of X-Forwarded-Proto and the Host h
   assert.equal(origin({ host: 'bad host' }), 'http://localhost:3000');
 });
 
+test('GET /network shows BITCOIN_NETWORK, and POST /mine fails on mutinynet', async () => {
+  const saved = process.env.BITCOIN_NETWORK;
+  process.env.BITCOIN_NETWORK = 'mutinynet';
+  try {
+    assert.deepEqual(await expectStatus(200, 'GET', '/network'), { network: 'mutinynet' });
+    const error = await expectStatus(409, 'POST', '/mine', { blocks: 1 });
+    assert.equal(error.code, 'conflict');
+  } finally {
+    if (saved === undefined) delete process.env.BITCOIN_NETWORK;
+    else process.env.BITCOIN_NETWORK = saved;
+  }
+});
+
 describe('payment flow', () => {
   let server: Server;
   let host: string;
@@ -155,6 +168,8 @@ describe('payment flow', () => {
     server = await serveApp();
     host = `127.0.0.1:${(server.address() as AddressInfo).port}`;
     origin = `http://${host}`;
+    const { network } = await expectStatus(200, 'GET', '/network');
+    if (network !== 'regtest') throw new Error(`The test mines blocks, so it works only on regtest. The network is ${network}.`);
   });
 
   after(() => server?.close());

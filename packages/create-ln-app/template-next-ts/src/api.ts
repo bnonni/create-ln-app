@@ -1,6 +1,9 @@
 // A typed client for the API server. The contract is in server/API.md.
 // Each request goes to /api on the origin of the page.
 
+// The Bitcoin network of the nodes. On mutinynet, the server cannot mine blocks.
+export type Network = 'regtest' | 'mutinynet';
+
 export type ChannelStatus = 'pending' | 'active' | 'inactive';
 
 export type Channel = {
@@ -97,6 +100,8 @@ async function request<T>(method: 'GET' | 'POST', path: string, body?: object): 
 const node = (name: string) => `/nodes/${encodeURIComponent(name)}`;
 
 export const getHealth = () => request<{ status: 'ok' }>('GET', '/health');
+
+export const getNetwork = () => request<{ network: Network }>('GET', '/network');
 
 export const getNodes = () => request<LightningNode[]>('GET', '/nodes');
 
