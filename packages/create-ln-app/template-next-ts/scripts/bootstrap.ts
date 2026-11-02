@@ -1,93 +1,29 @@
-// Fund the Lightning nodes on the local regtest network and wait for chain sync.
+// Fund the Lightning nodes and wait for chain sync.
+// On regtest, the script mines blocks to the nodes. On Mutinynet, nothing mines blocks, so the funds come from the faucet.
+// With a faucet token (npm run faucet:login), the script requests the funds. With no token, it shows the node addresses.
+// Then it waits up to 15 min for the confirmed funds.
 // Start the network first: docker compose -f network/docker-compose.yml up -d
 // You can run this script again. It does not fund a node that has a balance.
-import { execFile } from 'node:child_process';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { fileURLToPath } from 'node:url';
-import { promisify } from 'node:util';
-import { readNetwork } from './network.ts';
-import { type Impl, type Node, readNodes } from './nodes.ts';
+import { errorText, FAUCET_URL, readToken, requestOnchain, tokenExpiry } from './faucet.ts';
+import { type NetworkSpec, NETWORK_SPECS, readNetwork } from './network.ts';
+import { type Node, readNodes } from './nodes.ts';
+import { bitcoinCli, compose, type Wallet, wallets } from './wallets.ts';
 
-const run = promisify(execFile);
-
-const COMPOSE_FILE = fileURLToPath(new URL('../network/docker-compose.yml', import.meta.url));
-const BITCOIN_CLI = ['bitcoin-cli', '-regtest', '-rpcuser=polaruser', '-rpcpassword=polarpass'];
 // A wallet can spend a coinbase output only after 100 confirmations.
 const MATURITY_BLOCKS = 100;
 const TIMEOUT_MS = 120_000;
 const POLL_MS = 1_000;
-// The compose file sets this Eclair API password.
-const ECLAIR_API_PASSWORD = 'eclairpw';
+// The amount for each node on Mutinynet. It is sufficient for the 100,000-sat channel of the page and the fees.
+// The faucet gives up to 1,000,000 sats in 24 hours.
+const FAUCET_SATS = 200_000;
+// A Mutinynet block comes every 30 s. The time also lets you use the faucet page.
+const FUND_TIMEOUT_MS = 15 * 60_000;
+const FUND_POLL_MS = 5_000;
 
+type Chain = NetworkSpec['chain'];
 type ContainerState = { Service: string; Health: string };
-type LndInfo = { synced_to_chain: boolean; block_height: number };
-type LndBalance = { confirmed_balance: string };
-type LndAddress = { address: string };
-// CLN shows a warning in getinfo while it or bitcoind syncs.
-type ClnInfo = { blockheight: number; warning_bitcoind_sync?: string; warning_lightningd_sync?: string };
-type ClnFunds = { outputs: { amount_msat: number; status: string }[] };
-// CLN 25.12 signs a coinbase output to its bech32 address with the wrong key, so a channel open fails. A p2tr output works.
-type ClnAddress = { p2tr: string };
-// Eclair shows the balance of its bitcoind wallet in sats.
-type EclairBalance = { confirmed: number };
-type EclairInfo = { blockHeight: number };
-
-// The wallet calls for one impl. A balance is in sats.
-type Wallet = {
-  balance: (node: string) => Promise<number>;
-  newAddress: (node: string) => Promise<string>;
-  synced: (node: string, height: number) => Promise<boolean>;
-};
-
-async function compose(...args: string[]): Promise<string> {
-  const { stdout } = await run('docker', ['compose', '-f', COMPOSE_FILE, ...args]);
-  return stdout.trim();
-}
-
-function bitcoinCli(...args: string[]): Promise<string> {
-  return compose('exec', '-T', 'bitcoind', ...BITCOIN_CLI, ...args);
-}
-
-async function lncli<T>(node: string, ...args: string[]): Promise<T> {
-  return JSON.parse(await compose('exec', '-T', '-u', 'lnd', node, 'lncli', '-n', 'regtest', ...args)) as T;
-}
-
-async function lightningCli<T>(node: string, ...args: string[]): Promise<T> {
-  return JSON.parse(await compose('exec', '-T', '-u', 'clightning', node, 'lightning-cli', '--network=regtest', ...args)) as T;
-}
-
-// eclair-cli shows a string result with no quotes, so the function does not parse the output.
-function eclairCli(node: string, ...args: string[]): Promise<string> {
-  return compose('exec', '-T', node, 'eclair-cli', '-p', ECLAIR_API_PASSWORD, ...args);
-}
-
-const WALLETS: Record<Impl, Wallet> = {
-  lnd: {
-    balance: async (node) => Number((await lncli<LndBalance>(node, 'walletbalance')).confirmed_balance),
-    newAddress: async (node) => (await lncli<LndAddress>(node, 'newaddress', 'p2wkh')).address,
-    synced: async (node, height) => {
-      const info = await lncli<LndInfo>(node, 'getinfo');
-      return info.synced_to_chain && info.block_height >= height;
-    },
-  },
-  cln: {
-    balance: async (node) => {
-      const { outputs } = await lightningCli<ClnFunds>(node, 'listfunds');
-      const msat = outputs.filter((output) => output.status === 'confirmed').reduce((sum, output) => sum + output.amount_msat, 0);
-      return Math.floor(msat / 1000);
-    },
-    newAddress: async (node) => (await lightningCli<ClnAddress>(node, 'newaddr', 'p2tr')).p2tr,
-    synced: async (node, height) => {
-      const info = await lightningCli<ClnInfo>(node, 'getinfo');
-      return !info.warning_bitcoind_sync && !info.warning_lightningd_sync && info.blockheight >= height;
-    },
-  },
-  eclair: {
-    balance: async (node) => (JSON.parse(await eclairCli(node, 'onchainbalance')) as EclairBalance).confirmed,
-    newAddress: (node) => eclairCli(node, 'getnewaddress'),
-    synced: async (node, height) => (JSON.parse(await eclairCli(node, 'getinfo')) as EclairInfo).blockHeight >= height,
-  },
-};
+type WalletOf = (node: Node) => Wallet;
 
 async function waitFor(goal: string, check: () => Promise<boolean>): Promise<void> {
   const deadline = Date.now() + TIMEOUT_MS;
@@ -115,54 +51,124 @@ async function waitForHealthy(nodes: string[]): Promise<void> {
   });
 }
 
-function balance(node: Node): Promise<number> {
-  return WALLETS[node.impl].balance(node.name);
-}
-
-function newAddress(node: Node): Promise<string> {
-  return WALLETS[node.impl].newAddress(node.name);
-}
-
 async function mine(blocks: number, address: string): Promise<void> {
-  await bitcoinCli('generatetoaddress', String(blocks), address);
+  await bitcoinCli('regtest', 'generatetoaddress', String(blocks), address);
 }
 
-async function main(): Promise<void> {
-  if ((await readNetwork()) === 'mutinynet') {
-    console.log('On Mutinynet, nothing mines blocks, so the bootstrap does not fund the nodes. Get test funds at https://faucet.mutinynet.com.');
-    return;
+async function waitForSync(chain: Chain, nodes: Node[], wallet: WalletOf): Promise<void> {
+  console.log('Wait for chain sync.');
+  const height = Number(await bitcoinCli(chain, 'getblockcount'));
+  for (const node of nodes) {
+    await waitFor(`${node.name} syncs to block ${height}`, () => wallet(node).synced(node.name, height));
   }
-  const nodes = await readNodes();
-  console.log('Wait for healthy containers.');
-  await waitForHealthy(nodes.map((node) => node.name));
+}
 
+async function mineFunds(nodes: Node[], wallet: WalletOf): Promise<void> {
   const unfunded: Node[] = [];
   for (const node of nodes) {
-    if ((await balance(node)) === 0) unfunded.push(node);
+    if ((await wallet(node).balance(node.name)) === 0) unfunded.push(node);
   }
 
   if (unfunded.length > 0) {
     console.log(`Fund ${unfunded.map((node) => node.name).join(', ')}.`);
     let address = '';
     for (const node of unfunded) {
-      address = await newAddress(node);
+      address = await wallet(node).newAddress(node.name);
       await mine(1, address);
     }
     await mine(MATURITY_BLOCKS, address);
   } else {
     // bitcoind stays in initial block download while the tip is more than 24 hours old.
     // The nodes do not sync during initial block download, so 1 new block is necessary.
-    const { initialblockdownload } = JSON.parse(await bitcoinCli('getblockchaininfo')) as { initialblockdownload: boolean };
-    if (initialblockdownload) await mine(1, await newAddress(nodes[0]));
+    const { initialblockdownload } = JSON.parse(await bitcoinCli('regtest', 'getblockchaininfo')) as { initialblockdownload: boolean };
+    if (initialblockdownload) await mine(1, await wallet(nodes[0]).newAddress(nodes[0].name));
   }
 
-  console.log('Wait for chain sync.');
-  const height = Number(await bitcoinCli('getblockcount'));
+  await waitForSync('regtest', nodes, wallet);
   for (const node of nodes) {
-    await waitFor(`${node.name} syncs to block ${height}`, () => WALLETS[node.impl].synced(node.name, height));
-    await waitFor(`${node.name} has a confirmed balance`, async () => (await balance(node)) > 0);
-    console.log(`${node.name}: ${await balance(node)} sats`);
+    await waitFor(`${node.name} has a confirmed balance`, async () => (await wallet(node).balance(node.name)) > 0);
+    console.log(`${node.name}: ${await wallet(node).balance(node.name)} sats`);
   }
+}
+
+// The faucet token, or undefined if there is no token or if the token expired.
+function usableToken(): string | undefined {
+  const token = readToken();
+  const expiry = token ? tokenExpiry(token) : undefined;
+  if (expiry && expiry.getTime() <= Date.now()) {
+    console.log(`The faucet token expired on ${expiry.toISOString()}. To get a new token, run npm run faucet:login.`);
+    return undefined;
+  }
+  return token;
+}
+
+// Request the funds from the faucet. Return a line with the address of each node that the faucet did not fund.
+async function requestFunds(unfunded: Node[], wallet: WalletOf): Promise<string[]> {
+  let token = usableToken();
+  const lines: string[] = [];
+  for (const node of unfunded) {
+    const address = await wallet(node).newAddress(node.name);
+    if (token) {
+      try {
+        const { txid } = await requestOnchain(token, address, FAUCET_SATS);
+        console.log(`The faucet sent ${FAUCET_SATS.toLocaleString('en')} sats to ${node.name} in transaction ${txid}.`);
+        continue;
+      } catch (error) {
+        // A request after a failed request fails too, for example at the daily limit.
+        console.log(`The faucet request for ${node.name} failed. ${errorText(error)}`);
+        token = undefined;
+      }
+    }
+    lines.push(`  ${node.name}: ${address}`);
+  }
+  return lines;
+}
+
+async function waitForFunds(unfunded: Node[], wallet: WalletOf): Promise<void> {
+  console.log(`Wait up to ${FUND_TIMEOUT_MS / 60_000} min for confirmed funds. A block comes every 30 s.`);
+  const deadline = Date.now() + FUND_TIMEOUT_MS;
+  let waiting = unfunded;
+  while (waiting.length > 0) {
+    const funded = await Promise.all(waiting.map(async (node) => (await wallet(node).balance(node.name)) > 0));
+    waiting = waiting.filter((_, i) => !funded[i]);
+    if (waiting.length === 0) return;
+    if (Date.now() > deadline) {
+      throw new Error(`Timeout: ${waiting.map((node) => node.name).join(', ')} got no confirmed funds. Fix: send funds to the addresses above, then run npm run network again.`);
+    }
+    await sleep(FUND_POLL_MS);
+  }
+}
+
+async function faucetFunds(nodes: Node[], wallet: WalletOf): Promise<void> {
+  await waitForSync('signet', nodes, wallet);
+  const unfunded: Node[] = [];
+  for (const node of nodes) {
+    if ((await wallet(node).funds(node.name)) === 0) unfunded.push(node);
+  }
+
+  if (unfunded.length > 0) {
+    const lines = await requestFunds(unfunded, wallet);
+    if (lines.length > 0) {
+      console.log(`Send test funds to these addresses. ${FAUCET_SATS.toLocaleString('en')} sats for each node are sufficient.
+${lines.join('\n')}
+Use the faucet page ${FAUCET_URL} or a different Mutinynet wallet.`);
+      if (!readToken()) console.log('To let the bootstrap request the funds, run npm run faucet:login.');
+    }
+    await waitForFunds(unfunded, wallet);
+  }
+  for (const node of nodes) {
+    console.log(`${node.name}: ${await wallet(node).funds(node.name)} sats`);
+  }
+}
+
+async function main(): Promise<void> {
+  const network = await readNetwork();
+  const nodeWallets = wallets(NETWORK_SPECS[network].chain);
+  const wallet: WalletOf = (node) => nodeWallets[node.impl];
+  const nodes = await readNodes();
+  console.log('Wait for healthy containers.');
+  await waitForHealthy(nodes.map((node) => node.name));
+  await (network === 'mutinynet' ? faucetFunds(nodes, wallet) : mineFunds(nodes, wallet));
 }
 
 try {

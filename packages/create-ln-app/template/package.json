@@ -21,6 +21,7 @@
     "reset": "node scripts/reset.ts",
     "doctor": "npm run compose && node scripts/doctor.ts",
     "bootstrap": "node scripts/bootstrap.ts",
+    "faucet:login": "node scripts/faucet-login.ts",
     "env": "node scripts/env.ts",
     "build": "npm --prefix frontend run build",
     "lint": "npm --prefix frontend run lint",
