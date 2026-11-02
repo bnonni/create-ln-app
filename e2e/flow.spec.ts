@@ -1,26 +1,40 @@
 import { expect, test, type Page } from '@playwright/test';
 
 // The test does the browser steps of the example app: select a node, connect a peer, open a channel,
-// mine blocks, request an invoice, pay it with WebLN, pay a Lightning Address, and send sats with a withdraw link.
+// confirm it, request an invoice, pay it with WebLN, pay a Lightning Address, and send sats with a withdraw link.
 // Each run opens a new channel, so the test also passes if a channel already exists.
-const NODE = 'alice';
-const PEER = 'bob';
+// On regtest, step 3 mines blocks. On Mutinynet, step 3 waits for the blocks, so the test can take 10 min.
+// To use a different node pair, set FLOW_NODES, for example `FLOW_NODES=bob,alice npm run test:e2e`.
+const [NODE, PEER, ...otherNodes] = (process.env.FLOW_NODES ?? 'alice,bob').split(',').map((name) => name.trim());
+if (!NODE || !PEER || NODE === PEER || otherNodes.length > 0) {
+  throw new Error(`FLOW_NODES must be 2 different node names, for example alice,bob. It is: ${process.env.FLOW_NODES}`);
+}
+// The channel size and the invoice prefix of each network (see frontend/src/components/Page.tsx).
+const NETWORKS: Record<string, { channel: string; invoice: RegExp }> = {
+  regtest: { channel: '1,000,000', invoice: /^lnbcrt/ },
+  mutinynet: { channel: '100,000', invoice: /^lntbs/ },
+};
+const MUTINYNET_WAIT_MS = 10 * 60_000;
 
 // The box of one step. `title` is the start of the step text, for example "1. Connect".
 const step = (page: Page, title: string) => page.locator('.step', { hasText: title });
 
 // Click the button of a step, then wait for the result text.
 // If the step shows an API error, the failure message shows the error text.
-const runStep = async (page: Page, title: string, button: string, result: RegExp) => {
+const runStep = async (page: Page, title: string, button: string, result: RegExp, timeout?: number) => {
   const box = step(page, title);
   await box.getByRole('button', { name: button }).click();
-  await expect(box.locator('.result, .error')).toHaveText(result);
+  await expect(box.locator('.result, .error')).toHaveText(result, { timeout });
 };
 
 test('a node pays a peer over a new channel', async ({ page, request }) => {
   // If the network does not run, stop now. The failure message shows the API error.
   const nodes = await request.get('/api/nodes');
   expect(nodes, await nodes.text()).toBeOK();
+  const { network } = await (await request.get('/api/network')).json();
+  const expected = NETWORKS[network];
+  expect(expected, `unknown network: ${network}`).toBeDefined();
+  if (network === 'mutinynet') test.setTimeout(MUTINYNET_WAIT_MS + 120_000);
 
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -32,9 +46,13 @@ test('a node pays a peer over a new channel', async ({ page, request }) => {
   await page.locator('#peer-select').selectOption(PEER);
   await runStep(page, '1. Connect', 'Connect', new RegExp(`${NODE} is connected to ${PEER}`));
 
-  await runStep(page, '2. Open', 'Open channel', new RegExp(`${NODE} opened a 1,000,000 sat channel to ${PEER}`));
+  await runStep(page, '2. Open', 'Open channel', new RegExp(`${NODE} opened a ${expected.channel} sat channel to ${PEER}`));
 
-  await runStep(page, '3. Mine', 'Mine blocks', /bitcoind mined 6 blocks/);
+  if (network === 'mutinynet') {
+    await runStep(page, '3. Wait', 'Wait for channel', /is active/, MUTINYNET_WAIT_MS);
+  } else {
+    await runStep(page, '3. Mine', 'Mine blocks', /bitcoind mined 6 blocks/);
+  }
   // LND needs some time to see the blocks. Load the nodes again until no channel is pending.
   const nodeInfo = page.locator('.node-info');
   await expect(async () => {
@@ -44,7 +62,7 @@ test('a node pays a peer over a new channel', async ({ page, request }) => {
   }).toPass();
 
   await runStep(page, '4. Request', 'Request invoice', new RegExp(`${PEER} made an invoice for 1,000 sats`));
-  await expect(page.getByLabel('Payment request')).toHaveValue(/^lnbcrt/);
+  await expect(page.getByLabel('Payment request')).toHaveValue(expected.invoice);
   await expect(page.getByText('Invoice status: open')).toBeVisible();
 
   await runStep(page, '5. Pay', 'Pay invoice', new RegExp(`${NODE} paid 1,000 sats to ${PEER} with webln`));

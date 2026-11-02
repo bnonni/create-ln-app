@@ -6,6 +6,7 @@ import {
   createInvoice,
   createWithdrawLink,
   getInvoice,
+  getNetwork,
   getNodes,
   mineBlocks,
   openChannel,
@@ -13,18 +14,24 @@ import {
   type ErrorCode,
   type Invoice,
   type LightningNode,
+  type Network,
   type WithdrawLink,
 } from '../api';
 import { nodeProvider } from '../webln';
 import NodeInfo from './NodeInfo';
 import './Page.css';
 
-// The capacity of the channel that step 2 opens.
-const CHANNEL_SATS = 1_000_000;
-// The number of blocks that step 3 mines. LND needs 3 confirmations for a small channel.
+// The capacity of the channel that step 2 opens. The Mutinynet faucet gives fewer sats, so the channel is smaller.
+// Steps 5 to 7 send 3,000 sats in total over this channel.
+const CHANNEL_SATS: Record<Network, number> = { regtest: 1_000_000, mutinynet: 100_000 };
+// The number of blocks that step 3 mines on regtest. LND needs 3 confirmations for a small channel.
 const CONFIRM_BLOCKS = 6;
 // LND can take some time to see new blocks. After a mine, the page loads the nodes again after this delay.
 const LND_SYNC_MS = 2000;
+// On Mutinynet, step 3 loads the nodes again at this interval until the channel is active.
+// A block comes about every 30 s, and the channel is active after 1 to 6 blocks.
+const CHANNEL_POLL_MS = 5000;
+const CHANNEL_WAIT_MS = 10 * 60_000;
 // The amount and the memo of the invoice that step 4 requests.
 const INVOICE_SATS = 1000;
 const INVOICE_MEMO = 'create-ln-app example';
@@ -96,9 +103,9 @@ const useStep = (onDone: () => void): Step => {
   return { busy, error, result, run };
 };
 
-const StepStatus = ({ step }: { step: Step }) => (
+const StepStatus = ({ step, busyText = 'Wait for the API server.' }: { step: Step; busyText?: string }) => (
   <>
-    {step.busy && <p className="busy">Wait for the API server.</p>}
+    {step.busy && <p className="busy">{busyText}</p>}
     {step.error && <p className="error">{step.error}</p>}
     {step.result && <p className="result">{step.result}</p>}
   </>
@@ -106,6 +113,7 @@ const StepStatus = ({ step }: { step: Step }) => (
 
 const Page = () => {
   const [nodes, setNodes] = useState<LightningNode[]>([]);
+  const [network, setNetwork] = useState<Network>();
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -116,6 +124,8 @@ const Page = () => {
   const [invoiceError, setInvoiceError] = useState('');
   const [link, setLink] = useState<NodeWithdrawLink | null>(null);
   const node = nodes.find((n) => n.name === name);
+  // On Mutinynet, the server cannot mine. Step 3 waits for the blocks.
+  const mutinynet = network === 'mutinynet';
   const peers = nodes.filter((n) => n.name !== name);
   // If the user selects the peer as their own node, no peer is selected.
   const peer = peers.some((n) => n.name === peerName) ? peerName : '';
@@ -127,7 +137,7 @@ const Page = () => {
 
   const peerStep = useStep(refresh);
   const channelStep = useStep(refresh);
-  const mineStep = useStep(refresh);
+  const confirmStep = useStep(refresh);
   const invoiceStep = useStep(refresh);
   const payStep = useStep(refresh);
   const addressStep = useStep(refresh);
@@ -136,10 +146,11 @@ const Page = () => {
   useEffect(() => {
     // If a newer refresh starts first, ignore this reply.
     let ignore = false;
-    getNodes()
-      .then((data) => {
+    Promise.all([getNodes(), getNetwork()])
+      .then(([data, info]) => {
         if (ignore) return;
         setNodes(data);
+        setNetwork(info.network);
         setError('');
       })
       .catch((err: unknown) => {
@@ -152,6 +163,24 @@ const Page = () => {
       ignore = true;
     };
   }, [version]);
+
+  // On Mutinynet, step 3 loads the nodes until a channel from the node to the peer is active and no channel is pending.
+  const waitForChannel = async () => {
+    const deadline = Date.now() + CHANNEL_WAIT_MS;
+    for (;;) {
+      const data = await getNodes();
+      setNodes(data);
+      const peerPubkey = data.find((n) => n.name === peer)?.pubkey;
+      const channels = data.find((n) => n.name === name)?.channels.filter((c) => c.peerPubkey === peerPubkey) ?? [];
+      if (channels.length === 0) throw new Error(`${name} has no channel to ${peer}. Open a channel in step 2.`);
+      const pending = channels.some((c) => c.status === 'pending');
+      if (!pending && channels.some((c) => c.status === 'active')) return `The channel from ${name} to ${peer} is active.`;
+      if (Date.now() > deadline) {
+        throw new Error(`After ${CHANNEL_WAIT_MS / 60_000} min, the channel to ${peer} is not active. Click again to wait.`);
+      }
+      await sleep(CHANNEL_POLL_MS);
+    }
+  };
 
   // Load the invoice status again until the invoice is settled or canceled.
   const payee = invoice?.payee;
@@ -237,12 +266,14 @@ const Page = () => {
         {/* Your feature: let the user set the channel size. Replace CHANNEL_SATS with an input. */}
         <p>2. Open a channel to {peer || 'the peer'}</p>
         <button
-          disabled={!node || !peer || channelStep.busy}
+          disabled={!node || !peer || !network || channelStep.busy}
           onClick={() =>
+            network &&
             channelStep.run(async () => {
-              const channel = await openChannel(name, peer, CHANNEL_SATS);
-              return `${name} opened a ${CHANNEL_SATS.toLocaleString()} sat channel to ${channel.peer}. ` +
-                `The channel is pending until you mine blocks. Channel point: ${channel.channelPoint}`;
+              const channel = await openChannel(name, peer, CHANNEL_SATS[network]);
+              return `${name} opened a ${CHANNEL_SATS[network].toLocaleString()} sat channel to ${channel.peer}. ` +
+                `The channel is pending until its funding transaction confirms in step 3. ` +
+                `Channel point: ${channel.channelPoint}`;
             })
           }
         >
@@ -252,21 +283,39 @@ const Page = () => {
       </div>
 
       <div className="step">
-        {/* Your feature: mine blocks automatically when a channel is pending. Then remove this step. */}
-        <p>3. Mine {CONFIRM_BLOCKS} blocks to confirm the channel</p>
-        <button
-          disabled={mineStep.busy}
-          onClick={() =>
-            mineStep.run(async () => {
-              const mined = await mineBlocks(CONFIRM_BLOCKS);
-              setTimeout(refresh, LND_SYNC_MS);
-              return `bitcoind mined ${mined.blockHashes.length} blocks. The block height is ${mined.height}.`;
-            })
-          }
-        >
-          Mine blocks
-        </button>
-        <StepStatus step={mineStep} />
+        {/* Your feature: confirm the channel automatically after step 2. Then remove this step. */}
+        {mutinynet ? (
+          <>
+            <p>3. Wait for the channel to confirm</p>
+            <p>Mutinynet makes a block about every 30 s. The server cannot mine blocks on it.</p>
+            <button
+              disabled={!node || !peer || confirmStep.busy}
+              onClick={() => confirmStep.run(waitForChannel)}
+            >
+              Wait for channel
+            </button>
+          </>
+        ) : (
+          <>
+            <p>3. Mine {CONFIRM_BLOCKS} blocks to confirm the channel</p>
+            <button
+              disabled={!network || confirmStep.busy}
+              onClick={() =>
+                confirmStep.run(async () => {
+                  const mined = await mineBlocks(CONFIRM_BLOCKS);
+                  setTimeout(refresh, LND_SYNC_MS);
+                  return `bitcoind mined ${mined.blockHashes.length} blocks. The block height is ${mined.height}.`;
+                })
+              }
+            >
+              Mine blocks
+            </button>
+          </>
+        )}
+        <StepStatus
+          step={confirmStep}
+          busyText={mutinynet ? 'Wait for the blocks. The channel table shows the status.' : undefined}
+        />
       </div>
 
       <div className="step">
@@ -290,7 +339,7 @@ const Page = () => {
           aria-label="Payment request"
           readOnly
           type="text"
-          placeholder="lnbcrt..."
+          placeholder={mutinynet ? 'lntbs...' : 'lnbcrt...'}
           value={invoice?.paymentRequest ?? ''}
         />
         {invoice && <p>Invoice status: {invoice.status}</p>}

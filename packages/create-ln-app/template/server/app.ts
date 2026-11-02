@@ -18,7 +18,10 @@ import {
 } from './lnurl.ts';
 import { NodeError, type LightningNode, type NodeErrorCode } from './nodes/types.ts';
 
-// POST /api/mine mines to this address. Its witness program is 32 zero bytes, so no one can spend the coins.
+// The networks of server/API.md. `npm run env` writes BITCOIN_NETWORK to .env.
+const NETWORKS = ['regtest', 'mutinynet'] as const;
+type Network = (typeof NETWORKS)[number];
+// POST /api/mine mines to this regtest address. Its witness program is 32 zero bytes, so no one can spend the coins.
 const BURN_ADDRESS = 'bcrt1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3xueyj';
 const MAX_BLOCKS = 1000;
 const MAX_SATS = 21_000_000 * 100_000_000;
@@ -52,6 +55,15 @@ let clients: Clients | undefined;
 export function getClients(): Clients {
   clients ??= { nodes: nodesFromEnv(process.env), bitcoind: new BitcoindClient(bitcoindConfigFromEnv(process.env)) };
   return clients;
+}
+
+// A .env from before BITCOIN_NETWORK is a regtest .env.
+function networkFromEnv(env: NodeJS.ProcessEnv): Network {
+  const network = env.BITCOIN_NETWORK ?? 'regtest';
+  if (!(NETWORKS as readonly string[]).includes(network)) {
+    throw new Error(`BITCOIN_NETWORK in .env must be ${NETWORKS.join(' or ')}, not ${network}. Run: npm run env`);
+  }
+  return network as Network;
 }
 
 async function nodeSummary(node: LightningNode) {
@@ -117,6 +129,8 @@ export const app = new Hono();
 const api = app.basePath('/api');
 
 api.get('/health', (c) => c.json({ status: 'ok' }));
+
+api.get('/network', (c) => c.json({ network: networkFromEnv(process.env) }));
 
 api.get('/nodes', async (c) => c.json(await Promise.all(getClients().nodes.map(nodeSummary))));
 
@@ -191,7 +205,11 @@ api.post('/nodes/:name/withdrawals', async (c) => {
   return c.json(await claimWithdrawLink(node, lnurl), 201);
 });
 
+// Only regtest lets the server mine. On Mutinynet, the signet makes a block about every 30 s.
 api.post('/mine', async (c) => {
+  if (networkFromEnv(process.env) !== 'regtest') {
+    throw new HTTPException(409, { message: 'The server mines only on regtest. Mutinynet makes a block about every 30 s.' });
+  }
   const blocks = integerField(await readBody(c), 'blocks', MAX_BLOCKS);
   const { bitcoind } = getClients();
   const blockHashes = await bitcoind.generateToAddress(blocks, BURN_ADDRESS);
@@ -213,9 +231,9 @@ const NODE_ERROR_STATUS: Partial<Record<NodeErrorCode, 400 | 404 | 409>> = {
 };
 
 app.onError((error, c) => {
-  // The server rejected the request: 404 for an unknown node, 400 for a bad body or path value.
+  // The server rejected the request: 404 for an unknown node, 409 for a mine on Mutinynet, 400 for a bad body or path value.
   if (error instanceof HTTPException) {
-    const code = error.status === 404 ? 'not_found' : 'invalid_request';
+    const code = error.status === 404 ? 'not_found' : error.status === 409 ? 'conflict' : 'invalid_request';
     return c.json({ error: error.message, code } satisfies ErrorBody, error.status);
   }
   // A node is down or rejected the request.
