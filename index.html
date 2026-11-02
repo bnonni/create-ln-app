@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>create-ln-app: make a Lightning app with one command</title>
-  <meta name="description" content="Make a Lightning app with a local regtest network: Bitcoin Core, 2 to 10 LND, Core Lightning, or Eclair nodes, an API server, and an example app with WebLN, a Lightning Address, and LNURL-withdraw.">
+  <meta name="description" content="Make a Lightning app with a local regtest network or with Mutinynet: Bitcoin Core, 2 to 10 LND, Core Lightning, or Eclair nodes, an API server, and an example app with WebLN, a Lightning Address, and LNURL-withdraw.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
   <style>
     :root { color-scheme: light dark; --accent: #f7931a; --muted: #6b7280; --code-bg: rgb(127 127 127 / 0.12); }
@@ -35,6 +35,7 @@ npm run dev</code></pre>
     <h2>What you get</h2>
     <ul>
       <li>Bitcoin Core and LND, Core Lightning, or Eclair nodes on regtest, funded and ready. The default is 3 LND nodes. Add <code>--nodes 5</code> to get 5 nodes (2 to 10). Add <code>--impl cln</code> to get Core Lightning nodes, or <code>--impl eclair</code> to get Eclair nodes.</li>
+      <li>Mutinynet in place of regtest, if you add <code>--network mutinynet</code>. Mutinynet is a public signet with a block every 30 s. The first start downloads the chain (about 11 GB of disk, 40 min or more). The <a href="https://faucet.mutinynet.com">faucet</a> funds the nodes. The nodes can be LND or Core Lightning. See the <a href="https://github.com/bnonni/create-ln-app#mutinynet">Mutinynet steps</a>.</li>
       <li>An API server that holds the macaroons and TLS certs. No secret goes to the browser.</li>
       <li>An example React app: connect a peer, open a channel, make an invoice, and pay it with WebLN. Then pay a Lightning Address, and send sats with an LNURL-withdraw link. The default is TypeScript. Add <code>--template react</code> to get JavaScript, or <code>--template next-ts</code> to get Next.js.</li>
     </ul>

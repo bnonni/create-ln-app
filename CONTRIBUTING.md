@@ -93,7 +93,42 @@ The E2E test does the browser steps of the example app in Chromium. It starts th
 
 To test a project that the CLI made, set `LAPP_DIR` to the project folder, for example `LAPP_DIR=/tmp/test-app npm run test:e2e`. CI packs the CLI, makes a project, and runs the test on it. The E2E jobs test 3 LND nodes, 5 LND nodes, 3 CLN nodes, 3 Eclair nodes, a mix of the 3 impls, the `react` template, and the `next-ts` template. The mix job also runs the integration test for each node pair. The `react` job also makes sure that the project has no TypeScript file, then lints and builds it. The `next-ts` job also lints, typechecks, and builds the project. If the test fails in CI, the job shows the network logs and uploads the Playwright traces.
 
+CI does not start Mutinynet, because the first sync takes 40 min or more and the faucet needs a GitHub login. Before each release, do [the Mutinynet check](#the-mutinynet-check) by hand.
+
 The `cli` jobs run on Linux, macOS, and Windows. Each job packs the CLI and makes a project from each template with `--skip-install`. The jobs do not start the network, because the Windows and macOS runners cannot run the network containers. `DOCKER_HOST` points to a closed port, so the doctor fails. The CLI must show the fixes and exit 0. On Linux, the job runs `shellcheck install.sh`. On Linux and macOS, the job sends `install.sh` to `/bin/bash` through a pipe, as `curl | bash` does. `CREATE_LN_APP_PACKAGE` points the script to the packed CLI. On macOS, `/bin/bash` is Bash 3.2.
+
+### The Mutinynet check
+
+The check runs the E2E test on Mutinynet with 1 LND node and 1 CLN node. It needs 400,000 test sats: 200,000 sats for each node.
+
+1. Make a project from the build. Use a folder that you keep, because the chain data uses about 11 GB.
+   ```sh
+   npm run build -w create-ln-app
+   node packages/create-ln-app/dist/cli.js ~/lapp-mutinynet --network mutinynet --nodes 2
+   ```
+2. Replace the contents of `~/lapp-mutinynet/network/nodes.json` with this list:
+   ```json
+   [
+     { "name": "alice", "impl": "lnd" },
+     { "name": "bob", "impl": "cln" }
+   ]
+   ```
+3. Optional: to skip the first sync, copy the chain data of an older Mutinynet project. Stop the older network first.
+   ```sh
+   cp -a <older project>/network/data/bitcoind ~/lapp-mutinynet/network/data/
+   ```
+4. Start the network in `~/lapp-mutinynet`. To let the bootstrap request the funds, run `npm run faucet:login` first. If you do not, send 200,000 sats to each address that the bootstrap shows.
+   ```sh
+   npm run network
+   ```
+5. Run the E2E test from the repo root, one time for each direction. Each run opens a new 100,000-sat channel from the first node of `FLOW_NODES`. The test timeout on Mutinynet is 12 min.
+   ```sh
+   LAPP_DIR=$HOME/lapp-mutinynet FLOW_NODES=alice,bob npm run test:e2e
+   LAPP_DIR=$HOME/lapp-mutinynet FLOW_NODES=bob,alice npm run test:e2e
+   ```
+6. Run `npm run down` in `~/lapp-mutinynet`.
+
+To open the channel, a node needs at least 110,177 sats (LND) or 125,166 sats (CLN) on chain. With 200,000 sats, each node can open 1 channel. For a second run, send more funds to the first node. Before you delete the project, send its funds to a wallet that you keep.
 
 ## Test the CLI
 
@@ -138,36 +173,37 @@ You must have publish rights for the `create-ln-app` package on npm.
    npm version <version> --no-git-tag-version -w create-ln-app
    ```
    Add a section for the version to `CHANGELOG.md`. Commit the three files.
-2. Merge the pull request. Make sure that CI is green on `master`.
-3. Get `master`. Make sure that `git status` shows no changes.
-4. Run the dry run. For a stable release, remove `--tag next`.
+2. Do [the Mutinynet check](#the-mutinynet-check) on the branch of the pull request.
+3. Merge the pull request. Make sure that CI is green on `master`.
+4. Get `master`. Make sure that `git status` shows no changes.
+5. Run the dry run. For a stable release, remove `--tag next`.
    ```sh
    npm publish --dry-run -w create-ln-app --tag next
    ```
-5. Check the file list:
+6. Check the file list:
    - The list has `LICENSE`, `README.md`, `dist/cli.js`, `dist/copy-filter.js`, and `package.json`. All other files are in `template/`, `template-react/`, and `template-next-ts/`.
    - The `template/` files are the same as the output of `git ls-files packages/create-ln-app/template`.
    - The `template-react/` files have no `.ts` file, no `.tsx` file, and no `tsconfig` file.
    - The `template-next-ts/` files are the same as the output of `git ls-files packages/create-ln-app/template-next-ts`. The list has no `.next/` file, no `AGENTS.md`, and no `next-env.d.ts`.
    - The list has no `.env`, no `node_modules`, and no node data. In each template, `network/data/.gitkeep` is the only file in `network/data/`.
-6. Do the packed-tarball test in [Test the CLI](#test-the-cli).
-7. Log in and publish. For a stable release, remove `--tag next`.
+7. Do the packed-tarball test in [Test the CLI](#test-the-cli).
+8. Log in and publish. For a stable release, remove `--tag next`.
    ```sh
    npm login
    npm publish -w create-ln-app --tag next
    ```
-8. Tag the commit and push the tag:
+9. Tag the commit and push the tag:
    ```sh
    git tag -s v<version> -m "v<version>"
    git push origin v<version>
    ```
-9. Check the tags on npm, then test the published package on a clean machine. For a stable release, remove `@next`.
+10. Check the tags on npm, then test the published package on a clean machine. For a stable release, remove `@next`.
    ```sh
    npm view create-ln-app dist-tags
    npx create-ln-app@next my-lapp && cd my-lapp && npm run dev
    ```
-10. On Windows, do the test of step 9 in WSL2 (Ubuntu), in the Linux home folder (`~/`). Open the app in a Windows browser and make a payment. See [Windows](README.md#windows).
-11. For a stable release, update the Homebrew formula in [bnonni/homebrew-tap](https://github.com/bnonni/homebrew-tap). The `bump` workflow sets the formula to the npm tarball of `<version>`. It installs and tests the formula, then pushes the change to `main`.
+11. On Windows, do the test of step 10 in WSL2 (Ubuntu), in the Linux home folder (`~/`). Open the app in a Windows browser and make a payment. See [Windows](README.md#windows).
+12. For a stable release, update the Homebrew formula in [bnonni/homebrew-tap](https://github.com/bnonni/homebrew-tap). The `bump` workflow sets the formula to the npm tarball of `<version>`. It installs and tests the formula, then pushes the change to `main`.
     ```sh
     gh workflow run bump --repo bnonni/homebrew-tap -f version=<version>
     gh run watch --repo bnonni/homebrew-tap
