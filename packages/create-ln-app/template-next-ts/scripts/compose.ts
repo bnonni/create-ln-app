@@ -66,8 +66,10 @@ ${logging(net, '  ')}  environment:
     rest: 8080,
     grpc: 10009,
     // LND finds the RPC port of a regtest bitcoind, but on signet it needs the port.
-    // On Mutinynet, --nobootstrap stops the search for peers in the DNS seeds of the default signet.
-    command: (name, net) => `lnd --noseedbackup --trickledelay=5000 --alias=${name} --externalip=${name}${net.network === 'mutinynet' ? ' --nobootstrap' : ''}
+    // --nobootstrap stops the search for new peers. The app connects each peer, and LND reconnects its channel peers.
+    // With the search, LND can connect again to a peer from the channel graph, and a channel open on the old connection fails.
+    // On Mutinynet, the search also tries the DNS seeds of the default signet.
+    command: (name, net) => `lnd --noseedbackup --trickledelay=5000 --alias=${name} --externalip=${name} --nobootstrap
       --tlsextradomain=${name} --tlsextraip=127.0.0.1
       --listen=0.0.0.0:9735 --rpclisten=0.0.0.0:10009 --restlisten=0.0.0.0:8080
       --bitcoin.${net.chain} --bitcoin.node=bitcoind
