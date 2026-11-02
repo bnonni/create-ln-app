@@ -62,7 +62,7 @@ services:
     <<: *lnd
     hostname: alice
     command: >-
-      lnd --noseedbackup --trickledelay=5000 --alias=alice --externalip=alice
+      lnd --noseedbackup --trickledelay=5000 --alias=alice --externalip=alice --nobootstrap
       --tlsextradomain=alice --tlsextraip=127.0.0.1
       --listen=0.0.0.0:9735 --rpclisten=0.0.0.0:10009 --restlisten=0.0.0.0:8080
       --bitcoin.regtest --bitcoin.node=bitcoind
@@ -81,7 +81,7 @@ services:
     <<: *lnd
     hostname: bob
     command: >-
-      lnd --noseedbackup --trickledelay=5000 --alias=bob --externalip=bob
+      lnd --noseedbackup --trickledelay=5000 --alias=bob --externalip=bob --nobootstrap
       --tlsextradomain=bob --tlsextraip=127.0.0.1
       --listen=0.0.0.0:9735 --rpclisten=0.0.0.0:10009 --restlisten=0.0.0.0:8080
       --bitcoin.regtest --bitcoin.node=bitcoind
@@ -100,7 +100,7 @@ services:
     <<: *lnd
     hostname: carol
     command: >-
-      lnd --noseedbackup --trickledelay=5000 --alias=carol --externalip=carol
+      lnd --noseedbackup --trickledelay=5000 --alias=carol --externalip=carol --nobootstrap
       --tlsextradomain=carol --tlsextraip=127.0.0.1
       --listen=0.0.0.0:9735 --rpclisten=0.0.0.0:10009 --restlisten=0.0.0.0:8080
       --bitcoin.regtest --bitcoin.node=bitcoind
