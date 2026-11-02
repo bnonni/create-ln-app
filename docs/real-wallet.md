@@ -7,7 +7,8 @@ The example app pays with the nodes of your project. This page tells how to pay 
 A wallet can pay an invoice only on its own network.
 
 - Regtest (the default): the chain is on your computer, and only the nodes of your project are on it. A mainnet wallet cannot pay a regtest invoice. A wallet can pay only if it uses a node of your project. `network/README.md` of your project has the host ports and the API keys of the nodes.
-- A public test network or mainnet: each wallet on the same network can pay. The plan for Mutinynet (a public signet) is in [ROADMAP.md](../ROADMAP.md#m13-mutinynet-branch-m13-mutinynet).
+- Mutinynet (`--network mutinynet`): a public signet. A Mutinynet wallet can pay your nodes only if it has a route to them. For a route, open a channel between a node of your project and a public Mutinynet node, for example with `lncli openchannel`. Nobody tested a payment from a different Mutinynet wallet. Get test funds from <https://faucet.mutinynet.com>. See [Mutinynet](../README.md#mutinynet) in the README.
+- Mainnet: each mainnet wallet can pay. create-ln-app does not make mainnet nodes.
 
 ## Pay with a WebLN extension
 

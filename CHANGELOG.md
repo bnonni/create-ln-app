@@ -2,6 +2,29 @@
 
 This file records the changes to the `create-ln-app` npm package in each release. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.8.0] - 2026-11-02
+
+### Added
+
+- Mutinynet, a public signet with a block every 30 s. The CLI option `--network mutinynet` selects it. Example: `npx create-ln-app my-lapp --network mutinynet`. The default is `regtest`. The CLI writes the value to `config.network` in `package.json`.
+- On Mutinynet, the nodes can be only LND or CLN. The CLI and `npm run compose` stop if a node is Eclair.
+- `network/mutinynet/Dockerfile` makes the bitcoind image `create-ln-app/mutinynet-bitcoind:2fda7bfc027e`. The image puts the Mutinynet fork of Bitcoin Core (Bitcoin Inquisition 29.2.0) in `polarlightning/bitcoind:30.0`. The Dockerfile checks the sha256 of the download.
+- `npm run sync` starts bitcoind and shows the sync progress. `npm run network` runs it, and starts the Lightning nodes only after the sync. The first Mutinynet sync downloads about 10 GB and takes 40 min or more. On regtest, the script does nothing.
+- `npm run faucet:login` gets a token for the Mutinynet faucet with the GitHub device flow. It writes the token to `.env` as `MUTINYNET_FAUCET_TOKEN`. The token is valid for 24 hours.
+- On Mutinynet, the bootstrap requests 200,000 sats from the faucet for each node with no funds. If `.env` has no valid token, the bootstrap shows the address of each node. Then it waits up to 15 min for the confirmed funds.
+- `GET /api/network` gives the chain of the nodes: `regtest` or `mutinynet`. `npm run env` writes `BITCOIN_NETWORK` to `.env`.
+- On Mutinynet, step 3 of the example app is "Wait for the channel to confirm". The page loads the channel status each 5 s until the channel is `active`, for a maximum of 10 min. The channel of step 2 is 100,000 sats. On regtest, the channel stays 1,000,000 sats.
+
+### Changed
+
+- On Mutinynet, `npm run reset` keeps the chain data in `network/data/bitcoind`. If a node has funds, or if the script cannot read the funds of a node, reset deletes nothing and fails. `npm run reset -- --force` deletes the wallets with no check.
+- On Mutinynet, `POST /api/mine` sends HTTP 409 with the code `conflict`. `npm run test:integration` mines blocks, so it stops with an error on Mutinynet.
+- On Mutinynet, bitcoind writes no `debug.log`, and the Docker log of each container has a size limit: 3 files of 10 MB.
+
+### Fixed
+
+- On regtest, the peer search of LND sometimes connected again to a peer from the channel graph. Then LND closed the old connection, and a channel open failed with `peer exiting`. Now LND starts with `--nobootstrap`. The app connects each peer, and LND reconnects its channel peers after a restart.
+
 ## [1.7.0] - 2026-11-01
 
 ### Added
@@ -127,6 +150,7 @@ The first release.
 - The project commands `network`, `down`, `reset`, `doctor`, `env`, and `test:integration`.
 - The docs: a quick start, an [architecture](docs/architecture.md) page, and a [troubleshooting](docs/troubleshooting.md) page.
 
+[1.8.0]: https://github.com/bnonni/create-ln-app/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/bnonni/create-ln-app/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/bnonni/create-ln-app/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/bnonni/create-ln-app/compare/v1.4.0...v1.5.0

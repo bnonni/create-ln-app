@@ -17,9 +17,9 @@ API server: Hono on Node.js (port 3001)
    |-- CLNRest, rune and CA cert -------> the CLN nodes, with the same ports
    |-- Eclair API and password ---------> the Eclair nodes, with the same REST ports
    |
-   '-- JSON-RPC, user and password -----> bitcoind (18443)
+   '-- JSON-RPC, user and password -----> bitcoind (18443, or 38332 on Mutinynet)
 
-Docker Compose project "<name in package.json>" (regtest):
+Docker Compose project "<name in package.json>" (regtest or Mutinynet):
    alice, bob, carol, ... <-- RPC and ZMQ ----> bitcoind
    alice, bob, carol, ... <-- Lightning P2P --> alice, bob, carol, ...
 ```
@@ -41,7 +41,8 @@ Docker Compose project "<name in package.json>" (regtest):
 - Each `LND_<NAME>_REST_URL` key, `CLN_<NAME>_REST_URL` key, and `ECLAIR_<NAME>_API_URL` key in `.env` adds one node to the server. The server sorts the nodes by name.
 - `server/nodes/lnd.ts` is the LND client, `server/nodes/cln.ts` is the CLN client, and `server/nodes/eclair.ts` is the Eclair client. The 3 clients have the same interface, `server/nodes/types.ts`. Thus, the API is the same for the 3 impls.
 - Each LND node and each CLN node makes its own self-signed TLS cert. The client for a node trusts only the cert of that node. The Eclair API uses plain HTTP and a password.
-- `POST /api/mine` tells bitcoind to mine blocks. The coins go to an address that no one can spend from.
+- `GET /api/network` gives the chain: `regtest` or `mutinynet`. The server reads it from `BITCOIN_NETWORK` in `.env`.
+- `POST /api/mine` tells bitcoind to mine blocks. The coins go to an address that no one can spend from. On Mutinynet, the server mines no blocks and sends HTTP 409.
 - If a node or bitcoind sends an error, the server sends HTTP 502 with `{ error, node }`.
 - API reference: [`server/API.md`](../packages/create-ln-app/template/server/API.md).
 
@@ -69,7 +70,9 @@ The browser does not connect to the nodes directly, for three reasons:
 - Node n in the list gets REST port `8080+n`, gRPC port `10000+n`, and P2P port `9734+n` on the host. An Eclair node uses the REST port for its API, and it has no gRPC port.
 - The Docker Compose project name comes from the `name` in `package.json`. Thus, each project has its own containers.
 - Images: `polarlightning/bitcoind:30.0`, `polarlightning/lnd:0.20.0-beta`, `polarlightning/clightning:25.12`, and `polarlightning/eclair:0.11.0`. Each image has an `amd64` build and an `arm64` build.
-- The chain is regtest. A block comes only when you mine it. The coins have no value.
+- The chain is regtest (the default) or Mutinynet. `config.network` in `package.json` sets the chain. The coins have no value on the 2 chains.
+  - Regtest: a local chain. A block comes only when you mine it.
+  - Mutinynet: a public signet with a block about every 30 s. The bitcoind image comes from `network/mutinynet/Dockerfile`, and the nodes can be only LND or CLN. The faucet funds the nodes.
 - The node data goes to `network/data/`. `npm run down` keeps the data. `npm run reset` deletes the data.
 - An Eclair node has no wallet of its own. It uses a bitcoind wallet with the node name.
 - `network/README.md` is the network reference. It has the host ports, the `lncli`, `lightning-cli`, and `eclair-cli` commands, and the steps to change the nodes.
@@ -77,12 +80,13 @@ The browser does not connect to the nodes directly, for three reasons:
 ## What `npm run dev` does
 
 1. `npm run compose` (`scripts/compose.ts`) writes `network/docker-compose.yml` from `network/nodes.json`.
-2. `docker compose ... up -d --wait` starts bitcoind and the Lightning nodes. The command waits until all health checks pass.
-3. `npm run bootstrap` (`scripts/bootstrap.ts`) mines blocks to fund each Lightning node. Then it waits until each node is synced to the chain. It does not fund a node that has a balance.
-4. `npm run env` (`scripts/env.ts`) writes `.env`. The file has the URL of each node, and the TLS cert path of each LND node and each CLN node. It also has the macaroon in hex of each LND node, the rune of each CLN node, and the API password of each Eclair node. It also has the bitcoind RPC values. Only your user can read the file.
-5. `concurrently` starts the API server (`npm run server`) and the Vite dev server. Ctrl+C stops the two servers. The network continues to run. To stop it, run `npm run down`.
+2. `npm run sync` (`scripts/sync.ts`) does nothing on regtest. On Mutinynet, it starts bitcoind and shows the sync progress until bitcoind has the full chain.
+3. `docker compose ... up -d --wait` starts bitcoind and the Lightning nodes. The command waits until all health checks pass.
+4. `npm run bootstrap` (`scripts/bootstrap.ts`) mines blocks to fund each Lightning node. Then it waits until each node is synced to the chain. It does not fund a node that has a balance. On Mutinynet, it requests 200,000 sats from the faucet for each node, or shows the node addresses. Then it waits for the confirmed funds.
+5. `npm run env` (`scripts/env.ts`) writes `.env`. The file has the URL of each node, and the TLS cert path of each LND node and each CLN node. It also has the macaroon in hex of each LND node, the rune of each CLN node, and the API password of each Eclair node. It also has the bitcoind RPC values and the chain (`BITCOIN_NETWORK`). Only your user can read the file.
+6. `concurrently` starts the API server (`npm run server`) and the Vite dev server. Ctrl+C stops the two servers. The network continues to run. To stop it, run `npm run down`.
 
-Steps 1 to 4 are the `npm run network` command.
+Steps 1 to 5 are the `npm run network` command.
 
 ## The Next.js template
 

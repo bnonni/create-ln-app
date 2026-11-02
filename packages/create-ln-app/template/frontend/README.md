@@ -16,7 +16,7 @@ npm run typecheck   # TypeScript, no emit
 
 The app sends each `/api` request to the API server. The Vite dev server proxies `/api` to `http://localhost:3001`. To use a different port, set `API_PORT` in the root `.env`.
 
-To start the regtest network, the API server, and the app together, run `npm run dev` in the root folder.
+To start the network, the API server, and the app together, run `npm run dev` in the root folder.
 
 ## WebLN
 

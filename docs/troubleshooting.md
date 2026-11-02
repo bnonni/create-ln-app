@@ -17,6 +17,7 @@ Contents:
 - [Errors in the app](#errors-in-the-app)
 - [Apple Silicon](#apple-silicon)
 - [Windows](#windows)
+- [Mutinynet](#mutinynet)
 - [Start again with new nodes](#start-again-with-new-nodes)
 
 ## Docker
@@ -32,7 +33,7 @@ Contents:
 
 A node container stops, and `docker compose -f network/docker-compose.yml ps -a` shows `Exited (137)`. Exit code 137 usually tells that Docker stopped the container because of low memory.
 
-The 4 containers use about 250 MB of memory together after a start. The images use about 510 MB of disk. An Eclair node uses about 600 MB of memory, and the Eclair image uses about 590 MB of disk.
+The 4 containers use about 250 MB of memory together after a start. The images use about 510 MB of disk. An Eclair node uses about 600 MB of memory, and the Eclair image uses about 590 MB of disk. On Mutinynet, bitcoind uses about 2.6 GB of memory.
 
 1. In Docker Desktop, open Settings > Resources > Advanced, and increase the memory limit.
 2. Click "Apply & restart".
@@ -57,6 +58,7 @@ Run `npm run dev` again. If the error occurs again, examine your internet connec
 | 10001, 10002, 10003, ... | LND gRPC or CLN gRPC (alice, bob, carol, ...). An Eclair node has no gRPC port. |
 | 9735, 9736, 9737, ... | Lightning P2P (alice, bob, carol, ...) |
 | 18443, 19444, 28334, 29335 | bitcoind RPC, P2P, and ZMQ |
+| 38332 | bitcoind RPC on Mutinynet. On Mutinynet, bitcoind has no P2P host port. |
 
 Node n in `network/nodes.json` uses the ports `8080+n`, `10000+n`, and `9734+n`. For example, a network with 10 nodes uses the ports 8081 to 8090, 10001 to 10010, and 9735 to 9744.
 
@@ -119,7 +121,7 @@ The Vite dev server runs, but the API server does not run. For example, you star
 
 The channel is not active yet. A new channel becomes active after 6 blocks.
 
-1. Do step 3: "Mine 6 blocks to confirm the channel".
+1. Do step 3: "Mine 6 blocks to confirm the channel". On Mutinynet, click "Wait for channel".
 2. Click Refresh until the channel status is `active`. A node needs some seconds to see the new blocks.
 3. Do the payment step (5 or 6) again.
 
@@ -164,6 +166,61 @@ WSL2 is slow with files in `/mnt/c`. The dev server does not see the changes tha
 
 To edit the files from Windows, use an editor that opens WSL2 folders, for example VS Code with the WSL extension.
 
+## Mutinynet
+
+These problems occur only on Mutinynet. The network of a project is `config.network` in `package.json`.
+
+### The first sync is slow
+
+`npm run dev` shows `Sync: block ... of ...` for a long time. The first sync downloads about 10 GB. On a fast machine, it takes about 40 min. A slower machine or a slower connection takes more time.
+
+- If the line shows `0 peers`, bitcoind cannot connect to the Mutinynet peer `45.79.52.207:38333`. Examine your internet connection and your firewall.
+- If you stop the command, bitcoind continues the sync in Docker. To see the progress again, run `npm run dev`.
+- The chain data uses about 11 GB of disk in `network/data/bitcoind`. If the disk is full, make disk space free. Then run `npm run dev` again.
+
+### The bootstrap does not get funds
+
+`npm run dev` shows the address of each node and `Send test funds to these addresses.` The bootstrap has no valid faucet token, or the faucet request failed. The lines above the addresses tell the cause.
+
+1. Send 200,000 sats to each address from <https://faucet.mutinynet.com>, or from a different Mutinynet wallet.
+2. Wait. The bootstrap waits up to 15 min for the confirmed funds, and a block comes about every 30 s.
+3. If the bootstrap stops with `Timeout: ... got no confirmed funds`, run `npm run dev` again after the funds confirm.
+
+The faucet gives up to 1,000,000 sats in 24 hours for each GitHub user and each IP address. The bootstrap requests 200,000 sats for each node, so 5 nodes use the limit of one day. To let the bootstrap request the funds, run `npm run faucet:login` before `npm run dev`.
+
+### The faucet token expired
+
+`npm run dev` shows `The faucet token expired on ...` or `The faucet did not accept the token (HTTP 401)`. A faucet token is valid for 24 hours.
+
+1. Run `npm run faucet:login`.
+2. Open the URL, and enter the code that the command shows.
+3. Run `npm run dev`.
+
+### Step 3 does not end
+
+Step 3 shows `After 10 min, the channel to bob is not active. Click again to wait.` The funding transaction of the channel did not confirm, or the node did not see the new blocks.
+
+1. Click "Wait for channel" again.
+2. If the channel stays `pending`, read the logs of the node (replace `alice` with the node name):
+   ```sh
+   docker compose -f network/docker-compose.yml logs --tail 50 alice
+   ```
+
+### `On Mutinynet, the nodes can be only LND or CLN`
+
+The CLI or `npm run compose` stops with this error. Nobody tested Eclair on Mutinynet. Use `--impl lnd` or `--impl cln`. In a project, set each `"impl"` in `network/nodes.json` to `"lnd"` or `"cln"`.
+
+### `npm run reset` fails
+
+`npm run reset` shows `WARNING: reset deletes the node wallets` and a list of nodes. On Mutinynet, reset deletes nothing if a node has funds, or if the script cannot read the funds of a node.
+
+1. If the network does not run, run `npm run network`.
+2. Close the channels of each node. `network/README.md` has the CLI commands of the nodes.
+3. Send the funds to a wallet that you keep.
+4. Run `npm run reset` again.
+
+To delete the wallets and their funds with no check, run `npm run reset -- --force`.
+
 ## Start again with new nodes
 
 Start again with new nodes if a node does not start, or if you want a new chain with no channels. First, read the logs of the node (replace `alice` with the node name):
@@ -179,3 +236,5 @@ Then delete the node data and start again:
 3. Run `npm run dev`. The network makes new nodes, funds them, and writes a new `.env`.
 
 All channels, balances, and invoices go away with the node data.
+
+On Mutinynet, reset keeps the chain data in `network/data/bitcoind`, so the next start does not download the chain again. If a node has funds, reset fails. See [`npm run reset` fails](#npm-run-reset-fails).

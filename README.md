@@ -2,7 +2,7 @@
 
 `create-ln-app` makes a Lightning app (Lapp) project with one command. The project has three parts:
 
-1. A local Bitcoin Lightning Network for development: Bitcoin Core and 2 to 10 Lightning nodes on regtest. Each node is LND, Core Lightning (CLN), or Eclair. The default is 3 LND nodes.
+1. A Bitcoin Lightning Network for development, in Docker on your computer: Bitcoin Core and 2 to 10 Lightning nodes. The chain is regtest (a local chain, the default) or [Mutinynet](#mutinynet) (a public signet). Each node is LND, Core Lightning (CLN), or Eclair. The default is 3 LND nodes.
 2. An API server that connects to the nodes.
 3. An example app that uses the API server. It shows a payment with WebLN, a payment to a Lightning Address, and an LNURL-withdraw link.
 
@@ -63,7 +63,7 @@ Open the app in a Windows browser. WSL2 sends the `localhost` connections from W
    1. "Who are you?": select `alice`.
    2. "1. Connect to a peer": select `bob`, then click "Connect".
    3. "2. Open a channel": click "Open channel".
-   4. "3. Mine 6 blocks": click "Mine blocks". Then click "Refresh" until the channel status is `active`.
+   4. "3. Mine 6 blocks": click "Mine blocks". Then click "Refresh" until the channel status is `active`. On Mutinynet, this step is different. See [Mutinynet](#mutinynet).
    5. "4. Request an invoice": click "Request invoice".
    6. "5. Pay the invoice with WebLN": click "Pay invoice". The page shows `Invoice status: settled`.
    7. "6. Pay the Lightning Address of bob": click "Pay address". `alice` pays the address `bob@localhost:5173`.
@@ -77,11 +77,40 @@ To use Core Lightning (CLN) for all the nodes, add `--impl cln`. To use Eclair f
 
 To use JavaScript, not TypeScript, add `--template react`. The default is `react-ts` (React and TypeScript). Example: `npx create-ln-app my-lapp --template react`. In the `react` template, each `.ts` file is a `.js` file and each `.tsx` file is a `.jsx` file.
 
+To use Mutinynet, not regtest, add `--network mutinynet`. Example: `npx create-ln-app my-lapp --network mutinynet`. See [Mutinynet](#mutinynet).
+
 To use Next.js, add `--template next-ts` (Next.js and TypeScript). Example: `npx create-ln-app my-lapp --template next-ts`. In the `next-ts` template, Next.js serves the example app and the API at <http://localhost:3000>. The app is in `src/`, not in `frontend/src/`.
 
 The `dev` command starts 1 bitcoind node and the Lightning nodes, funds the Lightning nodes, and writes the node values to `.env`. Then it starts the API server at <http://localhost:3001/api> and the example app at <http://localhost:5173>. The first start downloads the Docker images (about 510 MB), so it takes more time.
 
 If a step fails, see [Troubleshooting](docs/troubleshooting.md).
+
+## Mutinynet
+
+Mutinynet is a public signet. A block comes about every 30 s, and the coins have no value. Other people also use Mutinynet, so a node of your project can open a channel to their nodes. On regtest, only the nodes of your project are on the chain.
+
+1. Make a project with `--network mutinynet`:
+   ```sh
+   npx create-ln-app my-lapp --network mutinynet
+   cd my-lapp
+   ```
+2. Optional: let the bootstrap get the funds from the faucet. Run this command, then open the URL and enter the code that the command shows. You must have a GitHub account.
+   ```sh
+   npm run faucet:login
+   ```
+   The command writes the faucet token to `.env` as `MUTINYNET_FAUCET_TOKEN`. The token is valid for 24 hours.
+3. Run `npm run dev`:
+   - The first start downloads the Mutinynet chain (about 10 GB). The chain data uses about 11 GB of disk. The sync takes 40 min or more, and `npm run sync` shows the progress. If you stop the command, bitcoind continues the sync in Docker. To continue, run `npm run dev` again.
+   - Then the bootstrap gets 200,000 sats from the faucet for each node with no funds. If `.env` has no valid token, the bootstrap shows the address of each node. Send the funds from <https://faucet.mutinynet.com> or from a different Mutinynet wallet. The bootstrap waits up to 15 min for the confirmed funds.
+4. Open <http://localhost:5173> (<http://localhost:3000> in the `next-ts` template), and do the steps on the page. Step 2 opens a 100,000-sat channel. Step 3 is "3. Wait for the channel to confirm": click "Wait for channel". The page loads the channel status each 5 s until the channel is `active`, for a maximum of 10 min. A channel is `active` after 1 to 6 blocks.
+
+The limits on Mutinynet:
+
+- The nodes can be only LND or CLN. Nobody tested Eclair on Mutinynet, so the CLI stops if you add `--impl eclair`.
+- The faucet gives up to 1,000,000 sats in 24 hours for each GitHub user and each IP address. With 200,000 sats for each node, a network with 6 or more nodes needs a second day.
+- Each project has its own copy of the chain in `network/data/bitcoind`. bitcoind uses about 2.6 GB of memory.
+- The page has no "Mine blocks" button. `npm run test:integration` mines blocks, so it works only on regtest.
+- `npm run reset` keeps the chain data. If a node has funds, reset deletes nothing and fails. See [Start again with new nodes](docs/troubleshooting.md#start-again-with-new-nodes).
 
 ## Next steps
 

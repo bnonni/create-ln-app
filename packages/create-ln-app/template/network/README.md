@@ -4,6 +4,8 @@ Run the commands in this file in the project folder, not in `network/`.
 
 The network has 1 bitcoind node and the Lightning nodes in `network/nodes.json`. `npm run compose` writes `network/docker-compose.yml` from the list. The Docker Compose project name comes from the `name` in `package.json`. Node data goes to `network/data/`.
 
+The commands and the paths in this file are for regtest. If `config.network` in `package.json` is `mutinynet`, see [Mutinynet](#mutinynet).
+
 To start the network and wait until all nodes are healthy, run:
 
 ```sh
@@ -132,3 +134,22 @@ API reference: [Eclair API](https://acinq.github.io/eclair/).
 - REST: `http://127.0.0.1:18443/rest/`.
 
 API reference: [Bitcoin Core REST interface](https://github.com/bitcoin/bitcoin/blob/master/doc/REST-interface.md).
+
+## Mutinynet
+
+Mutinynet is a public signet with a block every 30 s. The CLI option `--network mutinynet` sets `config.network` in `package.json` to `mutinynet`. On Mutinynet, these things are different:
+
+- The chain name is `signet`, not `regtest`. Use `signet` in the CLI commands and in the data paths. Examples:
+  ```sh
+  docker compose -f network/docker-compose.yml exec -u lnd alice lncli -n signet getinfo
+  docker compose -f network/docker-compose.yml exec -u clightning alice lightning-cli --network=signet getinfo
+  ```
+  The LND macaroon is `network/data/alice/data/chain/bitcoin/signet/admin.macaroon`. The CLN CA cert is `network/data/alice/signet/ca.pem`.
+- The nodes can be only LND or CLN. `npm run compose` stops if a node is Eclair.
+- The bitcoind RPC URL is `http://127.0.0.1:38332`. bitcoind has no P2P host port. It connects to the Mutinynet peer `45.79.52.207:38333`.
+- `network/mutinynet/Dockerfile` makes the bitcoind image `create-ln-app/mutinynet-bitcoind:2fda7bfc027e`. The image has the Mutinynet fork of Bitcoin Core, because Bitcoin Core cannot sync Mutinynet. All projects use the same image.
+- `npm run sync` starts bitcoind and shows the sync progress. `npm run network` starts the Lightning nodes only after the sync.
+- Nothing mines blocks. `npm run bootstrap` funds the nodes from the faucet (<https://faucet.mutinynet.com>). `npm run faucet:login` writes the faucet token to `.env` as `MUTINYNET_FAUCET_TOKEN`.
+- The chain data is in `network/data/bitcoind`. `npm run reset` keeps it, and fails if a node has funds.
+
+Mutinynet explorer: <https://mutinynet.com>.

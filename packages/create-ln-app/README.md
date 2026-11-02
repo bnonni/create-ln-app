@@ -1,8 +1,8 @@
 # create-ln-app
 
-Make a Lightning app (Lapp) with a local regtest network. The new project has three parts:
+Make a Lightning app (Lapp) with a local regtest network or with Mutinynet. The new project has three parts:
 
-1. A local Bitcoin Lightning Network for development: Bitcoin Core and 2 to 10 Lightning nodes on regtest. Each node is LND, Core Lightning (CLN), or Eclair. The default is 3 LND nodes.
+1. A Bitcoin Lightning Network for development, in Docker on your computer: Bitcoin Core and 2 to 10 Lightning nodes. The chain is regtest (a local chain, the default) or Mutinynet (a public signet). Each node is LND, Core Lightning (CLN), or Eclair. The default is 3 LND nodes.
 2. An API server that connects to the nodes.
 3. An example app that uses the API server. It shows a payment with WebLN, a payment to a Lightning Address, and an LNURL-withdraw link.
 
@@ -50,8 +50,11 @@ Options:
 | `--template <name>` | Use this template: `react-ts` (React and TypeScript), `react` (React and JavaScript), or `next-ts` (Next.js and TypeScript). The default is `react-ts`. |
 | `--nodes <n>`       | Make a network with n nodes, from 2 to 10. The default is 3.                                        |
 | `--impl <impl>`     | Use this impl for all the nodes: `lnd`, `cln` (Core Lightning), or `eclair`. The default is `lnd`.  |
+| `--network <name>`  | Use this Bitcoin network: `regtest` (a local chain) or `mutinynet` (a public signet with a block every 30 s). Mutinynet works only with `lnd` and `cln`. The default is `regtest`. |
 | `--skip-install`    | Do not install the npm packages.                                                                    |
 | `-h`, `--help`      | Show the help.                                                                                      |
+
+On Mutinynet, the first `npm run dev` downloads the chain: about 11 GB of disk and 40 min or more. Then the bootstrap funds the nodes from the [Mutinynet faucet](https://faucet.mutinynet.com). To let the bootstrap request the funds, run `npm run faucet:login` before `npm run dev`. The faucet token is valid for 24 hours. For the steps and the limits, see [Mutinynet](https://github.com/bnonni/create-ln-app#mutinynet).
 
 The README in the new project has all the commands. `network/README.md` in the new project has the network reference.
 
